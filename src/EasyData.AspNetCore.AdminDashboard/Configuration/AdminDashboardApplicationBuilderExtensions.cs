@@ -1,11 +1,15 @@
 using System;
+using System.Threading.Tasks;
 
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 using EasyData.AspNetCore.AdminDashboard;
 using EasyData.AspNetCore.AdminDashboard.Authentication;
 using EasyData.AspNetCore.AdminDashboard.Authentication.Storage;
+using EasyData.AspNetCore.AdminDashboard.Dispatchers;
 using EasyData.Services;
 
 namespace Microsoft.AspNetCore.Builder
@@ -31,6 +35,12 @@ namespace Microsoft.AspNetCore.Builder
             if (options.RequireAuthentication)
             {
                 BootstrapAuthentication(app, options, easyDataOptions);
+            }
+
+            if (options.EnableSaml)
+            {
+                ResolveSamlMetadata(options);
+                RegisterSamlCallbackMiddleware(app, options, easyDataOptions, path);
             }
 
             app.UseMiddleware<AdminDashboardMiddleware>(options, easyDataOptions, path);
@@ -78,6 +88,64 @@ namespace Microsoft.AspNetCore.Builder
             {
                 queries.CreateDefaultAdminUserAsync(options.DefaultAdminPassword).GetAwaiter().GetResult();
             }
+        }
+
+        private static void ResolveSamlMetadata(AdminDashboardOptions options)
+        {
+            if (string.IsNullOrEmpty(options.SamlMetadataUrl))
+                return;
+
+            // Only fetch if cert or SSO URL are not manually set
+            if (!string.IsNullOrEmpty(options.SamlCertificate) && !string.IsNullOrEmpty(options.SamlIdpSsoUrl))
+                return;
+
+            var metadata = SamlIdpMetadataParser.FetchAndParseAsync(options.SamlMetadataUrl).GetAwaiter().GetResult();
+
+            if (string.IsNullOrEmpty(options.SamlCertificate))
+                options.SamlCertificate = metadata.Certificate;
+
+            if (string.IsNullOrEmpty(options.SamlIdpSsoUrl))
+                options.SamlIdpSsoUrl = metadata.SsoUrl;
+        }
+
+        private static void RegisterSamlCallbackMiddleware(
+            IApplicationBuilder app,
+            AdminDashboardOptions options,
+            EasyDataOptions easyDataOptions,
+            string basePath)
+        {
+            if (string.IsNullOrEmpty(options.SamlAcsUrl))
+                return;
+
+            // Extract the path from the ACS URL
+            var acsUri = new Uri(options.SamlAcsUrl);
+            var acsPath = acsUri.AbsolutePath;
+
+            app.Map(acsPath, branch =>
+            {
+                branch.Run(async httpContext =>
+                {
+                    if (httpContext.Request.Method != "POST")
+                    {
+                        httpContext.Response.StatusCode = 405;
+                        return;
+                    }
+
+                    // Create cookie auth service for the callback
+                    var dataProtectionProvider = httpContext.RequestServices.GetService<IDataProtectionProvider>();
+                    if (dataProtectionProvider != null)
+                    {
+                        var cookieService = new AdminCookieAuthService(dataProtectionProvider, options);
+                        httpContext.Items["EasyData.CookieAuthService"] = cookieService;
+                    }
+
+                    var manager = easyDataOptions.ManagerResolver(httpContext.RequestServices, easyDataOptions);
+                    var context = new AdminDashboardContext(httpContext, options, manager, basePath);
+
+                    var dispatcher = new SamlDispatcher("callback");
+                    await dispatcher.DispatchAsync(context, null);
+                });
+            });
         }
 
         private static DbContextOptions<AuthDbContext> GetAuthDbContextOptions(IServiceProvider serviceProvider)

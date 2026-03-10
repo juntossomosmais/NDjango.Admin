@@ -39,7 +39,8 @@ namespace EasyData.AspNetCore.AdminDashboard.Dispatchers
             {
                 Title = context.Options.DashboardTitle,
                 BasePath = context.BasePath,
-                NextUrl = nextUrl
+                NextUrl = nextUrl,
+                EnableSaml = context.Options.EnableSaml
             };
             await ViewRenderer.RenderLoginViewAsync(context.HttpContext, model);
         }
@@ -63,7 +64,8 @@ namespace EasyData.AspNetCore.AdminDashboard.Dispatchers
                     Title = context.Options.DashboardTitle,
                     BasePath = context.BasePath,
                     ErrorMessage = "Please enter the correct username and password.",
-                    NextUrl = nextUrl
+                    NextUrl = nextUrl,
+                    EnableSaml = context.Options.EnableSaml
                 };
                 await ViewRenderer.RenderLoginViewAsync(context.HttpContext, model);
                 return;

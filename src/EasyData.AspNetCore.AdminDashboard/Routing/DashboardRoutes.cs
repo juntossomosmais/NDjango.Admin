@@ -19,6 +19,9 @@ namespace EasyData.AspNetCore.AdminDashboard.Routing
             routes.Add("POST", @"^/login/$", System.Array.Empty<string>(), new AuthDispatcher("login_post"));
             routes.Add("GET", @"^/logout/$", System.Array.Empty<string>(), new AuthDispatcher("logout"));
 
+            // SAML SSO
+            routes.Add("GET", @"^/saml/init/$", System.Array.Empty<string>(), new SamlDispatcher("init"));
+
             // Dashboard home
             routes.Add("GET", @"^/?$", System.Array.Empty<string>(), new RazorViewDispatcher("Dashboard/Index"));
 

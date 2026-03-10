@@ -111,5 +111,83 @@ WHERE ug.user_id = @userId";
                 new object[] { hashedPassword },
                 ct);
         }
+
+        public async Task<int> CreateOrUpdateSamlUserAsync(string username, CancellationToken ct = default)
+        {
+            var randomHash = PasswordHasher.HashPassword(Guid.NewGuid().ToString("N"));
+
+            await _dbContext.Database.ExecuteSqlRawAsync(
+                @"IF NOT EXISTS (SELECT 1 FROM auth_user WHERE username = {0})
+                  INSERT INTO auth_user (username, password, is_superuser, is_active, date_joined, last_login)
+                  VALUES ({0}, {1}, 0, 1, GETUTCDATE(), GETUTCDATE())
+                ELSE
+                  UPDATE auth_user SET last_login = GETUTCDATE() WHERE username = {0}",
+                new object[] { username, randomHash },
+                ct);
+
+            var conn = _dbContext.Database.GetDbConnection();
+            await conn.OpenAsync(ct);
+            try
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT id FROM dbo.auth_user WHERE username = @username";
+                var param = cmd.CreateParameter();
+                param.ParameterName = "@username";
+                param.Value = username;
+                cmd.Parameters.Add(param);
+
+                var result = await cmd.ExecuteScalarAsync(ct);
+                return Convert.ToInt32(result);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+        }
+
+        public async Task SyncUserGroupsAsync(int userId, List<string> samlGroupIds, CancellationToken ct = default)
+        {
+            // Remove all existing group memberships
+            await _dbContext.Database.ExecuteSqlRawAsync(
+                "DELETE FROM auth_user_groups WHERE user_id = {0}",
+                new object[] { userId },
+                ct);
+
+            if (samlGroupIds == null || samlGroupIds.Count == 0)
+                return;
+
+            // Add memberships for matching groups using parameterized query
+            var conn = _dbContext.Database.GetDbConnection();
+            await conn.OpenAsync(ct);
+            try
+            {
+                using var cmd = conn.CreateCommand();
+
+                var paramNames = new List<string>();
+                for (int i = 0; i < samlGroupIds.Count; i++)
+                {
+                    var paramName = $"@g{i}";
+                    paramNames.Add(paramName);
+                    var param = cmd.CreateParameter();
+                    param.ParameterName = paramName;
+                    param.Value = samlGroupIds[i].Trim();
+                    cmd.Parameters.Add(param);
+                }
+
+                var userIdParam = cmd.CreateParameter();
+                userIdParam.ParameterName = "@userId";
+                userIdParam.Value = userId;
+                cmd.Parameters.Add(userIdParam);
+
+                cmd.CommandText = $@"INSERT INTO auth_user_groups (user_id, group_id)
+                    SELECT @userId, g.id FROM auth_group g WHERE g.name IN ({string.Join(", ", paramNames)})";
+
+                await cmd.ExecuteNonQueryAsync(ct);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+        }
     }
 }

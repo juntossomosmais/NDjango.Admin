@@ -443,6 +443,24 @@ body.login { background: var(--body-bg); }
     font-size: 13px;
 }
 
+/* Alternative login (SSO) */
+.alternative-login-section {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.alternative-login-section a {
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.alternative-login-section a:hover {
+    color: var(--primary-dark);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     #main { flex-direction: column; padding: 15px; }

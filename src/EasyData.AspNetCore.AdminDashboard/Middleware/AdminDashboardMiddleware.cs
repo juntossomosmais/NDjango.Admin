@@ -21,7 +21,7 @@ namespace EasyData.AspNetCore.AdminDashboard
         private readonly DashboardRouteCollection _routes;
         private readonly AdminCookieAuthService _cookieAuthService;
 
-        private static readonly string[] AuthExemptPrefixes = { "/css/", "/js/", "/login/", "/logout/" };
+        private static readonly string[] AuthExemptPrefixes = { "/css/", "/js/", "/login/", "/logout/", "/saml/" };
 
         public AdminDashboardMiddleware(
             RequestDelegate next,

@@ -49,6 +49,13 @@ namespace EasyData.AspNetCore.AdminDashboard.Dispatchers
             sb.Append("<div class=\"submit-row\"><button type=\"submit\" class=\"default\">Log in</button></div>");
             sb.Append("</form>");
 
+            if (model.EnableSaml)
+            {
+                sb.Append("<section class=\"alternative-login-section\">");
+                sb.Append($"<a href=\"{model.BasePath}/saml/init/\">Try single sign-on (SSO) &#128272;</a>");
+                sb.Append("</section>");
+            }
+
             sb.Append("</div>");
             sb.Append("</div>");
             sb.Append("</body></html>");
