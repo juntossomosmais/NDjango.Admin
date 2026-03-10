@@ -17,7 +17,4 @@
 
     <NoWarn>CS1591,CS1574</NoWarn>
   </PropertyGroup>
-  <ItemGroup>
-    <None Include="..\images\easydata-icon02.png" Pack="true" Visible="false" PackagePath=""/>
-  </ItemGroup>
 </Project>
