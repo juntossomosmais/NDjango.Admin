@@ -110,13 +110,13 @@ Open `http://localhost:8000/admin/` to see the dashboard with restaurant domain 
 docker compose up -d db
 
 # Run all tests (159 total)
-dotnet test EasyData.Dev.sln
+dotnet test EasyData.sln
 ```
 
 ## Project structure
 
 ```
-easydata.net/src/
+src/
   EasyData.Core/                              # Core metadata model
   EasyData.AspNetCore/                        # ASP.NET Core integration
   EasyData.EntityFrameworkCore.Relational/    # EF Core metadata loader
@@ -130,5 +130,6 @@ easydata.net/src/
     ViewModels/                               # Form and list models
     wwwroot/                                  # Embedded CSS/JS
 
+test/                                         # Integration & unit tests
 sample-project/                               # Working example app
 ```

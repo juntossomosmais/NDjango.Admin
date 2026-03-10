@@ -11,25 +11,23 @@ EasyData Admin Dashboard — a Django-admin-inspired CRUD dashboard for ASP.NET 
 docker compose up -d db
 
 # Build everything
-dotnet build EasyData.Dev.sln
+dotnet build EasyData.sln
 
 # Run all tests (~159 tests)
-dotnet test EasyData.Dev.sln
+dotnet test EasyData.sln
 
 # Run a single test project
-dotnet test easydata.net/test/EasyData.AspNetCore.AdminDashboard.Tests/
+dotnet test test/EasyData.AspNetCore.AdminDashboard.Tests/
 
 # Run a single test
-dotnet test EasyData.Dev.sln --filter "FullyQualifiedName~ForeignKeyTests.RestaurantAddForm_RendersCategory_DropdownAsync"
+dotnet test EasyData.sln --filter "FullyQualifiedName~ForeignKeyTests.RestaurantAddForm_RendersCategory_DropdownAsync"
 
 # Run the sample project (requires SQL Server running)
 cd sample-project/src && dotnet run -- api
 # Dashboard at http://localhost:8000/admin/
 ```
 
-**Solution files:**
-- `EasyData.Dev.sln` — development (source + tests). Use this for day-to-day work.
-- `EasyData.sln` — production packages only (no tests).
+**Solution file:** `EasyData.sln` — includes all source and test projects.
 
 ## Architecture
 

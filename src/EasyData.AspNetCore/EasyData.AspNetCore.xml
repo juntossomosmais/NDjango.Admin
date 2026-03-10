@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>EasyData.AspNetCore</name>
+    </assembly>
+    <members>
+        <member name="F:EasyData.AspNetCore.EasyDataApiHandler.HttpContext">
+            <summary>
+            The current HttpContext
+            </summary>
+        </member>
+        <member name="F:EasyData.AspNetCore.EasyDataApiHandler.Manager">
+            <summary>
+            An instance of EasyDatasManager that incapsulates all business logic of EasyData API
+            </summary>
+        </member>
+        <member name="F:EasyData.AspNetCore.EasyDataApiHandler.Options">
+            <summary>
+            Some options that affects handler's behavior
+            </summary>
+        </member>
+        <member name="M:EasyData.AspNetCore.EasyDataApiHandler.#ctor(EasyData.Services.EasyDataManager,EasyData.Services.EasyDataOptions,Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.AspNetCore.EasyDataApiHandler"/> class.
+            </summary>
+            <param name="manager">The instance of EasyDataManager that incapsulates all business logic of EasyData API.</param>
+            <param name="options"> Some options that affects handler's behavior.</param>
+            <param name="httpContext">The current HttpContext.</param>
+        </member>
+        <member name="M:EasyData.AspNetCore.EasyDataApiHandler.HandleGetModelAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Handles the "GetModel" request as an asynchronous operation.
+            </summary>
+            <param name="modelId">The model identifier.</param>
+            <param name="ct">The cancellation token.</param>
+        </member>
+        <member name="M:EasyData.AspNetCore.EasyDataApiHandler.WriteGetModelResponseAsync(Newtonsoft.Json.JsonWriter,EasyData.MetaData,System.Threading.CancellationToken)">
+            <summary>
+            Writes the model's content to the JsonWriter.
+            Can be overridden in the derived classes to write some extra data to the response for GetModel request .
+            </summary>
+            <param name="jsonWriter">An instance of JsonWriter.</param>
+            <param name="model">The data model.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.AspNetCore.EasyDataApiHandler.HandleExceptionAsync(System.Exception,System.Threading.CancellationToken)">
+            <summary>
+            Handles exceptions that might occur inside any other EasyData API request handler.
+            If the writing to the response content has not started it returns a response with 400 code and the error message.
+            </summary>
+            <param name="ex">The ex.</param>
+            <param name="ct">The cancellation token.</param>
+        </member>
+        <member name="M:EasyData.AspNetCore.EasyDataApiHandler.WriteJsonResponseAsync(Microsoft.AspNetCore.Http.HttpContext,System.String,System.Func{Newtonsoft.Json.JsonWriter,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.Threading.CancellationToken)">
+            <summary>
+            Writes a response in JSON format.
+            This function creates a HttpResponseStreamWriter and invokes the callback function which actually does the job.
+            </summary>
+            <param name="context">The HTTP context.</param>
+            <param name="result">The value of result property in the response object (either "ok" or any other string).</param>
+            <param name="writeContentAction">The function that actually writes the content.</param>
+            <param name="ct">The cancellation token.</param>
+        </member>
+        <member name="M:EasyData.AspNetCore.EasyDataApiHandler.WriteOkJsonResponseAsync(Microsoft.AspNetCore.Http.HttpContext,System.Func{Newtonsoft.Json.JsonWriter,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.Threading.CancellationToken)">
+            <summary>
+            Writes an OK response in JSON format.
+            This function actually calls <see cref="M:EasyData.AspNetCore.EasyDataApiHandler.WriteJsonResponseAsync(Microsoft.AspNetCore.Http.HttpContext,System.String,System.Func{Newtonsoft.Json.JsonWriter,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.Threading.CancellationToken)"/> with "ok" value for the "result" parameter.
+            </summary>
+            <param name="context">The HTTP context.</param>
+            <param name="writeContentAction">The function that actually writes the content.</param>
+            <param name="ct">The cancellation token.</param>
+        </member>
+        <member name="M:EasyData.AspNetCore.EasyDataApiHandler.WriteErrorJsonResponseAsync(Microsoft.AspNetCore.Http.HttpContext,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Writes an ERROR response in JSON format.
+            This function actually calls <see cref="M:EasyData.AspNetCore.EasyDataApiHandler.WriteJsonResponseAsync(Microsoft.AspNetCore.Http.HttpContext,System.String,System.Func{Newtonsoft.Json.JsonWriter,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.Threading.CancellationToken)" /> with "error" value for the "result" parameter.
+            It also writes a "message" property to the response object with the value passed in "errorMessage" parameter.
+            </summary>
+            <param name="context">The HTTP context.</param>
+            <param name="errorMessage">The error message.</param>
+            <param name="ct">The cancellation token.</param>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,625 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>EasyData.EntityFrameworkCore.Relational</name>
+    </assembly>
+    <members>
+        <member name="M:EasyData.EntityFrameworkCore.MetaDataEfCoreExtensions.LoadFromDbContext(EasyData.MetaData,Microsoft.EntityFrameworkCore.DbContext)">
+            <summary>
+            Loads the model from a database context.
+            </summary>
+            <param name="model">A DbModel object.</param>
+            <param name="context">A DbContext object to load the model from.</param>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaDataEfCoreExtensions.LoadFromDbContext(EasyData.MetaData,Microsoft.EntityFrameworkCore.DbContext,EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions)">
+            <summary>
+            Loads the model from a database context.
+            </summary>
+            <param name="model">A DbModel object.</param>
+            <param name="context">A DbContext object to load the model from.</param>
+            <param name="options">Different options</param>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsInheritedFrom(System.Type,System.String)">
+            <summary>
+            Determines whether the type is inherited from another type specified by the specified full type name.
+            </summary>
+            <param name="type">The type to check the inheritence for.</param>
+            <param name="fullTypeName">Full name of the type.</param>
+            <returns><c>true</c> if is inherited from the type specified byt its full type name; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsInheritedFrom(System.Type,System.Type)">
+            <summary>
+            Determines whether the type is inherited from another type.
+            </summary>
+            <param name="type">The type to check the inheritence for.</param>
+            <param name="baseType">The base type.</param>
+            <returns><c>true</c> if is inherited from the type; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsInheritedFromGeneric(System.Type,System.Type)">
+            <summary>
+            Determines whether the type is inherited from generic type.
+            </summary>
+            <param name="type">The type to check the inheritence for.</param>
+            <param name="baseType">The base type.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsSimpleType(System.Type)">
+            <summary>
+            Checks if the type can be used in columns and conditions
+            </summary>
+            <param name="t">The type.</param>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsComplexType(System.Type)">
+            <summary>
+            Determines whether the specified type is complex type (marked by ComplexType attribute).
+            </summary>
+            <param name="typeToCheck">The type to check.</param>
+            <returns><c>true</c> if the specified type is a complex type; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsGenericType(System.Type)">
+            <summary>
+            Determines whether the specified type is generic type.
+            </summary>
+            <param name="typeToCheck">The type to check.</param>
+            <returns><c>true</c> if the specified type is a generic type; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsEnum(System.Type)">
+            <summary>
+            Determines whether the specified type is an enumeration.
+            </summary>
+            <param name="typeToCheck">The type to check.</param>
+            <returns><c>true</c> if the specified type is a enumeration type; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsNullable(System.Type)">
+            <summary>
+            Determines whether the specified type is a nullable type.
+            </summary>
+            <param name="typeToCheck">The type to check.</param>
+            <returns><c>true</c> if the specified type is a nullable type; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsAttributeDefined(System.Reflection.PropertyInfo,System.String)">
+            <summary>
+            Determines whether the attribute with specified name is defined for the property.
+            </summary>
+            <param name="pi">A PropertyInfo object which defines the property</param>
+            <param name="attrName">Name of the attribute.</param>
+            <returns><c>true</c> if "attrName" attribute is defined for "pi" property; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.GetMappedProperties(System.Collections.Generic.IEnumerable{System.Reflection.PropertyInfo})">
+            <summary>
+            Filters the list of properties (defined by source parameter) to return only those which does not have "NotMapped" attribute.
+            </summary>
+            <param name="source">The source list of properties.</param>
+            <returns>IEnumerable&lt;PropertyInfo&gt;.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.TypeExtensions.IsEnumerable(System.Type)">
+            <summary>
+            Determines whether the specified type is enumerable (supports <see cref="T:System.Collections.Generic.IEnumerable"/> interface.
+            </summary>
+            <param name="typeToCheck">The type to check.</param>
+            <returns><c>true</c> if the specified type to check is enumerable; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="T:EasyData.EntityFrameworkCore.DbContextMetaDataLoader">
+            <summary>
+            Retrieves DB metadata from a DbContext object and fills the structures of <see cref="T:EasyData.MetaData"/> instance.
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.#ctor(Microsoft.EntityFrameworkCore.DbContext,EasyData.MetaData)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.EntityFrameworkCore.DbContextMetaDataLoader"/> class.
+            </summary>
+            <param name="dbContext">The DbContext to get metadata from.</param>
+            <param name="model">The MetaData object to save metadata to.</param>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.#ctor(Microsoft.EntityFrameworkCore.DbContext,EasyData.MetaData,EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.EntityFrameworkCore.DbContextMetaDataLoader"/> class.
+            </summary>
+            <param name="dbContext">The DbContext to get metadata from.</param>
+            <param name="model">The MetaData object to save metadata to.</param>
+            <param name="options">The loader option. You can define here which model and/or properties should be skipped, 
+            what names the will have, what display formats to use and so on.
+            </param>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.GetEntityTypes">
+            <summary>
+            Gets the entity types filtered acording to EntitFilters list defined in <see cref="F:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.Options"/>
+            </summary>
+            <returns>IEnumerable&lt;IEntityType&gt;.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.ApplyEntityFilters(Microsoft.EntityFrameworkCore.Metadata.IEntityType)">
+            <summary>
+            Applies the entity filters.
+            </summary>
+            <param name="entityType">An instance of <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IEntityType"/> that defines the entity.</param>
+            <returns><c>true</c> if the entity passes the filters, <c>false</c> otherwise.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.GetEntityProperties(Microsoft.EntityFrameworkCore.Metadata.IEntityType)">
+            <summary>
+            Gets the entity properties filtered according to the PropertyFilters list defined in <see cref="F:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.Options"/>.
+            </summary>
+            <param name="entityType">An instance of <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IEntityType"/> that represents the entity.</param>
+            <returns>IEnumerable&lt;IProperty&gt;.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.ApplyPropertyFilters(Microsoft.EntityFrameworkCore.Metadata.IProperty)">
+            <summary>
+            Applies the property filters.
+            </summary>
+            <param name="property">An instance of <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IProperty"/> that represents the property.</param>
+            <returns><c>true</c> if the property passes the filters, <c>false</c> otherwise.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.LoadFromDbContext">
+            <summary>
+            Loads metadata from a DbContext object and stores them into a <see cref="T:EasyData.MetaData"/> instance passed in the constructor
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.GetEntityId(Microsoft.EntityFrameworkCore.Metadata.IEntityType)">
+            <summary>
+            Gets the entity ID by <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IEntityType"/>.
+            </summary>
+            <param name="entityType">An instance of <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IEntityType"/> that represents the entity.</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.ProcessEntityType(Microsoft.EntityFrameworkCore.Metadata.IEntityType)">
+            <summary>
+            Processes one entity.
+            </summary>
+            <param name="entityType">An instance of <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IEntityType"/> that represents the entity.</param>
+            <returns>MetaEntity.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.ProcessNavigationProperty(EasyData.MetaEntity,Microsoft.EntityFrameworkCore.Metadata.IEntityType,Microsoft.EntityFrameworkCore.Metadata.INavigation,System.Int32@)">
+            <summary>
+            Processes the navigation property.
+            </summary>
+            <param name="entity">The entity.</param>
+            <param name="entityType">An instance of <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IEntityType"/> that represents the entity in DbContext.</param>
+            <param name="navigation">The navigation property.</param>
+            <param name="attrCounter">Represents the default index of the processed attribute</param>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoader.CreateEntityAttribute(EasyData.MetaEntity,Microsoft.EntityFrameworkCore.Metadata.IEntityType,Microsoft.EntityFrameworkCore.Metadata.IProperty)">
+            <summary>
+            Creates the entity attribute for a particular entity type and property.
+            </summary>
+            <param name="entity">The entity to which the new attribute will be added.</param>
+            <param name="entityType">An instance of <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IEntityType"/> that represents the entity in the DbContext.</param>
+            <param name="property">An instance of <see cref="T:Microsoft.EntityFrameworkCore.Metadata.IProperty"/> that represents the property in the model class.</param>
+            <returns>MetaEntityAttr.</returns>
+        </member>
+        <member name="T:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderException">
+            <summary>
+            Represents exception class for <see cref="T:EasyData.EntityFrameworkCore.DbContextMetaDataLoader"/>
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderException" /> class.
+            </summary>
+            <param name="message">The error message.</param>
+        </member>
+        <member name="T:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions">
+            <summary>
+            Contains different options for <see cref="T:EasyData.EntityFrameworkCore.DbContextMetaDataLoader"/>
+            </summary>
+        </member>
+        <member name="P:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.EntityFilters">
+            <summary>
+            Gets the list of entity filters
+            </summary>
+        </member>
+        <member name="P:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.PropertyFilters">
+            <summary>
+            Gets the list of property filters.
+            </summary>
+            <value>The property filters.</value>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.AddFilter(System.Func{Microsoft.EntityFrameworkCore.Metadata.IEntityType,System.Boolean})">
+            <summary>
+            Adds a filter, which will be used during model loading from <see cref="T:Microsoft.EntityFrameworkCore.DbContext"/> 
+            </summary>
+            <param name="filter"></param>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.AddEntityFilter(System.Func{Microsoft.EntityFrameworkCore.Metadata.IEntityType,System.Boolean})">
+            <summary>
+            Adds an entity filter
+            that will be used during the loading of the model from a <see cref="T:Microsoft.EntityFrameworkCore.DbContext" />
+            </summary>
+            <param name="filter">The filter.</param>
+            <returns>DbContextMetaDataLoaderOptions (to use in chained calls).</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.AddPropertyFilter(System.Func{Microsoft.EntityFrameworkCore.Metadata.IProperty,System.Boolean})">
+            <summary>
+            Adds the property filter.
+            that will be used during the loading of the model from a <see cref="T:Microsoft.EntityFrameworkCore.DbContext" />
+            </summary>
+            <param name="filter">The filter.</param>
+            <returns>DbContextMetaDataLoaderOptions (to use in chained calls).</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.Skip``1(System.Linq.Expressions.Expression{System.Func{``0,System.Object}}[])">
+            <summary>
+            Adds an entity filter (if the list of property selectors is empty) or bunch of property filters
+            that makes the model loader skip the specified entity or properties.
+            </summary>
+            <typeparam name="TEntity">The type of the model class the represent the entity which should be skipped
+            (or some of its properties should be skipped).</typeparam>
+            <param name="propertySelectors">The list of property selectors. Each selector defines a property that should be skipped during the metadata loading.</param>
+            <returns>DbContextMetaDataLoaderOptions (to use in chained calls).</returns>
+        </member>
+        <member name="P:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.HidePrimaryKeys">
+            <summary>
+            Gets or sets a value indicating whether we need to hide primary key fields in the data model.
+            </summary>
+            <value><c>true</c> if the primary key fields must be hidden; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="P:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.SkipForeignKeys">
+            <summary>
+            Gets or sets a value indicating whether we need to skip foreign key fields and don't include them into the data model.
+            </summary>
+            <value><c>true</c> if the foreign key fields must be skipped; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="P:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.KeepDbSetDeclarationOrder">
+            <summary>
+            Gets or sets a value indicating whether entities must keep order of DbSet declarations.
+            </summary>
+        </member>
+        <member name="P:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.ModelCustomizer">
+            <summary>
+            Gets the delegate that will be called at the end of metadata loading to customize loaded entities and attributes (properties).
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.DbContextMetaDataLoaderOptions.CustomizeModel(System.Action{EasyData.EntityFrameworkCore.MetadataCustomizer})">
+            <summary>
+            Sets the model customizer - an action that configures some entities and their properties in the loaded model.
+            </summary>
+            <param name="customizer">The procedure that configures the metadata model</param>
+        </member>
+        <member name="T:EasyData.EntityFrameworkCore.MetadataCustomizer">
+            <summary>
+            Builds entity metadata.
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetadataCustomizer.GetEntityBuilder``1">
+            <summary>
+            Gets the customizer for an entity by its type.
+            This is a virtual method that can be overridden in descendants
+            </summary>
+            <typeparam name="TEntity">Entity type.</typeparam>
+            <returns>An instance of IMetaEntityCustomizer&lt;TEntity&gt;.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetadataCustomizer.Entity``1">
+            <summary>
+            Gets the entity customizer by its type
+            </summary>
+            <typeparam name="TEntity">Entity type.</typeparam>
+            <returns>An instance of IMetaEntityCustomizer&lt;TEntity&gt;.</returns>
+        </member>
+        <member name="T:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer">
+            <summary>
+            Builder for entity attribute metadata.
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.#ctor(EasyData.MetaEntityAttr)">
+            <summary>
+            Initialize entity attribute builder.
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetDisplayName(System.String)">
+            <summary>
+            Set attribute display name.
+            </summary>
+            <param name="displayName">Name to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetDisplayFormat(System.String)">
+            <summary>
+            Set attribute display format.
+            </summary>
+            <param name="displayFormat">Display format to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetDescription(System.String)">
+            <summary>
+            Set attribute description.
+            </summary>
+            <param name="description">Description to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetEditable(System.Boolean)">
+            <summary>
+            Set whether the attribute is editable or not.
+            </summary>
+            <param name="editable">Editable or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetIndex(System.Int32)">
+            <summary>
+            Set the index of the attribute.
+            </summary>
+            <param name="index">Index to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetShowInLookup(System.Boolean)">
+            <summary>
+            Set whether attribute is shown in LookUp editor.
+            </summary>
+            <param name="showInLookup">To show or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetShowOnView(System.Boolean)">
+            <summary>
+            Set whether attribute is shown on view.
+            </summary>
+            <param name="showOnView">To show or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetShowOnEdit(System.Boolean)">
+            <summary>
+            Set whether attribute is shown on edit.
+            </summary>
+            <param name="showOnEdit">To show or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetShowOnCreate(System.Boolean)">
+            <summary>
+            Set whether attribute is shown on create.
+            </summary>
+            <param name="showOnCreate">To show or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetSorting(System.Int32)">
+            <summary>
+            Set the default sorting.
+            </summary>
+            <param name="sorting">Sorting to set.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetDataType(EasyData.DataType)">
+            <summary>
+            Set the data type
+            </summary>
+            <param name="dataType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrCustomizer.SetDefaultValue(System.Object)">
+            <summary>
+            Set the default value
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer">
+            <summary>
+            Builder for entity attribute metadata.
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.#ctor">
+            <summary>
+            Initialize entity attribute builder.
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetDisplayName(System.String)">
+            <summary>
+            Set attribute display name.
+            </summary>
+            <param name="displayName">Name to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetDisplayFormat(System.String)">
+            <summary>
+            Set attribute display format.
+            </summary>
+            <param name="displayFormat">Display format to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetDescription(System.String)">
+            <summary>
+            Set attribute description.
+            </summary>
+            <param name="description">Description to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetEditable(System.Boolean)">
+            <summary>
+            Set whether the attribute is editable or not.
+            </summary>
+            <param name="editable">Editable or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetIndex(System.Int32)">
+            <summary>
+            Set the index of the attribute.
+            </summary>
+            <param name="index">Index to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetShowInLookup(System.Boolean)">
+            <summary>
+            Set whether attribute is shown in LookUp editor.
+            </summary>
+            <param name="showInLookup">To show or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetShowOnView(System.Boolean)">
+            <summary>
+            Set whether attribute is shown on view.
+            </summary>
+            <param name="showOnView">To show or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetShowOnEdit(System.Boolean)">
+            <summary>
+            Set whether attribute is shown on edit.
+            </summary>
+            <param name="showOnEdit">To show or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetShowOnCreate(System.Boolean)">
+            <summary>
+            Set whether attribute is shown on create.
+            </summary>
+            <param name="showOnCreate">To show or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetSorting(System.Int32)">
+            <summary>
+            Set the default sorting.
+            </summary>
+            <param name="sorting">Sorting to set.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetDataType(EasyData.DataType)">
+            <summary>
+            Set the data type
+            </summary>
+            <param name="dataType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityAttrVoidCustomizer.SetDefaultValue(System.Object)">
+            <summary>
+            Set the default value
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyData.EntityFrameworkCore.MetaEntityCustomizer`1">
+            <summary>
+            Builder for entity metadata.
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityCustomizer`1.#ctor(EasyData.MetaEntity)">
+            <summary>
+            Initialize entity builder
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityCustomizer`1.SetDisplayName(System.String)">
+            <summary>
+            Set entity display name.
+            </summary>
+            <param name="displayName">Name to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityCustomizer`1.SetDisplayNamePlural(System.String)">
+            <summary>
+            Set entity plural display name.
+            </summary>
+            <param name="displayNamePlural">Name to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityCustomizer`1.SetDescription(System.String)">
+            <summary>
+            Set entity description.
+            </summary>
+            <param name="description">Description to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityCustomizer`1.SetEditable(System.Boolean)">
+            <summary>
+            Set entity availability for editing.
+            </summary>
+            <param name="editable">Editable or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityCustomizer`1.Attribute(System.Linq.Expressions.Expression{System.Func{`0,System.Object}})">
+            <summary>
+            Get entity attribute metadata builder.
+            </summary>
+            <param name="propertySelector">Property expression.</param>
+            <returns>Attribute metadata builder instance.</returns>
+        </member>
+        <member name="T:EasyData.EntityFrameworkCore.MetaEntityVoidCustomizer`1">
+            <summary>
+            Represents a special case of an entity builder that
+            does not really change any MetaEntity object
+            but rather saves information about which entities we need to ignore (skip)
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityVoidCustomizer`1.#ctor(EasyData.EntityFrameworkCore.MetadataCustomizer)">
+            <summary>
+            Initialize the builder
+            </summary>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityVoidCustomizer`1.SetDisplayName(System.String)">
+            <summary>
+            Does nothing.
+            </summary>
+            <param name="displayName">Name to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityVoidCustomizer`1.SetDisplayNamePlural(System.String)">
+            <summary>
+            Does nothing
+            </summary>
+            <param name="displayNamePlural">Name to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityVoidCustomizer`1.SetDescription(System.String)">
+            <summary>
+            Does nothing
+            </summary>
+            <param name="description">Description to set.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.MetaEntityVoidCustomizer`1.SetEditable(System.Boolean)">
+            <summary>
+            Does nothing
+            </summary>
+            <param name="editable">Editable or not.</param>
+            <returns>Current instance of the class.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.Utils.GetDbSchema(Microsoft.EntityFrameworkCore.Metadata.IEntityType)">
+            <summary>
+            Gets the schema name for the specified IEntityType
+            </summary>
+            <param name="entityType">Type of the entity.</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.Utils.GetDbTableName(Microsoft.EntityFrameworkCore.Metadata.IEntityType)">
+            <summary>
+            Gets the table name for the specified IEntityType.
+            </summary>
+            <param name="entityType">Type of the entity.</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="M:EasyData.EntityFrameworkCore.Utils.GetDbColumnName(Microsoft.EntityFrameworkCore.Metadata.IProperty)">
+            <summary>
+            Gets the column name for the specified IProperty.
+            </summary>
+            <param name="property">The property.</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="T:EasyData.Services.FullTextSearchOptions">
+            <summary>
+            Contains options for full text search
+            </summary>
+        </member>
+        <member name="P:EasyData.Services.FullTextSearchOptions.Filter">
+            <summary>
+            Lamda expression, which filters properties to use in full text search
+            </summary>
+        </member>
+        <member name="P:EasyData.Services.FullTextSearchOptions.OrderBy">
+            <summary>
+            The name of the property to order by the result list
+            </summary>
+        </member>
+        <member name="P:EasyData.Services.FullTextSearchOptions.IsDescendingOrder">
+            <summary>
+            if set to <c>true</c> then we use descending order
+            </summary>
+        </member>
+        <member name="P:EasyData.Services.FullTextSearchOptions.Depth">
+            <summary>
+            Depth of full text search. 
+            </summary>
+        </member>
+        <member name="M:EasyData.Services.LinqExtensions.FullTextSearchQuery``1(System.Linq.IQueryable{``0},System.String,EasyData.Services.FullTextSearchOptions)">
+            <summary>
+            Filters a sequence of values based on a fulltext search predicate 
+            </summary>
+            <typeparam name="T">Any type</typeparam>
+            <param name="source">The source - some IQueryable object.</param>
+            <param name="text">The text - meaning of the search</param>
+            <param name="options">The options for full-text search</param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

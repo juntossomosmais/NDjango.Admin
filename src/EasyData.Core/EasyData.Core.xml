@@ -1,0 +1,2669 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>EasyData.Core</name>
+    </assembly>
+    <members>
+        <member name="T:EasyData.EntityAttrKind">
+            <summary>
+            Represents an attribute's kind
+            </summary>
+        </member>
+        <member name="F:EasyData.EntityAttrKind.Data">
+            <summary>
+            The data attribute represents a field in some database table
+            </summary>
+        </member>
+        <member name="F:EasyData.EntityAttrKind.Virtual">
+            <summary>
+            The virtual or calculated attribute does not has a direct representations in a database.
+            It is defined as a calculation of few data attributes (fields)
+            </summary>
+        </member>
+        <member name="F:EasyData.EntityAttrKind.Lookup">
+            <summary>
+            The lookup attribute represents the connection between two entities.
+            It usually correspond to a navigation property in a model class.
+            </summary>
+        </member>
+        <member name="T:EasyData.MetaEntityAttr">
+            <summary>
+            Represents one entity attribute of data model.
+            </summary>
+            <remarks>
+            Usually Attribute object represents some field in database table 
+            but it also can represent more complicated attributes.
+            For the user who works with query builder entity attribute - 
+            is something that he(she) understand well and can operate with.
+            For example: "name of the company" or "payment method" 
+            but not the "payment method internal id" which is stored in database.
+            </remarks>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Id">
+            <summary>
+            Gets or sets the ID.
+            </summary>
+            <value>ID string.</value>
+            <remarks>
+            ID represents internal entityAttr attribute id which is not shown to user 
+            but is used for storing data model in external files.
+            </remarks>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.IsNullable">
+            <summary>Gets or sets a value indicating whether this attribute is nullable.</summary>
+            <value>
+              <c>true</c> if this instance is nullable; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.PropInfo">
+            <summary>
+            Gets or sets the property information.
+            </summary>
+            <value>The property information.</value>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.PropName">
+            <summary>
+            Gets or sets the name of the property.
+            </summary>
+            <value>The name of the property.</value>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.ColumnName">
+            <summary>
+            Gets or sets the name of the column associated with property (in EntityFramework context definition).
+            </summary>
+            <value>The name of the associated column.</value>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Index">
+            <summary>
+            Gets or sets the index of EntityAttr
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.LookupDataAttribute">
+            <summary>
+            Gets or sets the data attribute in the lookup entity (where the actual values will be saved to).
+            </summary>
+            <value>The lookup data attribute.</value>
+        </member>
+        <member name="F:EasyData.MetaEntityAttr.expr">
+            <summary>
+            Attribute expression
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.IsPrimaryKey">
+            <summary>
+            Gets ot sets a value indicating whether this attribute is a primary key
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.IsForeignKey">
+            <summary>
+            Gets ot sets a value indicating whether this attribute is a foreign key
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.IsEditable">
+            <summary>
+            Gets ot sets a value indicating whether this attribute is editable
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.ShowInLookup">
+            <summary>
+            Gets or sets a value indicating whether this attribute is shown in LookUp editor
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.IsVisible">
+            <summary>
+            Gets ot sets a value indicating whether this attribute is visible
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.ShowOnView">
+            <summary>
+            Gets ot sets a value indicating whether this attribute is visible in a view mode (in grid)
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.ShowOnEdit">
+            <summary>
+            Gets ot sets a value indicating whether this attribute is visible during the edit
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.ShowOnCreate">
+            <summary>
+            Gets ot sets a value indicating whether this attribute is visible during the creation
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.DefaultEditor">
+            <summary>
+            Gets or sets the default value editor.
+            </summary>
+            <value>The default value editor. null value represent AUTO value editor.</value>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.SetDefaultEditorWithoutChecking(EasyData.ValueEditor)">
+            <summary>
+            Sets default editor without adding it to model.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.LookupAttr">
+            <summary>
+            Gets the lookup attribute.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Model">
+            <summary>
+            Gets the model.
+            </summary>
+            <value>The model.</value>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.DisplayFormat">
+            <summary>
+            The display format for the attribute.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.CheckModel">
+            <summary>
+            Checks the Model property and raises an exception if it's null.
+            </summary>
+            <exception cref="T:EasyData.MetaDataException">
+            Entity is not specified for attribute:  + {attribute ID}
+            or
+            Model is not specified for entity:  + {entity ID}
+            </exception>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Entity">
+            <summary>
+            Gets or sets the entity.
+            </summary>
+            <value>The entity.</value>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.OnModelAssignment">
+            <summary>
+            Called when model is assigned.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Caption">
+            <summary>
+            Gets or sets the attribute's caption.
+            </summary>
+            <value>Caption text</value>
+            <remarks> Caption is the public representation of entityAttr.
+            It must have clear and understandable name. 
+            Example: "Company name" is a good caption 
+            but "CName" - is bad.
+            </remarks>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.GetFullCaption(System.String)">
+            <summary>
+            Gets the full name of the attribute (including the name of the parent entity).
+            </summary>
+            <param name="separator">The separator (space by default).</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Description">
+            <summary>
+            Gets or sets the description of entity attribute.
+            </summary>
+            <value>The description of entity attribute.</value>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.IsVirtual">
+            <summary>
+            Indicates if this attribute is a virtual (calculate) one.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.DefaultValue">
+            <summary>
+            The default value
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Sorting">
+            <summary>
+            Gets or sets the default sorting order
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.DataType">
+            <summary>
+            Gets or sets the type of data represented by attribute.
+            </summary>
+            <value>DataType value.</value>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Size">
+            <summary>
+            Gets or sets the size of data represented by attribute.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.Expr">
+            <summary>
+            Gets or sets the attribute expression.
+            </summary>
+            <value>Text that represents attribute expression. 
+            Can be simply field name for EntAttrKind.Data attributes or 
+            more complicated SQL expression composed of several fields, operators and functions.</value>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.ProcessVirtualExpr">
+            <summary>
+            Scans attribute's expression for new parameters, tables, etc
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.FullExpr">
+            <summary>
+            Gets the full expression of entity attribute.
+            </summary>
+            <value>
+            The full expression.
+            </value>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.GetDataAttrFullExpr">
+            <summary>
+            Gets full expression of the entity attribute.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:EasyData.MetaEntityAttr.UserData">
+            <summary>
+            Gets or sets the user data object assosiated with attribute.
+            </summary>
+            <value></value>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.CompareWithExpr(System.String)">
+            <summary>
+            Compares attribute's expression with the one passed in the parameter.
+            </summary>
+            <param name="expr">The expression definition to compare with</param>
+            <returns><c>true</c> if our attribute's expression is equal to the one passed in the parameter, <c>false</c> otherwise.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.CopyFrom(EasyData.MetaEntityAttr)">
+            <summary>
+            Copies all attribute's properties from another entity attribute
+            </summary>
+            <param name="attr">An EntityAttr object to copy from.</param>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.System#IComparable{EasyData#MetaEntityAttr}#CompareTo(EasyData.MetaEntityAttr)">
+            <summary>
+            Compares the current instance with another EntityAttr object 
+            and returns an integer that indicates whether the current instance precedes, 
+            follows, or occurs in the same position in the sort order as the other object.
+            </summary>
+            <param name="attr">The entity attribute.</param>
+            <returns>An integer that indicates whether the current instance precedes, 
+            follows, or occurs in the same position in the sort order as the other object</returns>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.WriteToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes attribute's content to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer.</param>
+            <returns>Task.</returns>
+            <param name="options">Some read/write options</param>
+            <param name="ct">The cancellation token.</param>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes attribute properties to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="options">Some read/write options</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.ReadFromJsonAsync(Newtonsoft.Json.JsonReader,System.Threading.CancellationToken)">
+            <summary>
+            Reads the attribute content from JSON (asynchronous way).
+            </summary>
+            <param name="reader">A JsonReader.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+            <exception cref="T:EasyData.BadJsonFormatException">
+            </exception>
+        </member>
+        <member name="M:EasyData.MetaEntityAttr.ReadPropertyFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one attribute's property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">A JsonReader.</param>
+            <param name="propName">Name of the property.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="T:EasyData.MetaEntityAttrList">
+            <summary>
+            Represents list of entity attributes
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntityAttrList.SortByCaption">
+            <summary>
+            Orders list of attributes by their captions.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntityAttrList.Reorder">
+            <summary>
+            Reorders entity attributes by index in increase order.
+            </summary>
+        </member>
+        <member name="T:EasyData.MetaEntityAttrStore">
+            <summary>
+            Represents entity attributes storage associated with a particular entity.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntityAttrStore.#ctor(EasyData.MetaEntity)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EntityAttrStore"/> class.
+            </summary>
+            <param name="entity">The entity.</param>
+        </member>
+        <member name="P:EasyData.MetaEntityAttrStore.Model">
+            <summary>Gets the DataModel object this entity attribute belongs to</summary>
+            <value>The model.</value>
+        </member>
+        <member name="M:EasyData.MetaEntityAttrStore.InsertItem(System.Int32,EasyData.MetaEntityAttr)">
+            <summary>
+            Inserts an element into the <see cref="T:System.Collections.ObjectModel.Collection`1"/> at the specified index.
+            </summary>
+            <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
+            <param name="item">The object to insert. The value can be null for reference types.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            	<paramref name="index"/> is less than zero.
+            -or-
+            <paramref name="index"/> is greater than <see cref="P:System.Collections.ObjectModel.Collection`1.Count"/>.
+            </exception>
+        </member>
+        <member name="M:EasyData.MetaEntityAttrStore.OnEntityAttrInsertion(EasyData.MetaEntityAttr,System.Int32)">
+            <summary>
+            Called when some attribute is inserted to the list.
+            </summary>
+            <param name="entityAttr">The attribute.</param>
+            <param name="index">The index.</param>
+        </member>
+        <member name="T:EasyData.CommonExtensions">
+            <summary>
+            Useful extension methods for EasyQuery's types
+            </summary>
+        </member>
+        <member name="M:EasyData.CommonExtensions.IntToDataType(System.Int32)">
+            <summary>
+            Returns DataType by its numeric representation.
+            </summary>
+            <param name="value">An integer value.</param>
+            <returns>DataType.</returns>
+        </member>
+        <member name="M:EasyData.CommonExtensions.ToInt(EasyData.DataType)">
+            <summary>
+            Returns a numeric representation of a DataType value.
+            </summary>
+            <param name="dt">A DataType value.</param>
+            <returns>Int32.</returns>
+        </member>
+        <member name="M:EasyData.CommonExtensions.StrToDataType(System.String)">
+            <summary>
+            Returns DataType value by its string representation 
+            </summary>
+            <param name="typeName"></param>
+        </member>
+        <member name="T:EasyData.DataType">
+            <summary>
+            Represents the common types of the data. 
+            </summary>
+        </member>
+        <member name="F:EasyData.DataType.Unknown">
+            <summary>Unknown type value</summary>
+        </member>
+        <member name="F:EasyData.DataType.String">
+            <summary>String value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Byte">
+            <summary>8-bit integer value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Word">
+            <summary>16-bit integer value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Int32">
+            <summary>32-bit integer value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Int64">
+            <summary>64-bit integer value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Bool">
+            <summary>Boolean value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Float">
+            <summary>Floating-point numeric value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Currency">
+            <summary>Money value</summary>
+        </member>
+        <member name="F:EasyData.DataType.BCD">
+            <summary>Binary-coded decimal value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Date">
+            <summary>Date value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Time">
+            <summary>Time value</summary>
+        </member>
+        <member name="F:EasyData.DataType.DateTime">
+            <summary>Date and time value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Autoinc">
+            <summary>Autoincrement 32-bit integer value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Memo">
+            <summary>MEMO value (text with unlimited length)</summary>
+        </member>
+        <member name="F:EasyData.DataType.Blob">
+            <summary>BLOB value (any data with unlimited length)</summary>
+        </member>
+        <member name="F:EasyData.DataType.FixedChar">
+            <summary>Fixed character value</summary>
+        </member>
+        <member name="F:EasyData.DataType.Guid">
+            <summary> The unique identifier</summary>
+        </member>
+        <member name="F:EasyData.DataType.Geometry">
+            <summary>Any geometry data</summary>
+        </member>
+        <member name="F:EasyData.DataType.Geography">
+            <summary>Any data that represents some geography objects</summary>
+        </member>
+        <member name="T:EasyData.DataTypeList">
+            <summary>
+            Represents a list of DataType values.
+            </summary>
+        </member>
+        <member name="M:EasyData.DataTypeList.InsertItem(System.Int32,EasyData.DataType)">
+            <summary>
+            Inserts an element into the <see cref="T:System.Collections.ObjectModel.Collection`1"/> at the specified index.
+            </summary>
+            <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
+            <param name="item">The object to insert. The value can be null for reference types.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            	<paramref name="index"/> is less than zero.
+            -or-
+            <paramref name="index"/> is greater than <see cref="P:System.Collections.ObjectModel.Collection`1.Count"/>.
+            </exception>
+        </member>
+        <member name="M:EasyData.DataTypeList.AddRange(System.Collections.Generic.IEnumerable{EasyData.DataType})">
+            <summary>
+            Adds the type stored in an IEnumerable to the end of the list. 
+            </summary>
+            <param name="types">The list of types to add.</param>
+        </member>
+        <member name="M:EasyData.DataTypeList.InsertRange(System.Int32,System.Collections.Generic.IEnumerable{EasyData.DataType})">
+            <summary>
+            Inserts the types stored in an IEnumerable object into the list starting from specified index. 
+            </summary>
+            <param name="index">The index.</param>
+            <param name="types">The list of types to add.</param>
+        </member>
+        <member name="P:EasyData.DataTypeList.CommaText">
+            <summary>
+            Gets or sets the text representation of type list delimited with the comma.
+            </summary>
+            <value>The text representation of type list delimited with the comma.</value>
+        </member>
+        <member name="M:EasyData.DataTypeList.#ctor(EasyData.DataType[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:DataTypeList"/> class.
+            </summary>
+            <param name="typeList">The array which the list initialized by.</param>
+        </member>
+        <member name="M:EasyData.DataTypeList.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:DataTypeList"/> class.
+            </summary>
+            <param name="listStr">The list values represented by comma-separated string.</param>
+        </member>
+        <member name="M:EasyData.DataTypeList.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:DataTypeList"/> class.
+            </summary>
+        </member>
+        <member name="F:EasyData.DataTypeList.CommonDataTypes">
+            <summary>
+            The list which represents the most common data types
+            </summary>
+        </member>
+        <member name="F:EasyData.DataTypeList.RangeDataTypes">
+            <summary>
+            The list which represents all ranged data types (numeric and boolean)
+            </summary>
+        </member>
+        <member name="F:EasyData.DataTypeList.FloatDataTypes">
+            <summary>
+            The list which represents all float data types
+            </summary>
+        </member>
+        <member name="F:EasyData.DataTypeList.IntegerDataTypes">
+            <summary>
+            The list which represents all integer-like data types (numeric and boolean)
+            </summary>
+        </member>
+        <member name="F:EasyData.DataTypeList.StringDataTypes">
+            <summary>
+            The list which represents all string data types (numeric and boolean)
+            </summary>
+        </member>
+        <member name="F:EasyData.DataTypeList.TimeDataTypes">
+            <summary>
+            The list which represents all string data types (numeric and boolean)
+            </summary>
+        </member>
+        <member name="F:EasyData.DataTypeList.BoolDataTypes">
+            <summary>
+            The list which represents the most common data types
+            </summary>
+        </member>
+        <member name="T:EasyData.SortDirection">
+            <summary>
+            Represents sorting direction.
+            </summary>
+        </member>
+        <member name="F:EasyData.SortDirection.None">
+            <summary>
+            No sorting.
+            </summary>
+        </member>
+        <member name="F:EasyData.SortDirection.Ascending">
+            <summary>
+            Ascending order.
+            </summary>
+        </member>
+        <member name="F:EasyData.SortDirection.Descending">
+            <summary>
+            Descending order.
+            </summary>
+        </member>
+        <member name="M:EasyData.StringExtensions.GetSecondPart(System.String,System.Char)">
+            <summary>
+            Gets the second part of the string divided by separator. If the separator is not included - the whole string is returned.
+            </summary>
+            <param name="s">The input string.</param>
+            <param name="sep">The separator.</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="M:EasyData.StringExtensions.ToIdentifier(System.String)">
+            <summary>
+            Converts any string to an identifier (changes all symbols like '.' ';' '?' etc to '_')
+            </summary>
+            <param name="s">The source string.</param>
+            <returns>The result identifier</returns>
+        </member>
+        <member name="M:EasyData.DataUtils.ReplaceChar(System.String,System.Char,System.Int32)">
+            <summary>
+             Written to replace char in string 
+            </summary>
+        </member>
+        <member name="M:EasyData.DataUtils.MakePlural(System.String)">
+            <summary>
+             Change single to plural
+            </summary>
+        </member>
+        <member name="M:EasyData.DataUtils.GetDataTypeBySystemType(System.Type)">
+            <summary>
+            Gets the type of the data type by system type.
+            </summary>
+            <param name="systemType">Type of the system type.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.DataUtils.ComposeDisplayFormatForEnum(System.Type)">
+            <summary>
+            Builds sequence display format for enum.
+            </summary>
+            <param name="enumType">Type of the enum.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.DataUtils.InternalFormatToDateTime(System.String,EasyData.DataType)">
+            <summary>
+            Convert string representation in internal format to DateTime value.
+            </summary>
+            <param name="val">The val.</param>
+            <param name="dataType">Type of the data. Can be Date, DateTime or Time.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.DataUtils.DateTimeToInternalFormat(System.DateTime,EasyData.DataType)">
+            <summary>
+            Converts DateTime value to its string representation in internal format (yyyy-MM-dd).
+            </summary>
+            <param name="dt">A DateTime value.</param>
+            <param name="dataType">Type of the data. Can be Date, DateTime or Time.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.DataUtils.GetDateTimeInternalFormat(EasyData.DataType,System.Boolean)">
+            <summary>
+            Gets the format used for internal textual representation of date/time values.
+            EasyQuery uses "yyyy-MM-dd" format.
+            </summary>
+            <param name="dataType">Type of the data. Can be Date, DateTime or Time.</param>
+            <param name="shortTime">if set to <c>true</c> then we need short version of time part.</param>
+            <returns>System.String.</returns>
+            <value></value>
+        </member>
+        <member name="M:EasyData.DataUtils.GetInternalFormatProvider">
+            <summary>
+            Gets the internal format provider.
+            This provider defines the format used to store date/time and numeric values internally and it saved queries
+            </summary>
+            <value>The internal format provider.</value>
+        </member>
+        <member name="P:EasyData.DataUtils.InternalDateFormat">
+            <summary>
+            Gets the internal date format (yyyy-MM-dd).
+            </summary>
+            <value>The internal date format.</value>
+        </member>
+        <member name="P:EasyData.DataUtils.InternalTimeFormat">
+            <summary>
+            Gets the internal time format (HH:mm:ss).
+            </summary>
+            <value>The internal time format.</value>
+        </member>
+        <member name="M:EasyData.DataUtils.DateTimeToUserFormat(System.DateTime,EasyData.DataType)">
+            <summary>
+            Converts DateTime value to its string representation in current system format.
+            </summary>
+            <param name="dt">A DateTime value.</param>
+            <param name="dataType">Type of the data. Can be Date, DateTime or Time.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.DataUtils.IsNumber(System.Object)">
+            <summary>
+            Returns <c>true</c> if the value passed in the parameter is one of the number types.
+            </summary>
+            <param name="value">The object to investigate.</param>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.Id">
+            <summary>
+            Represents the internal column ID.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.Index">
+            <summary>
+            Represents the order number of this column among all columns in the result set.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.IsAggr">
+            <summary>
+            Indicates whether this column is an aggregate one.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.Label">
+            <summary>
+            The label that is used for this column in UI.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.Description">
+            <summary>
+            The detailed column description.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.DataType">
+            <summary>
+            The type of data represented by the property.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.AttrId">
+            <summary>
+            Represents internal property ID.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.DisplayFormat">
+            <summary>
+            The display format for the property.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataColDesc.Style">
+            <summary>
+            The style of the property to display in UI.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.Id">
+            <summary>
+            Represents the internal column ID.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.Index">
+            <summary>
+            Represents the order number of this column among all columns in the result set.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.IsAggr">
+            <summary>
+            Indicates whether this column is an aggregate one.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.Label">
+            <summary>
+            The label that is used for this column in UI.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.Description">
+            <summary>
+            The detailed column description.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.Type">
+            <summary>
+            The type of data represented by the property.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.DataType">
+            <summary>
+            The type of data represented by the property.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.OrginAttrId">
+            <summary>
+            Represents the ID of the metadata attribute this column is based on.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.DisplayFormat">
+            <summary>
+            The display format for the property.
+            </summary>
+        </member>
+        <member name="P:EasyData.EasyDataCol.Style">
+            <summary>
+            The style of the property to display in UI.
+            </summary>
+        </member>
+        <member name="P:EasyData.IEasyDataResultSet.Cols">
+            <summary>
+            Gets columns
+            </summary>
+        </member>
+        <member name="P:EasyData.IEasyDataResultSet.Rows">
+            <summary>
+            Gets rows.
+            </summary>
+        </member>
+        <member name="T:EasyData.MetaEntity">
+            <summary>
+            Represents one entity
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntity.#ctor(EasyData.MetaEntity)">
+            <summary>Initializes a new instance of the <see cref="T:Korzh.EasyQuery.Entity"/> class.</summary>
+            <param name="parent">The parent entity.</param>
+        </member>
+        <member name="M:EasyData.MetaEntity.#ctor(EasyData.MetaData)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Korzh.EasyData.MetaEntity"/> class.
+            </summary>
+            <param name="model">The mofrl.</param>
+        </member>
+        <member name="P:EasyData.MetaEntity.Parent">
+            <summary>
+            Gets the parent entity.
+            </summary>
+            <value>The parent entity.</value>
+        </member>
+        <member name="P:EasyData.MetaEntity.Id">
+            <summary>
+            Gets or sets the entity identifier
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntity.Name">
+            <summary>
+            Gets or sets the name of the entity.
+            </summary>
+            <value>Entity name</value>
+        </member>
+        <member name="P:EasyData.MetaEntity.NamePlural">
+            <summary>
+            Gets or sets the name of the entity in plural form.
+            </summary>
+            <value>Entity name</value>
+        </member>
+        <member name="P:EasyData.MetaEntity.IsEditable">
+            <summary>
+            Gets ot sets a value indicating whether this entity is editable
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntity.ClrType">
+            <summary>
+            Gets or sets the type of the entity.
+            </summary>
+            <value>The type of the entity.</value>
+        </member>
+        <member name="P:EasyData.MetaEntity.DbSetName">
+            <summary>
+            Gets or sets the name of the DbSet associated with entity
+            </summary>
+            <value>The name of the associated column.</value>
+        </member>
+        <member name="P:EasyData.MetaEntity.TypeName">
+            <summary>
+            Gets or sets the path for building query for complex types
+            </summary>
+            <value>The complex type path.</value>
+        </member>
+        <member name="P:EasyData.MetaEntity.Index">
+            <summary>
+            Gets or sets the index of the entity
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntity.IsEmpty">
+            <summary>
+            Gets a value indicating whether this instance is empty.
+            </summary>
+            <value>
+              <c>true</c> if this entity has no attributes and all its subentities don't have attributes; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:EasyData.MetaEntity.IsRoot">
+            <summary>
+            Gets a value indicating whether this entity is a root entity.
+            </summary>
+            <value>
+              <c>true</c> if this instance is root; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:EasyData.MetaEntity.SubEntities">
+            <summary>
+            List of sub entities that belong to this entity.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntity.Attributes">
+            <summary>
+            List of Attributes that belong to this entity.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaEntity.Model">
+            <summary>
+            Gets the model.
+            </summary>
+            <value>The model.</value>
+        </member>
+        <member name="M:EasyData.MetaEntity.OnModelAssignment">
+            <summary>
+            Called when the entity is inserted into model.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntity.GetFullName(System.String)">
+            <summary>
+            Gets the full name.
+            </summary>
+            <value>The full name.</value>
+        </member>
+        <member name="P:EasyData.MetaEntity.Description">
+            <summary>
+            Gets or sets the description.
+            </summary>
+            <value>The description.</value>
+        </member>
+        <member name="P:EasyData.MetaEntity.UserData">
+            <summary>
+            Gets or sets the user data object associated with entity.
+            </summary>
+            <value></value>
+        </member>
+        <member name="M:EasyData.MetaEntity.GetFirstLeaf">
+            <summary>
+            Gets the first attribute in all attributes and sub-entities of the current entity.
+            </summary>
+            <returns>An Attribute object.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.FindAttributeById(System.String)">
+            <summary>
+            Finds an attribute by its ID.
+            </summary>
+            <param name="id">The ID of the attribute we are looking for.</param>
+            <returns>MetaEntityAttr.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.FindAttributeByCaption(System.String)">
+            <summary>
+            Finds an attribute by its caption.
+            </summary>
+            <param name="caption">The caption.</param>
+            <returns>MetaEntityAttr.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.FindAttributeByExpression(System.String)">
+            <summary>Finds the attribute by its expression.</summary>
+            <param name="expr">The expression that represents the attribute.
+            Must be a combination of the entity name and attribute's name.
+            For example: "Customer.CompanyName". Or "Order.OrderDate".</param>
+            <returns>MetaEntityAttr.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.FindAttribute(System.Func{EasyData.MetaEntityAttr,System.Boolean})">
+            <summary>
+            Finds an attribute using a predicate function.
+            </summary>
+            <param name="predicate">
+            The function must return <c>true</c> for the attribute we are searching for and <c>false</c> otherwise.
+            </param>
+            <returns>MetaEntityAttr.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.FindSubEntity(System.String)">
+            <summary>
+            Finds an entity by its name.
+            </summary>
+            <param name="entityName">Name of the sub-entity we are srearching for</param>
+            <returns>
+            An Entity object with specified name or null if it cannot be found.
+            </returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.FindSubEntity(System.Func{EasyData.MetaEntity,System.Boolean})">
+            <summary>
+            Finds an entity using a predicate function.
+            </summary>
+            <param name="predicate">
+            The function must return <c>true</c> for the entity we are searching for and <c>false</c> otherwise.
+            </param>
+            <returns>MetaEntityAttr.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.DeleteSubEntities(System.String[])">
+            <summary>
+            Deletes sub-entities specified by name(s) passed in method's parameter(s).
+            </summary>
+            <param name="namesToDelete">The names of the entities to delete.</param>
+            <returns>The amount of deleted entities</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.DeleteSubEntities(System.Func{EasyData.MetaEntity,System.Boolean})">
+            <summary>
+            Deletes the sub-entities.
+            </summary>
+            <param name="entityToDeleteFilter">The "filter" function that returns <c>true</c> if the entity should be removed</param>
+            <returns>The amount of deleted entities</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.Scan(System.Action{EasyData.MetaEntity},System.Action{EasyData.MetaEntityAttr},System.Boolean)">
+            <summary>
+            Scans all child entities and attributes (including this one one) calls entityHandler and attrHanlder delegates (correspondingly) for each of them
+            </summary>
+            <param name="entityHandler">The delegate which will be called for each entity.</param>
+            <param name="attrHandler">The delegate which will be called for each attribute</param>
+            <param name="processRoot">Indicates whether we need to call delegates for this entity as well.</param>
+        </member>
+        <member name="M:EasyData.MetaEntity.WriteToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the entity to JSON (asynchronious way)
+            </summary>
+            <param name="writer">The writer.</param>
+            <param name="options">Some read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,System.Threading.CancellationToken)">
+            <summary>
+            Writes entity's properties to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntity.ReadFromJsonAsync(Newtonsoft.Json.JsonReader,System.Threading.CancellationToken)">
+            <summary>Reads the entity content from JSON (asynchronous way).</summary>
+            <param name="reader">The reader.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+            <exception cref="T:EasyData.BadJsonFormatException"></exception>
+        </member>
+        <member name="M:EasyData.MetaEntity.ReadOnePropertyFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one entity property from JSON (asynchronous way) or skips unused.
+            </summary>
+            <param name="reader">The reader.</param>
+            <param name="propName">Name of the property.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="T:EasyData.MetaEntityList">
+            <summary>
+            Represents list of entities
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntityList.SortByName">
+            <summary>
+            Sorts all items in this list by their names.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntityList.Reorder">
+            <summary>
+            Reorders entity attributes by index in increase order.
+            </summary>
+        </member>
+        <member name="T:EasyData.MetaEntityStore">
+            <summary>
+            Represents storage of entities
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaEntityStore.#ctor(EasyData.MetaEntity)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EntityStore"/> class.
+            </summary>
+            <param name="parentEntity">The parent entity.</param>
+        </member>
+        <member name="P:EasyData.MetaEntityStore.Model">
+            <summary>Gets the model.</summary>
+            <value>The model.</value>
+        </member>
+        <member name="M:EasyData.MetaEntityStore.InsertItem(System.Int32,EasyData.MetaEntity)">
+            <summary>
+            Inserts an element into the <see cref="T:System.Collections.ObjectModel.Collection`1"/> at the specified index.
+            </summary>
+            <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
+            <param name="item">The object to insert. The value can be null for reference types.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            	<paramref name="index"/> is less than zero.
+            -or-
+            <paramref name="index"/> is greater than <see cref="P:System.Collections.ObjectModel.Collection`1.Count"/>.
+            </exception>
+        </member>
+        <member name="M:EasyData.MetaEntityStore.OnEntityInsertion(EasyData.MetaEntity,System.Int32)">
+            <summary>
+            Called on entity's insertion.
+            </summary>
+            <param name="entity">The entity.</param>
+            <param name="index">The index.</param>
+        </member>
+        <member name="M:EasyData.MetaEntityStore.WriteToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the list of entities to JSON (asynchronous way).
+            </summary>
+            <param name="writer">An instance of JsonWriter class.</param>
+            <param name="rwOptions">Different read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaEntityStore.ReadFromJsonAsync(Newtonsoft.Json.JsonReader,System.Threading.CancellationToken)">
+            <summary>Reads the list of entities from JSON (asynchronous way).</summary>
+            <param name="reader">The reader.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="T:EasyData.BadJsonFormatException">
+            <summary>
+            Represents an exception which occurs during the reading of the model from JSON
+            </summary>
+            <seealso cref="T:System.Exception" />
+        </member>
+        <member name="M:EasyData.BadJsonFormatException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.BadJsonFormatException"/> class.
+            </summary>
+            <param name="path">The path.</param>
+        </member>
+        <member name="M:EasyData.BadJsonFormatException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.BadJsonFormatException"/> class.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception, or a null reference (Nothing in Visual Basic) if no inner exception is specified.</param>
+        </member>
+        <member name="M:EasyData.MetaDataException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="!:Error"/> class.
+            </summary>
+            <param name="message">Message.</param>
+        </member>
+        <member name="T:EasyData.Export.BasicDataExportSettings">
+            <summary>
+            Represents basic (common) formats for data exporting operations
+            </summary>
+        </member>
+        <member name="M:EasyData.Export.BasicDataExportSettings.#ctor(System.Globalization.CultureInfo)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.Export.BasicDataExportSettings"/> class.
+            </summary>
+            <param name="culture">The culture.</param>
+        </member>
+        <member name="M:EasyData.Export.BasicDataExportSettings.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.Export.BasicDataExportSettings"/> class.
+            The date/time formats will be taken for the current culture
+            </summary>
+        </member>
+        <member name="M:EasyData.Export.BasicDataExportSettings.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.Export.BasicDataExportSettings"/> class.
+            <param name="locale">The locale name.</param>
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.ShowColumnNames">
+            <summary>
+            Gets or sets a value indicating whether column names should be included into export result.
+            </summary>
+            <value>
+                <see langword="true"/> if column names should be included into result file; otherwise, <see langword="false"/>.
+            </value>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.Culture">
+            <summary>
+            The culture
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.Default">
+            <summary>
+            Returns the default instance of <see cref="T:EasyData.Export.BasicDataExportSettings"/>.
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.ColumnFilter">
+            <summary>
+            Allows to filter columns during export
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.RowFilter">
+            <summary>
+            Filter rows during export
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.Title">
+            <summary>
+            The title
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.Description">
+            <summary>
+            The description
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.ShowDatasetInfo">
+            <summary>
+            Gets or sets value indicating whether title and description will be shown 
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.BasicDataExportSettings.PreserveFormatting">
+            <summary>
+            Gets or sets value indicating whether the exporter should preserve the formatting in the original value
+            </summary>
+        </member>
+        <member name="T:EasyData.Export.IDataExporter">
+            <summary>
+            Represents a type used to perform exporting of the data stream to some format (like CSV or PDF) 
+            </summary>
+        </member>
+        <member name="M:EasyData.Export.IDataExporter.GetDefaultSettings(System.Globalization.CultureInfo)">
+            <summary>
+            Default settings of the exporter.
+            </summary>
+        </member>
+        <member name="M:EasyData.Export.IDataExporter.Export(EasyData.IEasyDataResultSet,System.IO.Stream)">
+            <summary>
+            Exports the specified data to the stream.
+            </summary>
+            <param name="data">The fetched data.</param>
+            <param name="stream">The stream.</param>
+        </member>
+        <member name="M:EasyData.Export.IDataExporter.Export(EasyData.IEasyDataResultSet,System.IO.Stream,EasyData.Export.IDataExportSettings)">
+            <summary>
+            Exports the specified data to the stream with the specified formats.
+            </summary>
+            <param name="data">The fetched data.</param>
+            <param name="stream">The stream.</param>
+            <param name="settings">Some exporting settings.</param>
+        </member>
+        <member name="M:EasyData.Export.IDataExporter.ExportAsync(EasyData.IEasyDataResultSet,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Asynchronical version of <see cref="M:EasyData.Export.IDataExporter.Export(EasyData.IEasyDataResultSet,System.IO.Stream)"/> method.
+            </summary>
+            <param name="data">The fetched data.</param>
+            <param name="stream">The stream.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.Export.IDataExporter.ExportAsync(EasyData.IEasyDataResultSet,System.IO.Stream,EasyData.Export.IDataExportSettings,System.Threading.CancellationToken)">
+            <summary>
+            Asynchronical version of <see cref="M:EasyData.Export.IDataExporter.Export(EasyData.IEasyDataResultSet,System.IO.Stream,EasyData.Export.IDataExportSettings)" /> method.
+            </summary>
+            <param name="data">The fetched data.</param>
+            <param name="stream">The stream.</param>
+            <param name="settings">Some exporting settings.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.Export.IDataExporter.GetContentType">
+            <summary>
+            Gets the MIME content type of the exporting format.
+            </summary>
+            <returns>System.String.</returns>
+        </member>
+        <member name="M:EasyData.Export.IDataExporter.GetFileExtension">
+            <summary>
+            Gets the preferred file extension by the exporting format.
+            </summary>
+            <returns>A string object that represents the file extension (without the dot)</returns>
+        </member>
+        <member name="T:EasyData.Export.IDataExportSettings">
+            <summary>
+            Represents some settings used during exporting operations
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.ShowColumnNames">
+            <summary>
+            Gets or sets a value indicating whether column names should be included into export result.
+            </summary>
+            <value>
+                <see langword="true"/> if column names should be included into result file; otherwise, <see langword="false"/>.
+            </value>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.Culture">
+            <summary>
+            The culture.
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.ColumnFilter">
+            <summary>
+            Filter columns during export
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.RowFilter">
+            <summary>
+            Filter rows during export
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.BeforeRowInsert">
+            <summary>
+            Gets or sets the callback functions that is called for each exported row before its insertion.
+            </summary>
+            <value>The callback function.</value>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.Title">
+            <summary>
+            The title
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.Description">
+            <summary>
+            The description
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.ShowDatasetInfo">
+            <summary>
+            Gets or sets value indicating whether title and description will be shown 
+            </summary>
+        </member>
+        <member name="P:EasyData.Export.IDataExportSettings.PreserveFormatting">
+            <summary>
+            Gets or sets value indicating whether the exporter should preserve the formatting in the original value
+            </summary>
+        </member>
+        <member name="T:EasyData.MetaDataReadWriteOptions">
+            <summary>
+            Represents different options used during meta data loading or saving 
+            </summary>
+        </member>
+        <member name="F:EasyData.MetaDataReadWriteOptions.Defaults">
+            <summary>
+            Default options
+            </summary>
+        </member>
+        <member name="F:EasyData.MetaData.LastJsonFormatVersion">
+            <summary>
+            Read-only constant that represent the latest format version of data model definition JSON files
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaData.Id">
+            <summary>
+            Gets or sets the ID of the model.
+            </summary>
+            <value>
+            Model's ID.
+            </value>
+        </member>
+        <member name="P:EasyData.MetaData.FormatVersionJson">
+            <summary>
+            Gets or Sets the version of data model JSON format.
+            </summary>
+            <value>The version of data model JSON format.</value>
+        </member>
+        <member name="M:EasyData.MetaData.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.MetaData"/> class.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.#cctor">
+            <summary>
+            Initializes the <see cref="T:EasyData.MetaData"/> class.
+            Registers the main value editors types.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaData.Editors">
+            <summary>
+            List of data model operators.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaData.Description">
+            <summary>
+            Gets or sets the description.
+            </summary>
+            <value>The description.</value>
+        </member>
+        <member name="P:EasyData.MetaData.Name">
+            <summary>
+            Gets or sets the user-defined name of the model.
+            </summary>
+            <value>The name of the model.</value>
+        </member>
+        <member name="P:EasyData.MetaData.CustomInfo">
+            <summary>
+            Gets or sets the custom information associated with data model.
+            </summary>
+            <value>The custom info.</value>
+        </member>
+        <member name="P:EasyData.MetaData.FilePath">
+            <summary>
+            Gets the model file path. It is automatically assigned when you use LoadFromFile method.
+            </summary>
+            <value>The model file path.</value>
+        </member>
+        <member name="M:EasyData.MetaData.OnModelLoaded">
+            <summary>
+            Called when the model is loaded (from XML file or string).
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.OnModelChanged">
+            <summary>
+            Called after the model has been changed. Raises ModelChanged event if defined.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.Clear">
+            <summary>
+            Clears this instance.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.Clone">
+            <summary>
+            Clones the model object
+            </summary>
+            <returns>A duplicate of original DataModel object</returns>
+        </member>
+        <member name="P:EasyData.MetaData.ModelVersion">
+            <summary>
+            Gets the model version.
+            </summary>
+            <value>The model version.</value>
+        </member>
+        <member name="M:EasyData.MetaData.IncreaseModelVersion">
+            <summary>
+            Increases the model version.
+            </summary>
+        </member>
+        <member name="E:EasyData.MetaData.ModelChanged">
+            <summary>
+            Occurs when the model is changed.
+            </summary>
+        </member>
+        <member name="P:EasyData.MetaData.EntityRoot">
+            <summary>
+            The root entity of data model entities.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.CreateRootEntity">
+            <summary>
+            Creates the root entity.
+            This method can be overriden in descendant classes to retrun the object of appropriate class (e.g. DbEntity).
+            </summary>
+            <returns>Entity object.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.CreateEntity(EasyData.MetaEntity)">
+            <summary>
+            Creates the entity.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.CreateEntityAttr(EasyData.MetaEntityAttrDescriptor)">
+            <summary>
+            Creates the entity attribute. Used for creating entity attributes while building the model
+            </summary>
+            <param name="desc">The descriptor</param>
+            <returns></returns>
+        </member>
+        <member name="F:EasyData.MetaData.DisplayFormats">
+            <summary>
+            The formats store
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.SortEntities">
+            <summary>
+            Sorts all entities and their attributes alphabetically.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.SortEntityContent(EasyData.MetaEntity)">
+            <summary>
+            Sorts the content of one entity alphabetically.
+            This function is called by <see cref="M:EasyData.MetaData.SortEntities" /> method
+            </summary>
+            <param name="entity">The entity.</param>
+        </member>
+        <member name="P:EasyData.MetaData.IsEmpty">
+            <summary>
+            Gets a value indicating whether this model is empty (doesn't contain any entity or attribute) or not.
+            </summary>
+        </member>
+        <member name="F:EasyData.MetaData._maxEntAttrId">
+            <summary>
+            Number of virtual attributes
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.GetNextEntityAttrId">
+            <summary>
+            Gets the next free number for building virtual entity attribute ID.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.GetAttributeById(System.String,System.Boolean)">
+            <summary>
+            Gets the attribute by its ID.
+            </summary>
+            <param name="attrId">The attribute ID.</param>
+            <param name="useNullAttr">if set to <c>true</c> NullAttribute will be returned if we can not find the attribute with specified ID.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.FindEntityAttr(System.String)">
+            <summary>
+            Find attribute either by its ID, expression or caption.
+            </summary>
+            <param name="attrDef">A string that represents attribute (either ID, expression or caption).</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.FindEntity(System.String)">
+            <summary>
+            Finds an entity by its name.
+            </summary>
+            <param name="entityName">Name of the entity we are srearching for</param>
+            <returns>
+            An <see cref="T:EasyData.MetaEntity"/> object with specified name or null if it can't be found.
+            </returns>
+        </member>
+        <member name="M:EasyData.MetaData.FindEntity(System.Func{EasyData.MetaEntity,System.Boolean})">
+            <summary>
+            Finds the entity using a predicate function.
+            </summary>
+            <param name="predicate">The predicate.</param>
+            <returns>MetaEntityAttr.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.AddEntity(EasyData.MetaEntity,System.String)">
+            <summary>
+            Adds a sub-entity to the current entity.
+            </summary>
+            <param name="entity">The parent entity.</param>
+            <param name="entityName">The name of the new entity.</param>
+            <returns>Entity.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.AddEntityAttr(EasyData.MetaEntityAttrDescriptor)">
+            <summary>
+            Adds a new attribute to the model.
+            </summary>
+            <param name="desc">The descriptor.</param>
+            <returns>EntityAttr.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.AssignEntityAttrID(EasyData.MetaEntityAttr)">
+            <summary>
+            Assigns the default ID for entity attribute.
+            </summary>
+            <param name="attr">The EntityAttr object.</param>
+        </member>
+        <member name="M:EasyData.MetaData.InitModelLoading">
+            <summary>
+            Initializes the model loading.
+            </summary>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonFile(System.String)">
+            <summary>
+            Saves the data model to a file in JSON format.
+            </summary>
+            <param name="filePath">The path to the result file</param>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonFile(System.String,EasyData.BitOptions)">
+            <summary>
+            Saves the data model to a file in JSON format.
+            </summary>
+            <param name="filePath">The path to the result file</param>
+            <param name="options">Different read/write options</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonFileAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Saves the data model to a file in JSON format (asynchronous way). 
+            </summary>
+            <param name="filePath">The path to the result file</param>
+            <param name="ct">The cancellation token</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonFileAsync(System.String,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Saves the data model to a file in JSON format (asynchronous way). 
+            </summary> 
+            <param name="filePath">The path to the result file</param>
+            <param name="options">Different read/write options</param>
+            <param name="ct">The cancellation token</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonStream(System.IO.Stream)">
+            <summary>
+            Saves the data model to a stream in JSON format.
+            </summary>
+            <param name="stream">The stream to save the model to</param>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonStream(System.IO.Stream,EasyData.BitOptions)">
+            <summary>
+            Saves the data model to a stream in JSON format.
+            </summary>
+            <param name="stream">The stream to save the model to</param>
+            <param name="options">Different read/write options</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonStreamAsync(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Saves the data model to a stream in JSON format (asynchronous way).
+            </summary>
+            <param name="stream">The stream to save the model to</param>
+            <param name="ct">The cancellation token</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonStreamAsync(System.IO.Stream,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Saves the data model to a stream in JSON format (asynchronous way).
+            </summary>
+            <param name="stream">The stream to save the model to</param>
+            <param name="options">Different read/write options</param>
+            <param name="ct">The cancellation token</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonString">
+            <summary>
+            Saves the model to a string in JSON format.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonString(EasyData.BitOptions)">
+            <summary>
+            Saves the model to a string in JSON format.
+            </summary>
+            <param name="options">Different read/write options.</param>
+            <returns>System.String</returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonStringAsync(System.Threading.CancellationToken)">
+            <summary>
+            Saves the model to a string in JSON format (asynchronous way).
+            </summary>
+            <param name="ct">The cancellation token</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.SaveToJsonStringAsync(EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Saves the model to a string in JSON format (asynchronous way).
+            </summary>
+            <param name="options">Different read/write options.</param>
+            <param name="ct">The cancellation token</param>
+            <returns>Task&lt;System.String&gt;.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonStream(System.IO.Stream)">
+            <summary>
+            Loads data model from JSON stream.
+            </summary>
+            <param name="stream">A Stream object which contains data model definition.</param>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonStream(System.IO.Stream,EasyData.BitOptions)">
+            <summary>
+            Loads data model from JSON stream.
+            </summary>
+            <param name="stream">A Stream object which contains data model definition.</param>
+            <param name="options">Different read/write options. See <see cref="!:MetaDataReadWriterOptions"/> for details.</param>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonStreamAsync(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Loads data model from JSON stream (asynchronous way).
+            </summary>
+            <param name="stream">>A Stream object which contains data model definition.</param>
+            <param name="ct">The cancellation token</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonStreamAsync(System.IO.Stream,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Loads data model from JSON stream (asynchronous way).
+            </summary>
+            <param name="stream">A Stream object which contains data model definition.</param>
+            <param name="options">Different read/write options. See <see cref="!:MetaDataReadWriterOptions"/> for details.</param>
+            <param name="ct">The cancellation token</param>
+            <return>Task</return>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonFile(System.String)">
+            <summary>
+             Saves the model to a JSON file.
+            </summary>
+            <param name="filePath"></param>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonFile(System.String,EasyData.BitOptions)">
+            <summary>
+            Loads the metadata from a JSON file.
+            </summary>
+            <param name="filePath"></param>
+            <param name="options"></param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonFileAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads the metadata from a JSON file as an asynchronous operation.
+            </summary>
+            <param name="filePath">The file path.</param>
+            <param name="ct">The cancellation token</param>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonFileAsync(System.String,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Saves the model to a JSON file (asynchronous way).
+            </summary>
+            <param name="filePath"></param>
+            <param name="options"></param>
+            <param name="ct">The cancellation token</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonString(System.String)">
+            <summary>
+            Loads the model from a string in JSON format.
+            </summary>
+            <param name="json">A string in JSON format.</param>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonString(System.String,EasyData.BitOptions)">
+            <summary>
+            Loads the model from a string in JSON format.
+            </summary>
+            <param name="json">A string in JSON format.</param>
+            <param name="options">Different read/write options.</param>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonStringAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Loads the model from a string in JSON format (asynchronous way).
+            </summary>
+            <param name="json">>A string in JSON format.</param>
+            <param name="ct">The cancellation token</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.LoadFromJsonStringAsync(System.String,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Loads the model from a string in JSON format (asynchronous way).
+            </summary>
+            <param name="json">A string in JSON format.</param>
+            <param name="options">Different read/write options.</param>
+            <param name="ct">The cancellation token</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.WriteToJson(Newtonsoft.Json.JsonWriter)">
+            <summary>
+            Writes the content of the data model to JSON using JsonWriter.
+            </summary>
+            <param name="writer">>An instance of JsonWriter class.</param>
+        </member>
+        <member name="M:EasyData.MetaData.WriteToJson(Newtonsoft.Json.JsonWriter,EasyData.BitOptions)">
+            <summary>
+            Writes the content of the data model to JSON using JsonWriter.
+            </summary>
+            <param name="writer">An instance of JsonWriter class.</param>
+            <param name="options">Read-write options</param>
+        </member>
+        <member name="M:EasyData.MetaData.WriteToJsonAsync(Newtonsoft.Json.JsonWriter,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the data model to JSON using JsonWriter (asynchronous way).
+            </summary>
+            <param name="writer">An instance of JsonWriter class.</param>
+            <param name="ct">The cancellation token</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.WriteToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the data model to JSON using JsonWriter (asynchronous way).
+            </summary>
+            <param name="writer">An instance of JsonWriter class.</param>
+            <param name="options">Read-write options</param>
+            <param name="ct">The cancellation token</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.WriteModelPropsToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+             Writes properties of the model to JSON (asynchronous way).
+            </summary>
+            <param name="writer"></param>
+            <param name="options"></param>
+            <param name="ct">The cancellation token</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.MetaData.WriteContentToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the main content of the model to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer.</param>
+            <param name="rwOptions">The read/write options.</param>
+            <param name="ct">The cancellation token</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.MetaData.ReadFromJson(Newtonsoft.Json.JsonReader,EasyData.BitOptions)">
+            <summary>
+            Reads the content of the model from the specified JsonReader.
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="options">Some read/write options.</param>
+            <exception cref="T:EasyData.BadJsonFormatException"></exception>
+        </member>
+        <member name="M:EasyData.MetaData.ReadFromJsonAsync(Newtonsoft.Json.JsonReader,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Reads the content of the model from the specified JsonReader (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="options">Some read/write options.</param>
+            <param name="ct">The cancellation token</param>
+            <returns>Task.</returns>
+            <exception cref="T:EasyData.BadJsonFormatException"></exception>
+        </member>
+        <member name="M:EasyData.MetaData.ReadOneModelPropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one model property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader.</param>
+            <param name="propName">Name of the property.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.Services.EasyDataManager.Dispose(System.Boolean)">
+            <summary>
+            Releases unmanaged and - optionally - managed resources.
+            </summary>
+            <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        </member>
+        <member name="M:EasyData.Services.EasyDataManager.Dispose">
+            <summary>
+            Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+            </summary>
+        </member>
+        <member name="M:EasyData.Services.EasyDataOptions.UseManager(EasyData.Services.EasyDataManagerResolver)">
+            <summary>
+            Defines the function which creates and returns an instance of EasyQuery manager. 
+            The manager defines all basic operations with the models and queries: creating, loading, saving and query building itself.
+            </summary>
+            <param name="managerResolver">The manager resolver.</param>
+        </member>
+        <member name="M:EasyData.Services.EasyDataOptions.UseManager``1">
+            <summary>
+            Defines the function which creates and returns an instance of EasyData manager. 
+            The manager defines all basic operations with the models and queries: creating, loading, saving and query building itself.
+            </summary>
+            <typeparam name="TEDManager"></typeparam>
+        </member>
+        <member name="M:EasyData.Services.EasyDataOptions.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.Services.EasyDataOptions"/> class.
+            </summary>
+        </member>
+        <member name="P:EasyData.Services.EasyDataOptions.MetaDataLoaderOptionsBuilder">
+            <summary>
+            Gets or sets the options builder for metadata loader.
+            This action will be called before metadata loader creation to adjust the options passed to it
+            </summary>
+            <value>The options builder for metadata loader.</value>
+        </member>
+        <member name="M:EasyData.Services.EasyDataOptions.ResolveFilter(System.String,EasyData.MetaData)">
+            <summary>
+            Resolves filter by class for model
+            </summary>
+            <param name="filterClass">The filter class.</param>
+            <param name="model">The model</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.Services.EasyDataOptions.RegisterFilter(System.String,System.Type)">
+            <summary>
+            Registers filter
+            </summary>
+            <param name="filterClass"></param>
+            <param name="filterType"></param>
+        </member>
+        <member name="M:EasyData.Services.EasyDataOptions.RegisterFilter``1(System.String)">
+            <summary>
+            Registers filter
+            </summary>
+            <typeparam name="TFilter">The filter type</typeparam>
+            <param name="filterClass">The filter class name</param>
+        </member>
+        <member name="P:EasyData.Services.EasyDataOptions.ModelTuner">
+            <summary>
+            Gets the model tuner - an action which is called after the model loading and allows to "tune" your model before sending it to the client-side.
+            </summary>
+            <value>The model tuner.</value>
+        </member>
+        <member name="M:EasyData.Services.EasyDataOptions.UseModelTuner(System.Action{EasyData.MetaData})">
+            <summary>
+            Defines the model tuner. See more about the model tuner in <see cref="P:EasyData.Services.EasyDataOptions.ModelTuner"/> property description
+            </summary>
+            <param name="tuner">The model tuner.</param>
+        </member>
+        <member name="T:EasyData.Services.IEasyCache">
+            <summary>
+             Represents a general caching service
+            </summary>
+        </member>
+        <member name="M:EasyData.Services.IEasyCache.GetValue(System.String)">
+            <summary>
+            Gets the value associated with this key if present.
+            </summary>
+            <param name="key">The key.</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="M:EasyData.Services.IEasyCache.PutValue(System.String,System.String)">
+            <summary>
+            Puts the key:value pair to the cache
+            </summary>
+            <param name="key">The key.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="T:EasyData.CustomValueEditor">
+            <summary>
+            Represents custom (user defined) value editor.
+            </summary>
+        </member>
+        <member name="M:EasyData.CustomValueEditor.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.CustomValueEditor"/> class.
+            </summary>
+        </member>
+        <member name="M:EasyData.CustomValueEditor.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.CustomValueEditor"/> class.
+            </summary>
+            <param name="tag">The custom tag of this value editor.</param>
+        </member>
+        <member name="P:EasyData.CustomValueEditor.Tag">
+            <summary>
+            Gets the name of the value editor type.
+            </summary>
+            <value>The name of the value editor type.</value>
+        </member>
+        <member name="P:EasyData.CustomValueEditor.STypeCaption">
+            <summary>
+            Gets the full name of the value editor class type.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.CustomValueEditor.XmlDefinition">
+            <summary>
+            Gets the XML definition of value editor.
+            </summary>
+            <value>The XML definition of value editor.</value>
+            <remarks>
+            This defenition can be used for creation necessary row element
+            which represents current value editor in XListBox control.
+            </remarks>
+        </member>
+        <member name="P:EasyData.CustomValueEditor.DefaultValue">
+            <summary>
+            Gets or sets the default value.
+            </summary>
+            <value>The default value</value>
+        </member>
+        <member name="P:EasyData.CustomValueEditor.DefaultText">
+            <summary>
+            Gets or sets the default text.
+            </summary>
+            <value>The default text.</value>
+        </member>
+        <member name="M:EasyData.CustomValueEditor.ReadOnePropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one editor's property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="propName">The name of the property which is read</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:EasyData.CustomValueEditor.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the "CUSTOM" value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="P:EasyData.CustomValueEditor.Data">
+            <summary>
+            Gets or sets the data assigned with the editor.
+            </summary>
+            <value>Any data assigned with the editor.</value>
+        </member>
+        <member name="T:EasyData.IDefaultValuesStorage">
+            <summary>
+            Represents a storage of default values
+            </summary>
+            <remarks>
+            </remarks>
+        </member>
+        <member name="P:EasyData.IDefaultValuesStorage.DefaultValues">
+            <summary>
+            Gets the list of default values
+            </summary>
+        </member>
+        <member name="T:EasyData.DateTimeValueEditor">
+            <summary>
+            Represents the value editor for date and/or time.
+            </summary>
+        </member>
+        <member name="P:EasyData.DateTimeValueEditor.SubType">
+            <summary>
+            Gets or sets the type of data (Date, Time or DateTime).
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.DateTimeValueEditor.DefaultValues">
+            <summary>
+            Gets the list of default values
+            </summary>
+            <value></value>
+        </member>
+        <member name="M:EasyData.DateTimeValueEditor.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.DateTimeValueEditor"/> class.
+            </summary>
+        </member>
+        <member name="M:EasyData.DateTimeValueEditor.#ctor(System.String,EasyData.DataType)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.DateTimeValueEditor"/> class.
+            </summary>
+            <param name="id">The identifier.</param>
+            <param name="subType">Sub-Type of the editor.</param>
+        </member>
+        <member name="P:EasyData.DateTimeValueEditor.STypeCaption">
+            <summary>
+            Gets the full name of the value editor class type.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.DateTimeValueEditor.Tag">
+            <summary>
+            Gets the name of the value editor type.
+            </summary>
+            <value>The name of the value editor type.</value>
+        </member>
+        <member name="P:EasyData.DateTimeValueEditor.XmlDefinition">
+            <summary>
+            Gets the XML definition of value editor.
+            </summary>
+            <value>The XML definition of value editor.</value>
+            <remarks>
+            This definition can be used for creation necessary row element
+            which represents current value editor in XListBox control.
+            </remarks>
+        </member>
+        <member name="M:EasyData.DateTimeValueEditor.ReadOnePropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one editor's property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="propName">The name of the property which is read</param>
+            <param name="ct">The cancellation token.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.DateTimeValueEditor.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the date/time value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="P:EasyData.DateTimeValueEditor.DefaultValue">
+            <summary>
+            Gets or sets the default value.
+            </summary>
+            <value>The default value</value>
+        </member>
+        <member name="P:EasyData.DateTimeValueEditor.DefaultText">
+            <summary>
+            Gets or sets the default text.
+            </summary>
+            <value>The default text.</value>
+        </member>
+        <member name="M:EasyData.FileValueEditor.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the custom value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:EasyData.FileValueEditor.ReadOnePropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one editor's property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="propName">The name of the property which is read</param>
+            <param name="ct">The cancelleation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="T:EasyData.ListValueEditor">
+            <summary>
+            Represents base abstract type of list value editors.
+            </summary>
+        </member>
+        <member name="M:EasyData.ListValueEditor.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ListValueEditor"/> class.
+            </summary>
+        </member>
+        <member name="M:EasyData.ListValueEditor.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ListValueEditor"/> class.
+            </summary>
+            <param name="id">ID of the list value editor</param>
+        </member>
+        <member name="P:EasyData.ListValueEditor.ControlType">
+            <summary>
+            Gets or sets the type of list control (MENU, LISTBOX, etc).
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.ListValueEditor.Multiselect">
+            <summary>
+            Gets or sets a value indicating whether this <see cref="T:EasyData.ListValueEditor"/> allows to select several items.
+            </summary>
+            <value>
+              <c>true</c> if multiselect; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:EasyData.ListValueEditor.ExtraParams">
+            <summary>
+            Gets ExtraParams for this <see cref="T:EasyData.ListValueEditor"/>.
+            </summary>
+        </member>
+        <member name="M:EasyData.ListValueEditor.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the custom value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:EasyData.ListValueEditor.ReadOnePropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one editor's property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="propName">The name of the property which is read</param>
+            <param name="ct">The cancelleation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="T:EasyData.CustomListValueEditor">
+            <summary>
+            Represents custom (user-defined) list value editor
+            </summary>
+        </member>
+        <member name="M:EasyData.CustomListValueEditor.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.CustomListValueEditor"/> class.
+            </summary>
+        </member>
+        <member name="M:EasyData.CustomListValueEditor.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.CustomListValueEditor"/> class.
+            </summary>
+            <param name="id">The ID of the custom value editor</param>
+            <param name="listName">Name of the list.</param>
+            <param name="controlType">Type of the control.</param>
+        </member>
+        <member name="P:EasyData.CustomListValueEditor.DefaultValue">
+            <summary>
+            Gets or sets the default value.
+            </summary>
+            <value>The default value</value>
+        </member>
+        <member name="P:EasyData.CustomListValueEditor.DefaultText">
+            <summary>
+            Gets or sets the default text.
+            </summary>
+            <value>The default text.</value>
+        </member>
+        <member name="P:EasyData.CustomListValueEditor.ListName">
+            <summary>
+            Gets or sets the name of the list.
+            </summary>
+            <value>The name of the list.</value>
+        </member>
+        <member name="P:EasyData.CustomListValueEditor.STypeCaption">
+            <summary>
+            Gets the full name of the value editor class type.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.CustomListValueEditor.IdBase">
+            <summary>
+            Gets the base part of identifier.
+            </summary>
+            <value>The identifier base.</value>
+        </member>
+        <member name="P:EasyData.CustomListValueEditor.Tag">
+            <summary>
+            Gets the value editor's tag.
+            </summary>
+            <value>The tag of the value editor.</value>
+        </member>
+        <member name="P:EasyData.CustomListValueEditor.XmlDefinition">
+            <summary>
+            Gets the XML definition of value editor.
+            </summary>
+            <value>The XML definition of value editor.</value>
+            <remarks>
+            This defenition can be used for creation necessary row element
+            which represents current value editor in XListBox control.
+            </remarks>
+        </member>
+        <member name="P:EasyData.CustomListValueEditor.ResultType">
+            <summary>
+            Gets or sets the data type of edited values
+            </summary>
+            <value>
+            The data type of edited values.
+            </value>
+        </member>
+        <member name="M:EasyData.CustomListValueEditor.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the custom value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:EasyData.CustomListValueEditor.ReadOnePropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one editor's property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="propName">The name of the property which is read</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="T:EasyData.ConstValueItem">
+            <summary>
+            Represents one item in the list of available values for LIST value editor.
+            </summary>
+        </member>
+        <member name="P:EasyData.ConstValueItem.Id">
+            <summary>
+            Gets or sets the value.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.ConstValueItem.Text">
+            <summary>
+            Gets or sets the caption.
+            </summary>
+            <value></value>
+        </member>
+        <member name="T:EasyData.ConstValueList">
+            <summary>
+            Represents list of availalbe values. 
+            Each item contain the value itself and some caption representing this value.
+            </summary>
+        </member>
+        <member name="M:EasyData.ConstValueList.Add(System.String,System.String)">
+            <summary>
+            Adds new item with the specified value and caption into the list.
+            </summary>
+            <param name="id">Value ID.</param>
+            <param name="text">Value text.</param>
+            <returns>The index of new item in list.</returns>
+        </member>
+        <member name="T:EasyData.ConstListValueEditor">
+            <summary>
+            Represents the constant list value editor.
+            </summary>
+        </member>
+        <member name="P:EasyData.ConstListValueEditor.STypeCaption">
+            <summary>
+            Gets the full name of the value editor class type.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.ConstListValueEditor.Tag">
+            <summary>
+            Gets the name of the value editor type.
+            </summary>
+            <value>The name of the value editor type.</value>
+        </member>
+        <member name="P:EasyData.ConstListValueEditor.XmlDefinition">
+            <summary>
+            Gets the XML definition of value editor.
+            </summary>
+            <value>The XML definition of value editor.</value>
+            <remarks>
+            This defenition can be used for creation necessary row element
+            which represents current value editor in XListBox control.
+            </remarks>
+        </member>
+        <member name="P:EasyData.ConstListValueEditor.Values">
+            <summary>
+            Gets the list of available values.
+            </summary>
+            <value>The list of available values.</value>
+        </member>
+        <member name="M:EasyData.ConstListValueEditor.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ConstListValueEditor"/> class.
+            </summary>
+            <param name="id">Value editor's ID</param>
+        </member>
+        <member name="M:EasyData.ConstListValueEditor.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ConstListValueEditor"/> class.
+            </summary>
+        </member>
+        <member name="M:EasyData.ConstListValueEditor.CreateValueList">
+            <summary>
+            Creates the value list.
+            </summary>
+            <returns>The created ConstValueList object.</returns>
+        </member>
+        <member name="P:EasyData.ConstListValueEditor.DefaultValue">
+            <summary>
+            Gets or sets the default value.
+            </summary>
+            <value>The default value</value>
+        </member>
+        <member name="P:EasyData.ConstListValueEditor.DefaultText">
+            <summary>
+            Gets or sets the default text.
+            </summary>
+            <value>The default text.</value>
+        </member>
+        <member name="M:EasyData.ConstListValueEditor.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the "CONST LIST" value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="rwOptions">Different read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:EasyData.ConstListValueEditor.ReadOnePropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one editor's property from JSON.
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="propName">The name of the property which is read now</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="T:EasyData.TextValueEditor">
+            <summary>
+            Represents the simpliest value editor.
+            </summary>
+        </member>
+        <member name="M:EasyData.TextValueEditor.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.TextValueEditor"/> class.
+            </summary>
+        </member>
+        <member name="P:EasyData.TextValueEditor.IdBase">
+            <summary>
+            Gets the base part of identifier.
+            </summary>
+            <value>The identifier base.</value>
+        </member>
+        <member name="M:EasyData.TextValueEditor.#ctor(System.String,EasyData.DataType)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.TextValueEditor"/> class.
+            </summary>
+            <param name="id">The identifier.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="P:EasyData.TextValueEditor.Tag">
+            <summary>
+            Gets the tag of the value editor.
+            </summary>
+            <value>The name of the value editor type.</value>
+        </member>
+        <member name="P:EasyData.TextValueEditor.STypeCaption">
+            <summary>
+            Gets the full name of the value editor class type.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.TextValueEditor.XmlDefinition">
+            <summary>
+            Gets the XML definition of value editor.
+            </summary>
+            <value>The XML definition of value editor.</value>
+            <remarks>
+            This defenition can be used for creation necessary row element
+            which represents current value editor in XListBox control.
+            </remarks>
+        </member>
+        <member name="P:EasyData.TextValueEditor.DefaultValue">
+            <summary>
+            Gets or sets the default value.
+            </summary>
+            <value>The default value</value>
+        </member>
+        <member name="P:EasyData.TextValueEditor.DefaultText">
+            <summary>
+            Gets or sets the default text.
+            </summary>
+            <value>The default text.</value>
+        </member>
+        <member name="P:EasyData.TextValueEditor.ResultType">
+            <summary>
+            Gets or sets the data type of edited values
+            </summary>
+            <value>
+            The data type of edited values.
+            </value>
+        </member>
+        <member name="P:EasyData.TextValueEditor.Multiline">
+            <summary>
+            Gets or sets a value indicating whether text editor should be multiline.
+            </summary>
+            <value><c>true</c> if text editor must be multiline; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="M:EasyData.TextValueEditor.ReadOnePropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one editor's property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="propName">The name of the property which is read</param>
+            <param name="ct">The cancellation token.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.TextValueEditor.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the text value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="T:EasyData.EditorTags">
+            <summary>
+            Defines the constants for value editors' tags.
+            </summary>
+        </member>
+        <member name="F:EasyData.EditorTags.Text">
+            <summary>Represents a simple text editor</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.DateTime">
+            <summary>Represents a date/time editor</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.Date">
+            <summary>Represents a date editor</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.Time">
+            <summary>Represents a time editor</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.CustomList">
+            <summary>Represents a custom list value editor</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.ConstList">
+            <summary>Represents a constant list value editor</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.ConstListBox">
+            <summary>Represents a list value editor which uses a list box control to show the values</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.ConstListMulty">
+            <summary>Represents a list value editor which allows to select several values at once</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.File">
+            <summary>Represents a file value editor</summary>
+        </member>
+        <member name="F:EasyData.EditorTags.Custom">
+            <summary>Represents a custom value editor</summary>
+        </member>
+        <member name="T:EasyData.IValueEditorCreator">
+            <summary>
+            Internal interface used for definition new (custom) types of value editors
+            </summary>
+        </member>
+        <member name="M:EasyData.IValueEditorCreator.Create(System.String)">
+            <summary>
+            Creates an instance of ValueEditor.
+            </summary>
+            <returns>ValueEditor object.</returns>
+        </member>
+        <member name="T:EasyData.ValueEditor">
+            <summary>
+            Represents an abstract value editor. 
+            </summary>
+            <remarks>
+            Value editor defines the way how user input the constant values in query panel.
+            The simplest type of value editor is "EDIT" which represents one edit field where user can type necessary value.
+            Other type of value editor is "LIST" - it allows to select necessary value from some list of available values.
+            </remarks>
+        </member>
+        <member name="M:EasyData.ValueEditor.RegisterCreator(EasyData.IValueEditorCreator)">
+            <summary>
+            Registers new type of value editor. 
+            </summary>
+            <param name="creator">An object that implementats IValueEditorCeator iterface.</param>
+            <returns>Returns true if registration succeed. Otherwise - false.</returns>
+        </member>
+        <member name="M:EasyData.ValueEditor.GetNextID">
+            <summary>
+            Gets the next value editor identifier.
+            </summary>
+            <returns>System.Int32.</returns>
+        </member>
+        <member name="M:EasyData.ValueEditor.Create(System.String)">
+            <summary>
+            Creates a value editor instance of the specified type.
+            </summary>
+            <param name="tag">The tag which represents the editor.</param>
+            <returns>New created ValueEditor object if type is recognized. Otherwise - null.</returns>
+        </member>
+        <member name="M:EasyData.ValueEditor.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ValueEditor"/> class.
+            </summary>
+        </member>
+        <member name="M:EasyData.ValueEditor.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ValueEditor"/> class.
+            </summary>
+            <param name="id">Value Editor ID.</param>
+        </member>
+        <member name="P:EasyData.ValueEditor.Id">
+            <summary>
+            Gets or sets the ID of this value editor instance.
+            </summary>
+            <value>
+            The ID.
+            </value>
+        </member>
+        <member name="P:EasyData.ValueEditor.IsDefault">
+            <summary>
+            Gets or sets a value indicating whether this editor is one of the default ones.
+            </summary>
+            <value><c>true</c> if this instance is default; otherwise, <c>false</c>.</value>
+        </member>
+        <member name="P:EasyData.ValueEditor.IdBase">
+            <summary>
+            Gets the base part of identifier.
+            </summary>
+            <value>The identifier base.</value>
+        </member>
+        <member name="P:EasyData.ValueEditor.STypeCaption">
+            <summary>
+            Gets the full name of the value editor class type.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:EasyData.ValueEditor.Tag">
+            <summary>
+            Gets the name of the value editor type.
+            </summary>
+            <value>The name of the value editor type.</value>
+        </member>
+        <member name="P:EasyData.ValueEditor.XmlDefinition">
+            <summary>
+            Gets the XML definition of value editor.
+            </summary>
+            <value>The XML definition of value editor.</value>
+            <remarks> 
+            This defenition can be used for creation necessary row element 
+            which represents current value editor in XListBox control.
+            </remarks>
+        </member>
+        <member name="P:EasyData.ValueEditor.DefaultValue">
+            <summary>
+            Gets or sets the default value.
+            </summary>
+            <value>The default value</value>
+        </member>
+        <member name="P:EasyData.ValueEditor.DefaultText">
+            <summary>
+            Gets or sets the default text.
+            </summary>
+            <value>The default text.</value>
+        </member>
+        <member name="P:EasyData.ValueEditor.ResultType">
+            <summary>
+            Gets or sets the data type of edited values
+            </summary>
+            <value>The data type of edited values.</value>
+        </member>
+        <member name="M:EasyData.ValueEditor.CheckInModel(EasyData.MetaData)">
+            <summary>
+            Check current editor in model and adds it into Editors list if necessary.
+            </summary>
+            <param name="model">The model.</param>
+        </member>
+        <member name="P:EasyData.ValueEditor.Model">
+            <summary>
+            Gets the model which this editor belongs to
+            </summary>
+        </member>
+        <member name="M:EasyData.ValueEditor.ReadFromJsonAsync(Newtonsoft.Json.JsonReader,System.Threading.CancellationToken)">
+            <summary>
+            Creates a value editor based on the value of "tag" property and reads the content of the newly created editor from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task&lt;ValueEditor&gt;.</returns>
+            <exception cref="T:EasyData.BadJsonFormatException">
+            </exception>
+        </member>
+        <member name="M:EasyData.ValueEditor.WriteToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:EasyData.ValueEditor.WritePropertiesToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Threading.CancellationToken)">
+            <summary>
+            Writes the content of the value editor to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer.</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.ValueEditor.ReadContentFromJsonAsync(Newtonsoft.Json.JsonReader,System.Threading.CancellationToken)">
+            <summary>
+            Reads the content of the value editor from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="ct">The cancellation token.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.ValueEditor.ReadOnePropFromJsonAsync(Newtonsoft.Json.JsonReader,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Reads one editor's property from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="propName">The name of the property to read</param>
+            <param name="ct">The cancellation token.</param>
+            <returns></returns>
+        </member>
+        <member name="T:EasyData.ValueEditorList">
+            <summary>
+            Represents list of value editors
+            </summary>
+        </member>
+        <member name="M:EasyData.ValueEditorList.IndexById(System.String)">
+            <summary>
+            Find valueeditor index by ID.
+            </summary>
+            <param name="editorId">ID of operator.</param>
+            <returns>Operator index in the list or -1 if operator with specified ID was not found</returns>
+        </member>
+        <member name="M:EasyData.ValueEditorList.FindById(System.String)">
+            <summary>
+            Finds the valueeditor by ID.
+            </summary>
+            <param name="editorId">ID of operator.</param>
+            <returns>Operator object or null if operator with specified ID was not found.</returns>
+        </member>
+        <member name="M:EasyData.ValueEditorList.WriteToJsonAsync(Newtonsoft.Json.JsonWriter,EasyData.BitOptions,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Writes the list of the value editors to JSON (asynchronous way).
+            </summary>
+            <param name="writer">The writer.</param>
+            <param name="rwOptions">Read/write options.</param>
+            <param name="includeDefaults">if set to <c>true</c> then the default editors must be saved as well.</param>
+            <param name="ct">The cancellation token.</param>
+            <returns>Task.</returns>
+        </member>
+        <member name="M:EasyData.ValueEditorList.ReadFromJsonAsync(Newtonsoft.Json.JsonReader,System.Threading.CancellationToken)">
+            <summary>
+            Reads the list of value editors from JSON (asynchronous way).
+            </summary>
+            <param name="reader">The reader</param>
+            <param name="ct">The cancellation token.</param>
+            <returns></returns>
+        </member>
+        <member name="M:EasyData.ValueEditorList.ConvertOldSpecialDateTimeEditor(EasyData.ValueEditor)">
+            <summary>
+            Converts the old "special dates" value editor to the new one
+            </summary>
+            <param name="editor"></param>
+        </member>
+        <member name="T:EasyData.ValueEditorStore">
+            <summary>
+            Represents the list of value editors which belongs to some DataModel object.
+            Implements the <see cref="T:EasyData.ValueEditorList" />
+            </summary>
+            <seealso cref="T:EasyData.ValueEditorList" />
+        </member>
+        <member name="M:EasyData.ValueEditorStore.#ctor(EasyData.MetaData)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ValueEditorStore"/> class.
+            </summary>
+            <param name="model">The model.</param>
+        </member>
+        <member name="P:EasyData.ValueEditorStore.Model">
+            <summary>
+            Gets the model.
+            </summary>
+            <value>The model.</value>
+        </member>
+        <member name="M:EasyData.ValueEditorStore.InsertItem(System.Int32,EasyData.ValueEditor)">
+            <summary>
+            Inserts an element into the <see cref="T:System.Collections.ObjectModel.Collection`1"></see> at the specified index.
+            </summary>
+            <param name="index">The zero-based index at which item should be inserted.</param>
+            <param name="item">The object to insert. The value can be null for reference types.</param>
+        </member>
+        <member name="M:EasyData.ValueEditorStore.RemoveItem(System.Int32)">
+            <summary>
+            Removes the element at the specified index of the <see cref="T:System.Collections.ObjectModel.Collection`1"></see>.
+            </summary>
+            <param name="index">The zero-based index of the element to remove.</param>
+        </member>
+        <member name="M:EasyData.ValueEditorStore.ClearItems">
+            <summary>
+            Removes all elements from the <see cref="T:System.Collections.ObjectModel.Collection`1"></see>.
+            </summary>
+        </member>
+        <member name="T:EasyData.ValueEditorException">
+            <summary>
+            Represents errors that occur during some operation with a value editor.
+            Implements the <see cref="T:System.Exception" />
+            </summary>
+            <seealso cref="T:System.Exception" />
+        </member>
+        <member name="M:EasyData.ValueEditorException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ValueEditorException"/> class.
+            </summary>
+        </member>
+        <member name="M:EasyData.ValueEditorException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:EasyData.ValueEditorException"/> class.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+    </members>
+</doc>
