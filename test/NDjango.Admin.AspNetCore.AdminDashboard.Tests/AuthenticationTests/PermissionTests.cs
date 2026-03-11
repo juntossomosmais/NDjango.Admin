@@ -33,6 +33,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             _dbName = $"NDjangoAdminPermTest_{Guid.NewGuid():N}";
             var connectionString = string.Format(ConnectionStringTemplate, _dbName);
 
+            // Create database before host starts so the auth hosted service can connect
+            EnsureAndSeedDatabase(connectionString);
+
             _host = new HostBuilder()
                 .ConfigureWebHost(webBuilder =>
                 {
@@ -42,35 +45,45 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
                         {
                             services.AddDbContext<TestDbContext>(options =>
                                 options.UseSqlServer(connectionString));
-                            services.AddNDjangoAdminDashboard<TestDbContext>();
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                                    DashboardTitle = "Test Admin",
+                                    RequireAuthentication = true,
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = "admin",
+                                });
                         })
                         .Configure(app =>
                         {
-                            using var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-                            using var context = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-                            context.Database.EnsureCreated();
-
-                            var cat1 = new Category { Name = "Italian", Description = "Italian cuisine" };
-                            context.Categories.Add(cat1);
-
-                            var restaurant = new Restaurant { Name = "Test Restaurant", Address = "123 Main St", Category = cat1 };
-                            context.Restaurants.Add(restaurant);
-                            context.SaveChanges();
-
-                            app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
-                            {
-                                Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                DashboardTitle = "Test Admin",
-                                RequireAuthentication = true,
-                                CreateDefaultAdminUser = true,
-                                DefaultAdminPassword = "admin",
-                            });
-
-                            CreateLimitedUserAsync(connectionString).GetAwaiter().GetResult();
-                            CreateCategoryManagerUserAsync(connectionString).GetAwaiter().GetResult();
+                            app.UseNDjangoAdminDashboard("/admin");
                         });
                 })
                 .Start();
+
+            // Wait for auth bootstrap to complete before seeding test users
+            var readiness = _host.Services.GetRequiredService<Authentication.AuthBootstrapReadinessState>();
+            readiness.WaitForReadyAsync().GetAwaiter().GetResult();
+
+            CreateLimitedUserAsync(connectionString).GetAwaiter().GetResult();
+            CreateCategoryManagerUserAsync(connectionString).GetAwaiter().GetResult();
+        }
+
+        private static void EnsureAndSeedDatabase(string connectionString)
+        {
+            var options = new DbContextOptionsBuilder<TestDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+            using var context = new TestDbContext(options);
+            context.Database.EnsureCreated();
+
+            var cat1 = new Category { Name = "Italian", Description = "Italian cuisine" };
+            context.Categories.Add(cat1);
+
+            var restaurant = new Restaurant { Name = "Test Restaurant", Address = "123 Main St", Category = cat1 };
+            context.Restaurants.Add(restaurant);
+            context.SaveChanges();
         }
 
         private async Task CreateLimitedUserAsync(string connectionString)

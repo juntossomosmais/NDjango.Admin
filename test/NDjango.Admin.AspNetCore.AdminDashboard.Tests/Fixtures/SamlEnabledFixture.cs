@@ -30,6 +30,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
             _dbName = $"NDjangoAdminSamlTest_{Guid.NewGuid():N}";
             var connectionString = string.Format(ConnectionStringTemplate, _dbName);
 
+            // Create database before host starts so the auth hosted service can connect
+            EnsureDatabase(connectionString);
+
             _host = new HostBuilder()
                 .ConfigureWebHost(webBuilder =>
                 {
@@ -42,45 +45,61 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                                 options.UseSqlServer(connectionString);
                             });
 
-                            services.AddNDjangoAdminDashboard<TestDbContext>();
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                                    DashboardTitle = "Test Admin",
+                                    RequireAuthentication = true,
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = "admin",
+                                    EnableSaml = true,
+                                    SamlIdpSsoUrl = TestIdpSsoUrl,
+                                    SamlCertificate = TestCertificate,
+                                    SamlIssuer = TestSamlIssuer,
+                                    SamlAcsUrl = TestSamlAcsUrl,
+                                    SamlGroupsAttribute = "groups",
+                                });
                         })
                         .Configure(app =>
                         {
-                            // Ensure user DB exists
-                            using var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-                            using var context = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-                            context.Database.EnsureCreated();
-
-                            // Seed restaurant data
-                            var cat1 = new Category { Name = "Italian", Description = "Italian cuisine" };
-                            context.Categories.Add(cat1);
-                            context.SaveChanges();
-
-                            app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
-                            {
-                                Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                DashboardTitle = "Test Admin",
-                                RequireAuthentication = true,
-                                CreateDefaultAdminUser = true,
-                                DefaultAdminPassword = "admin",
-                                EnableSaml = true,
-                                SamlIdpSsoUrl = TestIdpSsoUrl,
-                                SamlCertificate = TestCertificate,
-                                SamlIssuer = TestSamlIssuer,
-                                SamlAcsUrl = TestSamlAcsUrl,
-                                SamlGroupsAttribute = "groups",
-                            });
-
-                            // Seed a group matching the test SAML group UUID
-                            SeedSamlGroup(app, connectionString);
+                            app.UseNDjangoAdminDashboard("/admin");
                         });
                 })
                 .Start();
+
+            // Wait for auth bootstrap to complete
+            var readiness = _host.Services.GetRequiredService<Authentication.AuthBootstrapReadinessState>();
+            readiness.WaitForReadyAsync().GetAwaiter().GetResult();
+
+            // Seed test data after auth tables exist
+            SeedData(connectionString);
+            SeedSamlGroup();
         }
 
-        private void SeedSamlGroup(IApplicationBuilder app, string connectionString)
+        private static void EnsureDatabase(string connectionString)
         {
-            using var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+            var options = new DbContextOptionsBuilder<TestDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+            using var context = new TestDbContext(options);
+            context.Database.EnsureCreated();
+        }
+
+        private static void SeedData(string connectionString)
+        {
+            var options = new DbContextOptionsBuilder<TestDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+            using var context = new TestDbContext(options);
+            var cat1 = new Category { Name = "Italian", Description = "Italian cuisine" };
+            context.Categories.Add(cat1);
+            context.SaveChanges();
+        }
+
+        private void SeedSamlGroup()
+        {
+            using var scope = _host.Services.GetRequiredService<IServiceScopeFactory>().CreateScope();
             var authDbContext = scope.ServiceProvider.GetRequiredService<Authentication.AuthDbContext>();
             authDbContext.Database.ExecuteSqlRaw(
                 "INSERT INTO auth_group (name) VALUES ({0})", TestSamlGroupId);

@@ -37,6 +37,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
         /// </summary>
         public int PaginationCountTimeoutMs { get; set; } = 200;
 
+        /// <summary>
+        /// When true, skips auth table creation, permission seeding, and default admin user
+        /// creation at startup. Useful for tests or externally managed schemas.
+        /// </summary>
+        public bool SkipStorageInitialization { get; set; } = false;
+
         // SAML SSO configuration
         public bool EnableSaml { get; set; } = false;
 

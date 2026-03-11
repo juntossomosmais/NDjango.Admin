@@ -20,6 +20,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
         private readonly string _basePath;
         private readonly DashboardRouteCollection _routes;
         private readonly AdminCookieAuthService _cookieAuthService;
+        private readonly AuthBootstrapReadinessState _readinessState;
 
         private static readonly string[] AuthExemptPrefixes = { "/css/", "/js/", "/login/", "/logout/", "/saml/" };
 
@@ -28,6 +29,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
             AdminDashboardOptions options,
             NDjangoAdminOptions ndjangoAdminOptions,
             string basePath,
+            AuthBootstrapReadinessState readinessState,
             IDataProtectionProvider dataProtectionProvider = null)
         {
             _next = next;
@@ -35,6 +37,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
             _ndjangoAdminOptions = ndjangoAdminOptions;
             _basePath = basePath.TrimEnd('/');
             _routes = DashboardRoutes.Routes;
+            _readinessState = readinessState;
 
             if (options.RequireAuthentication && dataProtectionProvider != null) {
                 _cookieAuthService = new AdminCookieAuthService(dataProtectionProvider, options);
@@ -47,6 +50,13 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
 
             if (!path.StartsWith(_basePath)) {
                 await _next(httpContext);
+                return;
+            }
+
+            if (_options.RequireAuthentication && !_readinessState.IsReady) {
+                httpContext.Response.StatusCode = 503;
+                httpContext.Response.Headers["Retry-After"] = "1";
+                await httpContext.Response.WriteAsync("Admin dashboard is initializing...");
                 return;
             }
 

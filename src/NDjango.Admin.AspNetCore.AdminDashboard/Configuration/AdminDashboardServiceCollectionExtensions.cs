@@ -2,6 +2,7 @@ using System;
 
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 using NDjango.Admin.AspNetCore.AdminDashboard;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
@@ -18,10 +19,15 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static IServiceCollection AddNDjangoAdminDashboard<TDbContext>(
             this IServiceCollection services,
+            AdminDashboardOptions dashboardOptions = null,
             Action<DbContextMetaDataLoaderOptions> loaderOptionsBuilder = null)
             where TDbContext : DbContext
         {
+            dashboardOptions ??= new AdminDashboardOptions();
+
             _dbContextType = typeof(TDbContext);
+
+            services.AddSingleton(dashboardOptions);
 
             services.AddSingleton(sp => {
                 var ndjangoAdminOptions = new NDjangoAdminOptions();
@@ -31,6 +37,13 @@ namespace Microsoft.Extensions.DependencyInjection
 
             // Register auth services eagerly (they are no-ops if RequireAuthentication is false)
             RegisterAuthServices<TDbContext>(services);
+
+            services.AddSingleton<AuthBootstrapReadinessState>();
+
+            if (dashboardOptions.RequireAuthentication && !dashboardOptions.SkipStorageInitialization)
+            {
+                services.AddHostedService<AuthBootstrapperHostedService>();
+            }
 
             return services;
         }
@@ -45,9 +58,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 var connectionString = userDbContext.Database.GetConnectionString();
                 options.UseSqlServer(connectionString);
             });
-
-            // AdminCookieAuthService is created per-request in the middleware
-            // because AdminDashboardOptions is not in DI
         }
     }
 }

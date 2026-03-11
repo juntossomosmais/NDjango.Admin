@@ -24,6 +24,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
             _dbName = $"NDjangoAdminAuthTest_{Guid.NewGuid():N}";
             var connectionString = string.Format(ConnectionStringTemplate, _dbName);
 
+            // Create database before host starts so the auth hosted service can connect
+            EnsureDatabase(connectionString);
+
             _host = new HostBuilder()
                 .ConfigureWebHost(webBuilder =>
                 {
@@ -36,31 +39,48 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                                 options.UseSqlServer(connectionString);
                             });
 
-                            services.AddNDjangoAdminDashboard<TestDbContext>();
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                                    DashboardTitle = "Test Admin",
+                                    RequireAuthentication = true,
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = "admin",
+                                });
                         })
                         .Configure(app =>
                         {
-                            // Ensure user DB exists
-                            using var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-                            using var context = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-                            context.Database.EnsureCreated();
-
-                            // Seed restaurant data
-                            var cat1 = new Category { Name = "Italian", Description = "Italian cuisine" };
-                            context.Categories.Add(cat1);
-                            context.SaveChanges();
-
-                            app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
-                            {
-                                Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                DashboardTitle = "Test Admin",
-                                RequireAuthentication = true,
-                                CreateDefaultAdminUser = true,
-                                DefaultAdminPassword = "admin",
-                            });
+                            app.UseNDjangoAdminDashboard("/admin");
                         });
                 })
                 .Start();
+
+            // Wait for auth bootstrap to complete
+            var readiness = _host.Services.GetRequiredService<Authentication.AuthBootstrapReadinessState>();
+            readiness.WaitForReadyAsync().GetAwaiter().GetResult();
+
+            SeedData(connectionString);
+        }
+
+        private static void EnsureDatabase(string connectionString)
+        {
+            var options = new DbContextOptionsBuilder<TestDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+            using var context = new TestDbContext(options);
+            context.Database.EnsureCreated();
+        }
+
+        private static void SeedData(string connectionString)
+        {
+            var options = new DbContextOptionsBuilder<TestDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+            using var context = new TestDbContext(options);
+            var cat1 = new Category { Name = "Italian", Description = "Italian cuisine" };
+            context.Categories.Add(cat1);
+            context.SaveChanges();
         }
 
         public IHost GetTestHost() => _host;

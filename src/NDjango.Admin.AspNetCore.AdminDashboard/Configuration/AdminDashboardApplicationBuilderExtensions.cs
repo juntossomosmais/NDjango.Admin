@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NDjango.Admin.AspNetCore.AdminDashboard;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authentication.Storage;
 using NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers;
 using NDjango.Admin.Services;
 
@@ -18,11 +17,16 @@ namespace Microsoft.AspNetCore.Builder
     {
         public static IApplicationBuilder UseNDjangoAdminDashboard(
             this IApplicationBuilder app,
-            string path = "/admin",
-            AdminDashboardOptions options = null)
+            string path = "/admin")
         {
-            options ??= new AdminDashboardOptions();
             path = "/" + path.Trim('/');
+
+            var options = app.ApplicationServices.GetService(typeof(AdminDashboardOptions)) as AdminDashboardOptions;
+            if (options == null) {
+                throw new InvalidOperationException(
+                    "AdminDashboardOptions is not registered. " +
+                    "Call services.AddNDjangoAdminDashboard<TDbContext>() in ConfigureServices first.");
+            }
 
             var ndjangoAdminOptions = (NDjangoAdminOptions)app.ApplicationServices.GetService(typeof(NDjangoAdminOptions));
             if (ndjangoAdminOptions == null) {
@@ -34,7 +38,7 @@ namespace Microsoft.AspNetCore.Builder
             ndjangoAdminOptions.PaginationCountTimeoutMs = options.PaginationCountTimeoutMs;
 
             if (options.RequireAuthentication) {
-                BootstrapAuthentication(app, options, ndjangoAdminOptions);
+                ConfigureCompositeManager(ndjangoAdminOptions);
             }
 
             if (options.EnableSaml) {
@@ -47,15 +51,8 @@ namespace Microsoft.AspNetCore.Builder
             return app;
         }
 
-        private static void BootstrapAuthentication(IApplicationBuilder app, AdminDashboardOptions options, NDjangoAdminOptions ndjangoAdminOptions)
+        private static void ConfigureCompositeManager(NDjangoAdminOptions ndjangoAdminOptions)
         {
-            using var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-
-            // Initialize auth tables
-            var authDbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-            var storageInitializer = new SqlServerAuthStorageInitializer(authDbContext);
-            storageInitializer.InitializeAsync().GetAwaiter().GetResult();
-
             // Store the original resolver and wrap with composite
             var originalResolver = ndjangoAdminOptions.ManagerResolver;
             var authNDjangoAdminOptions = new NDjangoAdminOptions();
@@ -70,21 +67,6 @@ namespace Microsoft.AspNetCore.Builder
                 var authDbCtx = services.GetService(typeof(AuthDbContext)) as DbContext;
                 return new CompositeNDjangoAdminManager(services, opts, userManager, authManager, userDbContext, authDbCtx);
             });
-
-            // Seed permissions
-            using var seedScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-            var seedManager = ndjangoAdminOptions.ManagerResolver(seedScope.ServiceProvider, ndjangoAdminOptions);
-            var model = seedManager.GetModelAsync("__admin").GetAwaiter().GetResult();
-
-            using var seedAuthDbContext = new AuthDbContext(GetAuthDbContextOptions(seedScope.ServiceProvider));
-            var queries = new AuthStorageQueries(seedAuthDbContext);
-            var seeder = new PermissionSeeder(queries);
-            seeder.SeedPermissionsAsync(model).GetAwaiter().GetResult();
-
-            // Create default admin user
-            if (options.CreateDefaultAdminUser) {
-                queries.CreateDefaultAdminUserAsync(options.DefaultAdminPassword).GetAwaiter().GetResult();
-            }
         }
 
         private static void ResolveSamlMetadata(AdminDashboardOptions options)
@@ -139,17 +121,6 @@ namespace Microsoft.AspNetCore.Builder
                     await dispatcher.DispatchAsync(context, null);
                 });
             });
-        }
-
-        private static DbContextOptions<AuthDbContext> GetAuthDbContextOptions(IServiceProvider serviceProvider)
-        {
-            var dbContextType = AdminDashboardServiceCollectionExtensions.DbContextType;
-            var userDbContext = (DbContext)serviceProvider.GetService(dbContextType);
-            var connectionString = userDbContext.Database.GetConnectionString();
-
-            return new DbContextOptionsBuilder<AuthDbContext>()
-                .UseSqlServer(connectionString)
-                .Options;
         }
     }
 }

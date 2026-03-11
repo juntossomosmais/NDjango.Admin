@@ -21,18 +21,18 @@ Add a reference to the `NDjango.Admin.AspNetCore.AdminDashboard` project (or NuG
 
 ```csharp
 // Program.cs or Startup.ConfigureServices
-services.AddNDjangoAdminDashboard<AppDbContext>();
+services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
+{
+    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+    DashboardTitle = "My Admin",
+});
 ```
 
 ### 3. Add the middleware
 
 ```csharp
 // Program.cs or Startup.Configure
-app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
-{
-    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-    DashboardTitle = "My Admin",
-});
+app.UseNDjangoAdminDashboard("/admin");
 ```
 
 That's it. Navigate to `/admin/` and you have a working admin panel.
@@ -55,6 +55,16 @@ new LocalRequestsOnlyAuthorizationFilter()
 
 ### Options
 
+All options are passed to `AddNDjangoAdminDashboard` at service registration:
+
+```csharp
+services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
+{
+    DashboardTitle = "My Admin",
+    DefaultRecordsPerPage = 50,
+});
+```
+
 | Option | Default | Description |
 |---|---|---|
 | `DashboardTitle` | `"Admin Dashboard"` | Title shown in the header |
@@ -65,16 +75,20 @@ new LocalRequestsOnlyAuthorizationFilter()
 
 ### Authentication (optional)
 
-The dashboard supports built-in cookie-based authentication with users, groups, and permissions — similar to Django Admin. Auth tables are created automatically in your existing database on startup.
+The dashboard supports built-in cookie-based authentication with users, groups, and permissions — similar to Django Admin. Auth tables are created automatically in your existing database via a background hosted service after the host starts.
 
 ```csharp
-app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
+// ConfigureServices
+services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 {
     DashboardTitle = "My Admin",
     RequireAuthentication = true,
     CreateDefaultAdminUser = true,
     DefaultAdminPassword = "admin",
 });
+
+// Configure
+app.UseNDjangoAdminDashboard("/admin");
 ```
 
 When `RequireAuthentication` is enabled:
@@ -83,6 +97,8 @@ When `RequireAuthentication` is enabled:
 - Permissions are auto-generated for every entity (`add_`, `view_`, `change_`, `delete_`)
 - Superusers bypass all permission checks; regular users need permissions assigned through groups
 - Auth entities (Users, Groups, Permissions) appear in the dashboard under "Authentication and Authorization" and are manageable through the same CRUD interface
+- Auth storage initialization (DDL, permission seeding, admin user creation) runs asynchronously in a `BackgroundService` after the host starts — it does not block app startup
+- While the bootstrap is in progress, the dashboard returns `503 Service Unavailable` with a `Retry-After: 1` header
 
 | Option | Default | Description |
 |---|---|---|
@@ -91,8 +107,9 @@ When `RequireAuthentication` is enabled:
 | `DefaultAdminPassword` | `"admin"` | Password for the default admin user |
 | `CookieName` | `".NDjango.Admin.Auth"` | Name of the authentication cookie |
 | `CookieExpiration` | `24 hours` | How long the session cookie remains valid |
+| `SkipStorageInitialization` | `false` | Skip auth table creation, permission seeding, and default admin user creation. Useful for integration tests or externally managed schemas |
 
-**Important:** Your database must exist before the auth bootstrap runs. If you use `EnsureCreated()`, call it **before** `UseNDjangoAdminDashboard()`:
+**Important:** Your database must exist before the auth bootstrap hosted service runs. If you use `EnsureCreated()`, call it **before** `UseNDjangoAdminDashboard()`:
 
 ```csharp
 // Correct order
@@ -100,7 +117,19 @@ using var scope = app.ApplicationServices.CreateScope();
 using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 db.Database.EnsureCreated();
 
-app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions { ... });
+app.UseNDjangoAdminDashboard("/admin");
+```
+
+#### Integration tests with `SkipStorageInitialization`
+
+When testing with `WebApplicationFactory`, set `SkipStorageInitialization = true` to prevent the hosted service from connecting to a database that may not exist:
+
+```csharp
+services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
+{
+    RequireAuthentication = true,
+    SkipStorageInitialization = true,
+});
 ```
 
 ### Auto-generated fields
@@ -133,7 +162,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 On tables with millions of rows, `SELECT COUNT(*)` can take seconds and block the list view. The dashboard cancels the COUNT query if it exceeds `PaginationCountTimeoutMs` and shows a fallback value instead. Data rows load independently and are not affected.
 
 ```csharp
-app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
+services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 {
     PaginationCountTimeoutMs = 200,  // default: 200ms; set -1 to disable
 });
@@ -150,7 +179,7 @@ To reproduce and test with large data, see [`sample-project/E2E_TESTING.md`](sam
 The dashboard supports SAML 2.0 single sign-on as an additional login method alongside password authentication. When enabled, the login page shows a "Try single sign-on (SSO)" link.
 
 ```csharp
-app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
+services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 {
     RequireAuthentication = true,
     EnableSaml = true,
@@ -159,6 +188,8 @@ app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
     SamlAcsUrl = "http://localhost:8000/api/security/saml/callback",
     SamlGroupsAttribute = "http://schemas.xmlsoap.org/claims/Group",
 });
+
+app.UseNDjangoAdminDashboard("/admin");
 ```
 
 On SSO login, the dashboard maps IdP group UUIDs to `auth_group.name` entries. Create groups whose names match the IdP group UUIDs, assign permissions to those groups, and SSO users automatically inherit them. Group memberships are fully replaced on each login.

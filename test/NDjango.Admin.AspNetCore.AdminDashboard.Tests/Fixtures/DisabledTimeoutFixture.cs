@@ -47,16 +47,17 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                                 options.AddInterceptors(new SlowCountInterceptor(InterceptorDelayMs));
                             });
 
-                            services.AddNDjangoAdminDashboard<TestDbContext>();
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                                    DashboardTitle = "Test Admin",
+                                    PaginationCountTimeoutMs = -1,
+                                });
                         })
                         .Configure(app =>
                         {
-                            app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
-                            {
-                                Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                DashboardTitle = "Test Admin",
-                                PaginationCountTimeoutMs = -1,
-                            });
+                            app.UseNDjangoAdminDashboard("/admin");
 
                             SeedDatabase(app);
                         });

@@ -34,6 +34,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             _dbName = $"NDjangoAdminAuthUserTest_{Guid.NewGuid():N}";
             _connectionString = string.Format(ConnectionStringTemplate, _dbName);
 
+            // Create database before host starts so the auth hosted service can connect
+            EnsureDatabase(_connectionString);
+
             _host = new HostBuilder()
                 .ConfigureWebHost(webBuilder =>
                 {
@@ -43,25 +46,35 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
                         {
                             services.AddDbContext<TestDbContext>(options =>
                                 options.UseSqlServer(_connectionString));
-                            services.AddNDjangoAdminDashboard<TestDbContext>();
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                                    DashboardTitle = "Test Admin",
+                                    RequireAuthentication = true,
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = "admin",
+                                });
                         })
                         .Configure(app =>
                         {
-                            using var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-                            using var context = scope.ServiceProvider.GetRequiredService<TestDbContext>();
-                            context.Database.EnsureCreated();
-
-                            app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
-                            {
-                                Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                DashboardTitle = "Test Admin",
-                                RequireAuthentication = true,
-                                CreateDefaultAdminUser = true,
-                                DefaultAdminPassword = "admin",
-                            });
+                            app.UseNDjangoAdminDashboard("/admin");
                         });
                 })
                 .Start();
+
+            // Wait for auth bootstrap to complete
+            var readiness = _host.Services.GetRequiredService<Authentication.AuthBootstrapReadinessState>();
+            readiness.WaitForReadyAsync().GetAwaiter().GetResult();
+        }
+
+        private static void EnsureDatabase(string connectionString)
+        {
+            var options = new DbContextOptionsBuilder<TestDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+            using var context = new TestDbContext(options);
+            context.Database.EnsureCreated();
         }
 
         [Fact]

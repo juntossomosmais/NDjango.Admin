@@ -40,15 +40,16 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                                 options.UseSqlServer(connectionString);
                             });
 
-                            services.AddNDjangoAdminDashboard<TestDbContext>();
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                                    DashboardTitle = "Test Admin",
+                                });
                         })
                         .Configure(app =>
                         {
-                            app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
-                            {
-                                Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                DashboardTitle = "Test Admin",
-                            });
+                            app.UseNDjangoAdminDashboard("/admin");
 
                             SeedDatabase(app);
                         });

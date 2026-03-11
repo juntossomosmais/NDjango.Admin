@@ -27,7 +27,20 @@ public class ApiCommand : ICommand
         {
             services.ConfigureSharedServices(_configuration);
 
-            services.AddNDjangoAdminDashboard<AppDbContext>();
+            services.AddNDjangoAdminDashboard<AppDbContext>(
+                new NDjango.Admin.AspNetCore.AdminDashboard.AdminDashboardOptions
+                {
+                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                    DashboardTitle = "Sample Admin (SSO)",
+                    RequireAuthentication = true,
+                    CreateDefaultAdminUser = true,
+                    DefaultAdminPassword = "admin",
+                    EnableSaml = true,
+                    SamlMetadataUrl = _configuration["Saml:MetadataUrl"],
+                    SamlIssuer = _configuration["Saml:Issuer"],
+                    SamlAcsUrl = _configuration["Saml:AcsUrl"],
+                    SamlGroupsAttribute = "http://schemas.xmlsoap.org/claims/Group",
+                });
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();
@@ -44,19 +57,7 @@ public class ApiCommand : ICommand
                 dbContext.Database.EnsureCreated();
             }
 
-            app.UseNDjangoAdminDashboard("/admin", new NDjango.Admin.AspNetCore.AdminDashboard.AdminDashboardOptions
-            {
-                Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                DashboardTitle = "Sample Admin (SSO)",
-                RequireAuthentication = true,
-                CreateDefaultAdminUser = true,
-                DefaultAdminPassword = "admin",
-                EnableSaml = true,
-                SamlMetadataUrl = _configuration["Saml:MetadataUrl"],
-                SamlIssuer = _configuration["Saml:Issuer"],
-                SamlAcsUrl = _configuration["Saml:AcsUrl"],
-                SamlGroupsAttribute = "http://schemas.xmlsoap.org/claims/Group",
-            });
+            app.UseNDjangoAdminDashboard("/admin");
 
             app.UseSwagger();
             app.UseSwaggerUI();

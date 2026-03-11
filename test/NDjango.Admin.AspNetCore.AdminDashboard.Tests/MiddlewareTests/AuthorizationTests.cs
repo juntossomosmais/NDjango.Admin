@@ -55,17 +55,18 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                         {
                             services.AddDbContext<TestDbContext>(options =>
                                 options.UseSqlServer(connectionString));
-                            services.AddNDjangoAdminDashboard<TestDbContext>();
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    Authorization = new IAdminDashboardAuthorizationFilter[]
+                                    {
+                                        new DenyAllFilter()
+                                    }
+                                });
                         })
                         .Configure(app =>
                         {
-                            app.UseNDjangoAdminDashboard("/admin", new AdminDashboardOptions
-                            {
-                                Authorization = new IAdminDashboardAuthorizationFilter[]
-                                {
-                                    new DenyAllFilter()
-                                }
-                            });
+                            app.UseNDjangoAdminDashboard("/admin");
                         });
                 })
                 .Start();

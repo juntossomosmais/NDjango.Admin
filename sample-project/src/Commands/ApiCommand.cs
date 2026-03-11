@@ -27,7 +27,15 @@ public class ApiCommand : ICommand
         {
             services.ConfigureSharedServices(_configuration);
 
-            services.AddNDjangoAdminDashboard<AppDbContext>();
+            services.AddNDjangoAdminDashboard<AppDbContext>(
+                new NDjango.Admin.AspNetCore.AdminDashboard.AdminDashboardOptions
+                {
+                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                    DashboardTitle = "Sample Admin",
+                    RequireAuthentication = true,
+                    CreateDefaultAdminUser = true,
+                    DefaultAdminPassword = "admin",
+                });
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();
@@ -44,14 +52,7 @@ public class ApiCommand : ICommand
                 dbContext.Database.EnsureCreated();
             }
 
-            app.UseNDjangoAdminDashboard("/admin", new NDjango.Admin.AspNetCore.AdminDashboard.AdminDashboardOptions
-            {
-                Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                DashboardTitle = "Sample Admin",
-                RequireAuthentication = true,
-                CreateDefaultAdminUser = true,
-                DefaultAdminPassword = "admin",
-            });
+            app.UseNDjangoAdminDashboard("/admin");
 
             app.UseSwagger();
             app.UseSwaggerUI();
