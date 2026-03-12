@@ -7,6 +7,7 @@ public class AppDbContext : DbContext
     public DbSet<RestaurantProfile> RestaurantProfiles { get; set; }
     public DbSet<Ingredient> Ingredients { get; set; }
     public DbSet<MenuItem> MenuItems { get; set; }
+    public DbSet<Gift> Gifts { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {

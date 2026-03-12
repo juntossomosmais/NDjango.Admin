@@ -57,3 +57,22 @@ public class MenuItem : StandardEntity
 
     public IList<Ingredient> Ingredients { get; set; }
 }
+
+public class Gift : StandardEntity
+{
+    public string Name { get; set; }
+    public bool IsWrapped { get; set; }
+    public Guid TrackingCode { get; set; }
+    public decimal Price { get; set; }
+    public long Barcode { get; set; }
+    public double Weight { get; set; }
+    public float Rating { get; set; }
+    public short QuantityInStock { get; set; }
+    public byte MinAge { get; set; }
+    public DateTimeOffset ShippedAt { get; set; }
+    public TimeSpan PreparationTime { get; set; }
+    public DateOnly ExpirationDate { get; set; }
+    public TimeOnly AvailableFrom { get; set; }
+    public string Description { get; set; } = "";
+    public string Notes { get; set; } = "";
+}

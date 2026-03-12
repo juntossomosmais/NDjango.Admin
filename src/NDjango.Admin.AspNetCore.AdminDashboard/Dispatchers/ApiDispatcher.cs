@@ -152,15 +152,18 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             foreach (var attr in entity.Attributes) {
                 string propName;
                 DataType dataType;
+                Type clrType;
 
                 if (attr.Kind == EntityAttrKind.Lookup) {
                     if (attr.DataAttr == null) continue;
                     propName = attr.DataAttr.PropName;
                     dataType = attr.DataAttr.DataType;
+                    clrType = attr.DataAttr.PropInfo?.PropertyType;
                 }
                 else {
                     propName = attr.PropName;
                     dataType = attr.DataType;
+                    clrType = attr.PropInfo?.PropertyType;
                 }
 
                 if (form.TryGetValue(propName, out var formValue)) {
@@ -168,7 +171,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                     if (value != null) {
                         if (string.IsNullOrEmpty(value) && dataType != DataType.String)
                             continue;
-                        props[propName] = JToken.FromObject(ConvertValue(value, dataType));
+                        props[propName] = JToken.FromObject(ConvertValue(value, dataType, clrType));
                     }
                 }
                 else if (dataType == DataType.Bool && attr.IsEditable) {
@@ -178,10 +181,21 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             return props;
         }
 
-        private static object ConvertValue(string value, DataType dataType)
+        private static object ConvertValue(string value, DataType dataType, Type clrType = null)
         {
             if (string.IsNullOrEmpty(value))
                 return value;
+
+            var underlyingType = clrType != null ? Nullable.GetUnderlyingType(clrType) ?? clrType : null;
+
+            if (underlyingType == typeof(DateOnly))
+                return DateOnly.TryParse(value, out var d) ? d : (object)value;
+
+            if (underlyingType == typeof(TimeOnly))
+                return TimeOnly.TryParse(value, out var t) ? t : (object)value;
+
+            if (underlyingType == typeof(DateTimeOffset))
+                return DateTimeOffset.TryParse(value, out var dto) ? dto : (object)value;
 
             return dataType switch
             {
@@ -193,6 +207,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                     System.Globalization.CultureInfo.InvariantCulture, out var m) ? m : (object)value,
                 DataType.Bool => value == "on" || value == "true" || value == "True",
                 DataType.Date or DataType.DateTime => DateTime.TryParse(value, out var dt) ? dt : (object)value,
+                DataType.Time => TimeSpan.TryParse(value, out var ts) ? ts : (object)value,
                 DataType.Guid => Guid.TryParse(value, out var g) ? g : (object)value,
                 _ => value,
             };

@@ -61,12 +61,18 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
         {
             // Arrange
             var cookie = await LoginAndGetCookieAsync();
-            var request = new HttpRequestMessage(HttpMethod.Get, "/admin/AuthPermission/");
-            request.Headers.Add("Cookie", cookie);
 
-            // Act
-            var response = await _client.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
+            // Act — fetch pages until the target permissions are found or no more results
+            var content = "";
+            for (var page = 1; page <= 5; page++)
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, $"/admin/AuthPermission/?page={page}");
+                request.Headers.Add("Cookie", cookie);
+                var response = await _client.SendAsync(request);
+                content += await response.Content.ReadAsStringAsync();
+                if (content.Contains("view_authgroup"))
+                    break;
+            }
 
             // Assert
             Assert.Contains("add_authgroup", content);

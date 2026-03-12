@@ -16,6 +16,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public DbSet<RestaurantProfile> RestaurantProfiles { get; set; }
         public DbSet<Ingredient> Ingredients { get; set; }
         public DbSet<MenuItem> MenuItems { get; set; }
+        public DbSet<Gift> Gifts { get; set; }
 
         public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
@@ -27,6 +28,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                 .HasOne(rp => rp.Restaurant)
                 .WithOne()
                 .HasForeignKey<RestaurantProfile>(rp => rp.RestaurantId);
+
+            modelBuilder.Entity<Gift>()
+                .Property(g => g.Price).HasPrecision(10, 2);
         }
     }
 
@@ -96,5 +100,29 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
 
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; }
+    }
+
+    public class Gift
+    {
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        public string Name { get; set; }
+
+        public bool IsWrapped { get; set; }
+        public Guid TrackingCode { get; set; }
+        public decimal Price { get; set; }
+        public long Barcode { get; set; }
+        public double Weight { get; set; }
+        public float Rating { get; set; }
+        public short QuantityInStock { get; set; }
+        public byte MinAge { get; set; }
+        public DateTimeOffset ShippedAt { get; set; }
+        public TimeSpan PreparationTime { get; set; }
+        public DateOnly ExpirationDate { get; set; }
+        public TimeOnly AvailableFrom { get; set; }
+        public string Description { get; set; } = "";
+        public string Notes { get; set; } = "";
     }
 }

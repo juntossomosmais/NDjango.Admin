@@ -167,7 +167,7 @@ h1 {
 }
 
 /* Changelist / List view */
-#changelist { margin-top: 10px; }
+#changelist { margin-top: 10px; overflow-x: auto; }
 
 #toolbar {
     display: flex;
