@@ -28,12 +28,5 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         public object Value { get; set; }
         public string DisplayFormat { get; set; }
         public string LookupEntityId { get; set; }
-        public List<LookupItem> LookupItems { get; set; }
-    }
-
-    public class LookupItem
-    {
-        public string Id { get; set; }
-        public string Text { get; set; }
     }
 }

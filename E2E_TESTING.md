@@ -105,13 +105,13 @@ The admin home at `/admin/` shows models organized in sections:
 
 ### User Models
 
-| Model | URL prefix | Relationships |
-|---|---|---|
-| Category | `/admin/Category/` | Standalone |
-| Restaurant | `/admin/Restaurant/` | Has 1:1 RestaurantProfile, has many MenuItems |
-| RestaurantProfile | `/admin/RestaurantProfile/` | FK dropdown → Restaurant (1:1) |
-| Ingredient | `/admin/Ingredient/` | Standalone (has M2M with MenuItem, not yet supported in UI) |
-| MenuItem | `/admin/MenuItem/` | FK dropdown → Restaurant (N:1) |
+| Model | URL prefix | Relationships | `IAdminSettings` |
+|---|---|---|---|
+| Category | `/admin/Category/` | Standalone | `SearchFields`: Name, Description |
+| Restaurant | `/admin/Restaurant/` | Has 1:1 RestaurantProfile, has many MenuItems | `SearchFields`: Name |
+| RestaurantProfile | `/admin/RestaurantProfile/` | FK text input + lookup popup → Restaurant (1:1) | None |
+| Ingredient | `/admin/Ingredient/` | Standalone (has M2M with MenuItem, not yet supported in UI) | None |
+| MenuItem | `/admin/MenuItem/` | FK text input + lookup popup → Restaurant (N:1) | None |
 
 ### Authentication and Authorization (when auth enabled)
 
@@ -194,21 +194,23 @@ All models inherit from `StandardEntity` which has `Id`, `CreatedAt`, `UpdatedAt
 - `Capacity` — number (spinbutton), required
 - `OpeningHours` — textbox, required
 - `Website` — textbox, required (has default empty string)
-- `Restaurant` — **dropdown (combobox)**, required, shows all Restaurants by name
+- `Restaurant` — **text input + lookup popup** (raw FK ID), required
 
 **Test steps:**
 1. **Ensure at least one Restaurant exists first**
 2. Navigate to `/admin/RestaurantProfile/add/`
-3. Verify the Restaurant dropdown (`combobox`) is present with restaurant names as options
-4. Fill Capacity, OpeningHours, Website
-5. Select a Restaurant from the dropdown
-6. Click Save → redirects to list
-7. Verify `RestaurantId` column in list matches the selected restaurant's ID
-8. Edit: verify dropdown has the correct restaurant pre-selected
+3. Verify the Restaurant field renders as a text input (`class="vForeignKeyRawIdAdminField"`) with a lookup icon (`class="related-lookup"`)
+4. The lookup icon links to `/admin/Restaurant/?_to_field=id&_popup=1`
+5. Type the Restaurant ID directly (e.g., `1`) or click the lookup icon to open a popup
+6. Fill Capacity, OpeningHours, Website
+7. Click Save → redirects to list
+8. Verify `RestaurantId` column in list matches the entered ID
+9. Edit: verify text input shows the current FK ID value (e.g., `1`)
 
-**FK dropdown details:**
-- The `<select>` element has `name="RestaurantId"` (the FK property name, not the navigation property name "Restaurant")
-- Options show the restaurant's display text (Name field), with the PK as the `value`
+**FK field details:**
+- The `<input type="text">` element has `name="RestaurantId"` (the FK property name, not the navigation property name "Restaurant")
+- The value is the raw FK ID (e.g., `1`), not a display name
+- The lookup icon opens a popup window with the related entity's list view
 
 ### MenuItem (N:1 FK to Restaurant)
 
@@ -217,18 +219,19 @@ All models inherit from `StandardEntity` which has `Id`, `CreatedAt`, `UpdatedAt
 - `IsAvailable` — checkbox (default true)
 - `Name` — textbox, required
 - `Price` — number with step=any (spinbutton), required
-- `Restaurant` — **dropdown (combobox)**, required, shows all Restaurants by name
+- `Restaurant` — **text input + lookup popup** (raw FK ID), required
 
 **Test steps:**
 1. **Ensure at least one Restaurant exists first**
 2. Navigate to `/admin/MenuItem/add/`
-3. Verify the Restaurant dropdown is present
-4. Fill Name, Description, Price (use `.` as decimal separator, e.g., `14.99`)
-5. Check/uncheck IsAvailable
-6. Select a Restaurant
-7. Click Save → redirects to list
-8. Verify record in list with correct RestaurantId
-9. Edit: verify all fields are pre-filled correctly, dropdown has correct selection
+3. Verify the Restaurant field renders as a text input (`class="vForeignKeyRawIdAdminField"`) with a lookup icon (`class="related-lookup"`)
+4. The lookup icon links to `/admin/Restaurant/?_to_field=id&_popup=1`
+5. Type the Restaurant ID directly (e.g., `1`) or click the lookup icon to open a popup
+6. Fill Name, Description, Price (use `.` as decimal separator, e.g., `14.99`)
+7. Check/uncheck IsAvailable
+8. Click Save → redirects to list
+9. Verify record in list with correct RestaurantId
+10. Edit: verify all fields are pre-filled correctly, text input shows current FK ID
 
 **Price locale note:** The list view may display prices with comma as decimal separator (e.g., `14,99`) depending on server locale. The form uses `<input type="number" step="any">`.
 
@@ -278,14 +281,14 @@ With 10 entities (5 user + 5 auth), expect 40 permissions total (25 per page, pa
 ### AuthGroupPermission
 
 **Editable fields:**
-- `GroupId` — FK dropdown to AuthGroup
-- `PermissionId` — FK dropdown to AuthPermission
+- `GroupId` — FK text input + lookup popup to AuthGroup
+- `PermissionId` — FK text input + lookup popup to AuthPermission
 
 ### AuthUserGroup
 
 **Editable fields:**
-- `UserId` — FK dropdown to AuthUser
-- `GroupId` — FK dropdown to AuthGroup
+- `UserId` — FK text input + lookup popup to AuthUser
+- `GroupId` — FK text input + lookup popup to AuthGroup
 
 ## Permission Enforcement
 
@@ -329,7 +332,9 @@ Every create/edit form has three save buttons:
 
 ## List View Features
 
-- **Search:** Text box at top, submits as `?q=term` query param, filters via substring match
+- **Search (conditional):** Search is **opt-in** via `IAdminSettings<T>.SearchFields`. Only entities that implement `IAdminSettings<T>` with non-empty `SearchFields` show the search box. When present, the text box submits as `?q=term` and filters via substring match on the configured fields only. Entities without `IAdminSettings` or with empty `SearchFields` do not render the search box and ignore `?q=` parameters.
+  - **With search:** Category (Name, Description), Restaurant (Name)
+  - **Without search:** RestaurantProfile, Ingredient, MenuItem, and all Auth entities
 - **Sorting:** Click column headers to sort. URL: `?sort=FieldName&dir=asc` or `dir=desc`. Active sort shows arrow (▲/▼)
 - **Pagination:** Shows page numbers at bottom when records exceed `DefaultRecordsPerPage` (25). URL: `?page=N`
 - **Record count:** Shows "N {model_name}" above the table
@@ -364,8 +369,60 @@ When running a full E2E test pass, verify in this order:
 8. **Category** — full CRUD (create, list, edit, delete)
 9. **Ingredient** — create with boolean field, edit, delete
 10. **Restaurant** — full CRUD
-11. **RestaurantProfile** — create with FK dropdown to Restaurant, edit, delete
-12. **MenuItem** — create with FK dropdown to Restaurant, edit, delete
+11. **RestaurantProfile** — create with FK text input + lookup popup to Restaurant, edit, delete
+12. **MenuItem** — create with FK text input + lookup popup to Restaurant, edit, delete
+
+### Phase 3a: Conditional Search + FK Lookup Popup
+
+#### Conditional Search
+
+Search is opt-in via `IAdminSettings<T>.SearchFields`. The search box only appears on list views for entities that implement this interface with non-empty `SearchFields`.
+
+**Test steps:**
+
+12a. **Search box visible (Category)** — Navigate to `/admin/Category/`. Verify a search box (textbox "Search..." + "Search" button) is present in the toolbar. Category implements `IAdminSettings<Category>` with `SearchFields => new(x => x.Name, x => x.Description)`.
+
+12b. **Search box visible (Restaurant)** — Navigate to `/admin/Restaurant/`. Verify the search box is present. Restaurant implements `IAdminSettings<Restaurant>` with `SearchFields => new(x => x.Name)`.
+
+12c. **Search box hidden (RestaurantProfile)** — Navigate to `/admin/RestaurantProfile/`. Verify there is **no** search box in the toolbar — only the "Add" link. RestaurantProfile does not implement `IAdminSettings`.
+
+12d. **Search box hidden (Ingredient)** — Navigate to `/admin/Ingredient/`. Verify there is **no** search box. Ingredient does not implement `IAdminSettings`.
+
+12e. **Search box hidden (MenuItem)** — Navigate to `/admin/MenuItem/`. Verify there is **no** search box.
+
+12f. **Search filters correctly** — With at least two categories (e.g., "Italian" and "Japanese"), navigate to `/admin/Category/?q=Italian`. Verify only the matching row appears (count shows "1 category") and "Japanese" is not in the results.
+
+12g. **Search ignored on non-searchable entity** — Navigate to `/admin/RestaurantProfile/?q=something`. Verify all records still display (the `?q=` param is ignored when no `SearchFields` are configured).
+
+#### FK Lookup Popup
+
+FK fields render as a plain text input (showing the raw FK ID) plus a lookup icon, matching Django Admin's `raw_id_fields` pattern. No `<select>` dropdowns.
+
+**Test steps:**
+
+12h. **FK text input + lookup icon (MenuItem → Restaurant)** — Navigate to `/admin/MenuItem/add/`. Verify the Restaurant field renders as:
+  - A text input with `class="vForeignKeyRawIdAdminField"`
+  - A lookup link with `class="related-lookup"` containing a magnifying glass icon
+  - The lookup link URL contains `/admin/Restaurant/?_to_field=id&_popup=1`
+  - There is **no** `<select>` element for the FK field
+
+12i. **FK text input + lookup icon (RestaurantProfile → Restaurant)** — Navigate to `/admin/RestaurantProfile/add/`. Same assertions as 12h.
+
+12j. **Popup renders simplified layout** — Navigate directly to `/admin/Restaurant/?_popup=1`. Verify:
+  - The page has `class="popup"` on the `<body>` tag
+  - There is **no** `id="header"` element (no site header)
+  - There is **no** `id="sidebar"` element (no navigation sidebar)
+  - The table rows have links with `class="popup-select"` and `data-pk` attributes (not links to change views)
+
+12k. **Popup respects conditional search** — Navigate to `/admin/Restaurant/?_popup=1`. Since Restaurant has `SearchFields`, the popup should show a search box. Navigate to `/admin/Ingredient/?_popup=1` (no `IAdminSettings`) — no search box.
+
+12l. **Popup search preserves popup params** — Navigate to `/admin/Restaurant/?_popup=1&_to_field=id`. Verify the search form contains hidden inputs: `name="_popup" value="1"` and `name="_to_field" value="id"`.
+
+12m. **Popup search filters results** — Navigate to `/admin/Restaurant/?_popup=1&_to_field=id&q=Bella`. Verify only matching restaurants appear.
+
+12n. **FK value saves correctly** — On `/admin/MenuItem/add/`, type `1` in the Restaurant text input, fill other required fields, click Save. Verify redirect to list and `RestaurantId` column shows `1`.
+
+12o. **FK value pre-filled on edit** — Navigate to the edit form of the MenuItem created in 12n. Verify the Restaurant text input shows `1` as its value.
 
 ### Phase 4: Auth Entity CRUD
 
@@ -383,7 +440,7 @@ When running a full E2E test pass, verify in this order:
 
 ### Phase 6: List Features
 
-21. **Search** — search on any list page, verify filtered results
+21. **Conditional search** — see Phase 3a above for detailed steps
 22. **Sorting** — click column header, verify sort direction toggle
 23. **Pagination** — AuthPermission list has 40 items (25/page), verify page 2
 

@@ -57,12 +57,21 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             // Assert
             Assert.Equal(HttpStatusCode.Redirect, deleteResponse.StatusCode);
 
-            var listResponse = await _client.GetAsync("/admin/Ingredient/?q=DeleteTest_");
-            var listHtml = await listResponse.Content.ReadAsStringAsync();
+            // Verify A still exists
+            var responseA = await _client.GetAsync($"/admin/Ingredient/{ids[0]}/change/");
+            var htmlA = await responseA.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, responseA.StatusCode);
+            Assert.Contains("DeleteTest_A", htmlA);
 
-            Assert.Contains("DeleteTest_A", listHtml);
-            Assert.DoesNotContain("DeleteTest_B", listHtml);
-            Assert.Contains("DeleteTest_C", listHtml);
+            // Verify B was deleted (fetching it should throw or return error)
+            await Assert.ThrowsAnyAsync<Exception>(() =>
+                _client.GetAsync($"/admin/Ingredient/{ids[1]}/change/"));
+
+            // Verify C still exists
+            var responseC = await _client.GetAsync($"/admin/Ingredient/{ids[2]}/change/");
+            var htmlC = await responseC.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, responseC.StatusCode);
+            Assert.Contains("DeleteTest_C", htmlC);
         }
 
         [Fact]

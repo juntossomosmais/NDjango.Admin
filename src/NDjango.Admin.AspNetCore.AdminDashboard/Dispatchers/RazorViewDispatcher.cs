@@ -94,11 +94,16 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             var sortField = query["sort"].FirstOrDefault();
             var sortDir = query["dir"].FirstOrDefault() ?? "asc";
 
+            var isSearchEnabled = entity.SearchFields != null && entity.SearchFields.Count > 0;
+            var isPopup = query["_popup"].FirstOrDefault() == "1";
+            var toField = query["_to_field"].FirstOrDefault();
+
             var filters = new List<NDjango.Admin.Services.EasyFilter>();
-            if (!string.IsNullOrEmpty(searchQuery)) {
+            if (isSearchEnabled && !string.IsNullOrEmpty(searchQuery)) {
                 var model = await metadataService.GetModelAsync(ct);
                 var filter = new SubstringFilter(model);
-                var json = $"{{\"class\":\"{SubstringFilter.Class}\",\"value\":\"{searchQuery.Replace("\"", "\\\"")}\"}}";
+                var jobj = new JObject { ["class"] = SubstringFilter.Class, ["value"] = searchQuery };
+                var json = jobj.ToString(Newtonsoft.Json.Formatting.None);
                 using (var sr = new System.IO.StringReader(json))
                 using (var jr = new Newtonsoft.Json.JsonTextReader(sr)) {
                     await filter.ReadFromJsonAsync(jr, ct);
@@ -175,7 +180,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 SortField = sortField,
                 SortDirection = sortDir,
                 PrimaryKeyField = pkAttr?.PropName,
-                SidebarGroups = sidebarGroups
+                SidebarGroups = sidebarGroups,
+                IsSearchEnabled = isSearchEnabled,
+                IsPopup = isPopup,
+                ToField = toField
             };
 
             await ViewRenderer.RenderEntityListViewAsync(context.HttpContext, viewModel, context.AuthenticatedUsername);
@@ -223,12 +231,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                         LookupEntityId = attr.LookupEntity != null
                             ? AdminMetadataService.GetEntityName(attr.LookupEntity) : null,
                     };
-
-                    if (attr.LookupEntity != null) {
-                        var lookupEntityId = AdminMetadataService.GetEntityName(attr.LookupEntity);
-                        var lookupDataset = await metadataService.FetchDatasetAsync(lookupEntityId, null, null, true, null, null, ct);
-                        field.LookupItems = BuildLookupItems(attr.LookupEntity, lookupDataset);
-                    }
 
                     if (record != null && attr.DataAttr?.PropInfo != null) {
                         field.Value = attr.DataAttr.PropInfo.GetValue(record);
@@ -322,41 +324,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             };
 
             await ViewRenderer.RenderEntityDeleteViewAsync(context.HttpContext, viewModel, context.AuthenticatedUsername);
-        }
-
-        private List<LookupItem> BuildLookupItems(MetaEntity lookupEntity, NDjangoAdminResultSet dataset)
-        {
-            var items = new List<LookupItem>();
-            var pkCol = dataset.Cols.FirstOrDefault(c => {
-                var attr = lookupEntity.Attributes.FirstOrDefault(a => a.Id == c.OrginAttrId);
-                return attr != null && attr.IsPrimaryKey;
-            });
-            if (pkCol == null) return items;
-
-            var pkIdx = dataset.Cols.IndexOf(pkCol);
-            var displayCols = dataset.Cols
-                .Where(c => {
-                    var attr = lookupEntity.Attributes.FirstOrDefault(a => a.Id == c.OrginAttrId);
-                    return attr != null && attr.ShowInLookup;
-                })
-                .Select(c => dataset.Cols.IndexOf(c))
-                .ToList();
-
-            if (displayCols.Count == 0) {
-                var stringCols = dataset.Cols
-                    .Where(c => c.DataType == DataType.String)
-                    .Select(c => dataset.Cols.IndexOf(c))
-                    .ToList();
-                displayCols = stringCols.Count > 0 ? stringCols : new List<int> { pkIdx };
-            }
-
-            foreach (var row in dataset.Rows) {
-                var id = row[pkIdx]?.ToString();
-                var textParts = displayCols.Select(i => row[i]?.ToString() ?? "").ToList();
-                items.Add(new LookupItem { Id = id, Text = string.Join(" ", textParts) });
-            }
-
-            return items;
         }
 
         private async Task<Dictionary<string, List<EntityGroupItem>>> BuildSidebarGroupsAsync(

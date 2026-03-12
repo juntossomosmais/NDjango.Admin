@@ -92,17 +92,24 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
 
         public static async Task RenderEntityListViewAsync(HttpContext httpContext, EntityListViewModel model, string authenticatedUsername = null)
         {
+            if (model.IsPopup) {
+                await RenderPopupEntityListViewAsync(httpContext, model);
+                return;
+            }
+
             var content = new StringBuilder();
             content.Append($"<h1>Select {Encode(model.EntityNamePlural.ToLower())} to change</h1>");
 
             // Search + Add bar
             content.Append("<div id=\"changelist\">");
             content.Append("<div id=\"toolbar\">");
-            content.Append($"<form method=\"get\" action=\"{model.BasePath}/{model.EntityId}/\">");
-            content.Append("<div class=\"search-box\">");
-            content.Append($"<input type=\"text\" name=\"q\" value=\"{Encode(model.SearchQuery ?? "")}\" placeholder=\"Search...\" />");
-            content.Append("<button type=\"submit\">Search</button>");
-            content.Append("</div></form>");
+            if (model.IsSearchEnabled) {
+                content.Append($"<form method=\"get\" action=\"{model.BasePath}/{model.EntityId}/\">");
+                content.Append("<div class=\"search-box\">");
+                content.Append($"<input type=\"text\" name=\"q\" value=\"{Encode(model.SearchQuery ?? "")}\" placeholder=\"Search...\" />");
+                content.Append("<button type=\"submit\">Search</button>");
+                content.Append("</div></form>");
+            }
             if (!model.IsReadOnly) {
                 content.Append($"<a href=\"{model.BasePath}/{model.EntityId}/add/\" class=\"addlink\">Add {Encode(model.EntityName.ToLower())}</a>");
             }
@@ -147,46 +154,89 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
 
             content.Append("</tbody></table>");
 
-            // Pagination — render a sliding window of page links to avoid
-            // generating millions of links when the count falls back to a huge value.
-            const int maxPageLinks = 10;
-            if (model.TotalPages > 1) {
-                content.Append("<div class=\"pagination\">");
-
-                var half = maxPageLinks / 2;
-                var startPage = Math.Max(1, model.CurrentPage - half);
-                var endPage = Math.Min(model.TotalPages, startPage + maxPageLinks - 1);
-                startPage = Math.Max(1, endPage - maxPageLinks + 1);
-
-                if (startPage > 1) {
-                    var qs = BuildPageQuery(model, 1);
-                    content.Append($"<a href=\"{model.BasePath}/{model.EntityId}/?{qs}\">1</a> ");
-                    if (startPage > 2)
-                        content.Append("<span class=\"page-ellipsis\">&hellip;</span> ");
-                }
-
-                for (int p = startPage; p <= endPage; p++) {
-                    var qs = BuildPageQuery(model, p);
-                    if (p == model.CurrentPage)
-                        content.Append($"<span class=\"this-page\">{p}</span> ");
-                    else
-                        content.Append($"<a href=\"{model.BasePath}/{model.EntityId}/?{qs}\">{p}</a> ");
-                }
-
-                if (endPage < model.TotalPages) {
-                    if (endPage < model.TotalPages - 1)
-                        content.Append("<span class=\"page-ellipsis\">&hellip;</span> ");
-                    var qs = BuildPageQuery(model, model.TotalPages);
-                    content.Append($"<a href=\"{model.BasePath}/{model.EntityId}/?{qs}\">{model.TotalPages}</a> ");
-                }
-
-                content.Append("</div>");
-            }
+            RenderPagination(content, model);
 
             content.Append("</div>");
 
             var breadcrumbs = new[] { ("Home", model.BasePath + "/"), (model.EntityNamePlural, (string)null) };
             await WriteLayoutAsync(httpContext, model.Title, model.BasePath, model.EntityNamePlural, content.ToString(), model.SidebarGroups, breadcrumbs, authenticatedUsername);
+        }
+
+        private static async Task RenderPopupEntityListViewAsync(HttpContext httpContext, EntityListViewModel model)
+        {
+            httpContext.Response.ContentType = "text/html; charset=utf-8";
+            httpContext.Response.StatusCode = 200;
+
+            var sb = new StringBuilder();
+            sb.Append("<!DOCTYPE html><html lang=\"en\"><head>");
+            sb.Append("<meta charset=\"utf-8\" />");
+            sb.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />");
+            sb.Append($"<title>Select {Encode(model.EntityNamePlural.ToLower())}</title>");
+            sb.Append($"<link rel=\"stylesheet\" href=\"{model.BasePath}/css/admin-dashboard.css\" />");
+            sb.Append("</head><body class=\"popup\">");
+
+            sb.Append("<div id=\"content\">");
+            sb.Append($"<h1>Select {Encode(model.EntityNamePlural.ToLower())}</h1>");
+
+            // Search + toolbar
+            sb.Append("<div id=\"changelist\">");
+            sb.Append("<div id=\"toolbar\">");
+            if (model.IsSearchEnabled) {
+                sb.Append($"<form method=\"get\" action=\"{model.BasePath}/{model.EntityId}/\">");
+                sb.Append("<input type=\"hidden\" name=\"_popup\" value=\"1\" />");
+                if (!string.IsNullOrEmpty(model.ToField))
+                    sb.Append($"<input type=\"hidden\" name=\"_to_field\" value=\"{Encode(model.ToField)}\" />");
+                sb.Append("<div class=\"search-box\">");
+                sb.Append($"<input type=\"text\" name=\"q\" value=\"{Encode(model.SearchQuery ?? "")}\" placeholder=\"Search...\" />");
+                sb.Append("<button type=\"submit\">Search</button>");
+                sb.Append("</div></form>");
+            }
+            sb.Append("</div>");
+
+            // Results count
+            sb.Append($"<p class=\"paginator\">{model.TotalRecords} {Encode(model.TotalRecords == 1 ? model.EntityName.ToLower() : model.EntityNamePlural.ToLower())}</p>");
+
+            // Table
+            sb.Append("<table id=\"result_list\"><thead><tr>");
+            foreach (var col in model.Columns) {
+                sb.Append($"<th>{Encode(col.Caption)}</th>");
+            }
+            sb.Append("</tr></thead><tbody>");
+
+            foreach (var row in model.Rows) {
+                string pkValue = "";
+                if (model.PrimaryKeyField != null) {
+                    row.TryGetValue(model.PrimaryKeyField, out var pkVal);
+                    pkValue = pkVal?.ToString() ?? "";
+                }
+
+                sb.Append("<tr>");
+                bool first = true;
+                foreach (var col in model.Columns) {
+                    row.TryGetValue(col.PropName, out var cellVal);
+                    var displayValue = cellVal?.ToString() ?? "";
+                    if (first) {
+                        sb.Append($"<td><a href=\"#\" class=\"popup-select\" data-pk=\"{Encode(pkValue)}\">{Encode(displayValue)}</a></td>");
+                    }
+                    else {
+                        sb.Append($"<td>{Encode(displayValue)}</td>");
+                    }
+                    first = false;
+                }
+                sb.Append("</tr>");
+            }
+
+            sb.Append("</tbody></table>");
+
+            RenderPagination(sb, model);
+
+            sb.Append("</div>"); // #changelist
+            sb.Append("</div>"); // #content
+
+            sb.Append($"<script src=\"{model.BasePath}/js/admin-dashboard.js\"></script>");
+            sb.Append("</body></html>");
+
+            await httpContext.Response.WriteAsync(sb.ToString());
         }
 
         public static async Task RenderEntityFormViewAsync(HttpContext httpContext, EntityFormViewModel model, string authenticatedUsername = null)
@@ -214,7 +264,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                     content.Append($"<span class=\"readonly-value\">{Encode(displayValue)}</span>");
                 }
                 else if (field.Kind == EntityAttrKind.Lookup) {
-                    RenderSelectField(content, field);
+                    RenderSelectField(content, field, model.BasePath);
                 }
                 else {
                     RenderInputField(content, field);
@@ -317,22 +367,21 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             }
         }
 
-        private static void RenderSelectField(StringBuilder content, FieldViewModel field)
+        private static void RenderSelectField(StringBuilder content, FieldViewModel field, string basePath)
         {
             var id = $"id_{field.PropName}";
             var required = field.IsRequired ? " required" : "";
-            content.Append($"<select id=\"{id}\" name=\"{field.PropName}\"{required}>");
-            if (!field.IsRequired)
-                content.Append("<option value=\"\">---------</option>");
+            var value = field.Value?.ToString() ?? "";
 
-            if (field.LookupItems != null) {
-                foreach (var item in field.LookupItems) {
-                    var selected = field.Value?.ToString() == item.Id ? " selected" : "";
-                    content.Append($"<option value=\"{Encode(item.Id)}\"{selected}>{Encode(item.Text)}</option>");
-                }
+            // Text input showing raw FK ID (like Django's raw_id_fields)
+            content.Append($"<input type=\"text\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\" class=\"vForeignKeyRawIdAdminField\"{required} />");
+
+            // Lookup icon
+            if (!string.IsNullOrEmpty(field.LookupEntityId))
+            {
+                var popupUrl = $"{basePath}/{field.LookupEntityId}/?_to_field=id&_popup=1";
+                content.Append($" <a href=\"{popupUrl}\" class=\"related-lookup\" id=\"lookup_{id}\" onclick=\"return showRelatedObjectLookupPopup(this);\" title=\"Lookup\">&#128269;</a>");
             }
-
-            content.Append("</select>");
         }
 
         internal static async Task WriteLayoutAsync(HttpContext httpContext, string title, string basePath,
@@ -412,6 +461,48 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             await httpContext.Response.WriteAsync(sb.ToString());
         }
 
+        /// <summary>
+        /// Renders a sliding window of pagination links to avoid generating
+        /// millions of links when the count falls back to a huge value.
+        /// </summary>
+        private static void RenderPagination(StringBuilder sb, EntityListViewModel model)
+        {
+            const int maxPageLinks = 10;
+            if (model.TotalPages <= 1)
+                return;
+
+            sb.Append("<div class=\"pagination\">");
+
+            var half = maxPageLinks / 2;
+            var startPage = Math.Max(1, model.CurrentPage - half);
+            var endPage = Math.Min(model.TotalPages, startPage + maxPageLinks - 1);
+            startPage = Math.Max(1, endPage - maxPageLinks + 1);
+
+            if (startPage > 1) {
+                var qs = BuildPageQuery(model, 1);
+                sb.Append($"<a href=\"{model.BasePath}/{model.EntityId}/?{qs}\">1</a> ");
+                if (startPage > 2)
+                    sb.Append("<span class=\"page-ellipsis\">&hellip;</span> ");
+            }
+
+            for (int p = startPage; p <= endPage; p++) {
+                var qs = BuildPageQuery(model, p);
+                if (p == model.CurrentPage)
+                    sb.Append($"<span class=\"this-page\">{p}</span> ");
+                else
+                    sb.Append($"<a href=\"{model.BasePath}/{model.EntityId}/?{qs}\">{p}</a> ");
+            }
+
+            if (endPage < model.TotalPages) {
+                if (endPage < model.TotalPages - 1)
+                    sb.Append("<span class=\"page-ellipsis\">&hellip;</span> ");
+                var qs = BuildPageQuery(model, model.TotalPages);
+                sb.Append($"<a href=\"{model.BasePath}/{model.EntityId}/?{qs}\">{model.TotalPages}</a> ");
+            }
+
+            sb.Append("</div>");
+        }
+
         private static string BuildPageQuery(EntityListViewModel model, int page)
         {
             var parts = new List<string> { $"page={page}" };
@@ -420,6 +511,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             if (!string.IsNullOrEmpty(model.SortField)) {
                 parts.Add($"sort={model.SortField}");
                 parts.Add($"dir={model.SortDirection}");
+            }
+            if (model.IsPopup) {
+                parts.Add("_popup=1");
+                if (!string.IsNullOrEmpty(model.ToField))
+                    parts.Add($"_to_field={System.Net.WebUtility.UrlEncode(model.ToField)}");
             }
             return string.Join("&", parts);
         }

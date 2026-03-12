@@ -214,6 +214,26 @@ namespace NDjango.Admin.EntityFrameworkCore
 
             entity.ClrType = entityType.ClrType;
 
+            var adminSettingsInterface = entityType.ClrType.GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAdminSettings<>));
+
+            if (adminSettingsInterface != null)
+            {
+                try
+                {
+                    var instance = Activator.CreateInstance(entityType.ClrType);
+                    var searchFieldsProp = adminSettingsInterface.GetProperty("SearchFields");
+                    if (searchFieldsProp != null)
+                    {
+                        entity.SearchFields = searchFieldsProp.GetValue(instance) as IReadOnlyList<string>;
+                    }
+                }
+                catch (Exception ex) when (ex is MissingMethodException or TargetInvocationException or MemberAccessException)
+                {
+                    // Entity can't be instantiated - leave SearchFields null
+                }
+            }
+
             entity.NamePlural = DataUtils.MakePlural(entity.Name);
 
             var annotation = (MetaEntityAttribute)entityType.ClrType.GetCustomAttribute(typeof(MetaEntityAttribute));

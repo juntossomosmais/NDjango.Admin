@@ -11,6 +11,7 @@
 
 	<ItemGroup>
     <InternalsVisibleTo Include="Korzh.EasyQuery" />
+    <InternalsVisibleTo Include="NDjango.Admin.EntityFrameworkCore.Relational" />
   </ItemGroup>
 
   <ItemGroup>

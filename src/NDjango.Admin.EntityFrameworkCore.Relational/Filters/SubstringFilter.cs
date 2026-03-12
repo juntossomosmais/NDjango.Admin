@@ -9,7 +9,7 @@ namespace NDjango.Admin.Services
 {
     public sealed class SubstringFilter : EasyFilter
     {
-        public static string Class = "__substring";
+        public const string Class = "__substring";
 
         private string _filterText;
 
@@ -61,9 +61,17 @@ namespace NDjango.Admin.Services
 
         private FullTextSearchOptions GetFilterOptions(MetaEntity entity, bool isLookup)
         {
+            var searchFields = entity.SearchFields;
+
             return new FullTextSearchOptions
             {
                 Filter = (prop) => {
+                    if (searchFields != null && searchFields.Count > 0)
+                    {
+                        return searchFields.Contains(prop.Name);
+                    }
+
+                    // Legacy fallback
                     var attr = entity?.FindAttribute(a => a.PropInfo == prop);
                     if (attr == null)
                         return false;

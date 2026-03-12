@@ -461,6 +461,12 @@ body.login { background: var(--body-bg); }
     color: var(--primary-dark);
 }
 
+/* Popup */
+body.popup { margin: 10px; }
+body.popup #content { max-width: 100%; }
+.related-lookup { cursor: pointer; margin-left: 5px; text-decoration: none; font-size: 1.2em; }
+.vForeignKeyRawIdAdminField { width: auto; }
+
 /* Responsive */
 @media (max-width: 768px) {
     #main { flex-direction: column; padding: 15px; }

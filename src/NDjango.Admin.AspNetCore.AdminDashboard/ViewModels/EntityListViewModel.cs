@@ -21,6 +21,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         public string SortDirection { get; set; }
         public string PrimaryKeyField { get; set; }
         public Dictionary<string, List<EntityGroupItem>> SidebarGroups { get; set; }
+        public bool IsSearchEnabled { get; set; }
+        public bool IsPopup { get; set; }
+        public string ToField { get; set; }
     }
 
     public class ColumnViewModel

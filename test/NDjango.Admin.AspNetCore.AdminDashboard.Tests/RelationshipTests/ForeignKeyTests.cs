@@ -22,16 +22,15 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
         }
 
         [Fact]
-        public async Task RestaurantAddForm_RendersCategory_DropdownAsync()
+        public async Task RestaurantAddForm_RendersCategory_LookupFieldAsync()
         {
             var response = await _client.GetAsync("/admin/Restaurant/add/");
             var html = await response.Content.ReadAsStringAsync();
 
             response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("<select");
-            html.Should().Contain("Italian");
-            html.Should().Contain("Japanese");
-            html.Should().Contain("Mexican");
+            html.Should().Contain("<input type=\"text\"");
+            html.Should().Contain("class=\"vForeignKeyRawIdAdminField\"");
+            html.Should().Contain("class=\"related-lookup\"");
         }
 
         [Fact]
@@ -51,32 +50,30 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
         }
 
         [Fact]
-        public async Task MenuItemAddForm_RendersRestaurant_DropdownAsync()
+        public async Task MenuItemAddForm_RendersRestaurant_LookupFieldAsync()
         {
             var response = await _client.GetAsync("/admin/MenuItem/add/");
             var html = await response.Content.ReadAsStringAsync();
 
             response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("<select");
-            html.Should().Contain("Bella Roma");
-            html.Should().Contain("Sakura");
+            html.Should().Contain("<input type=\"text\"");
+            html.Should().Contain("class=\"vForeignKeyRawIdAdminField\"");
+            html.Should().Contain("class=\"related-lookup\"");
         }
 
         [Fact]
         public async Task FkDropdown_UsesDataAttributePropName_NotNavigationNameAsync()
         {
-            // The FK dropdown should use name="CategoryId" (the data attribute prop name),
+            // The FK field should use name="CategoryId" (the data attribute prop name),
             // not name="Category" (the navigation property name).
-            // Before the fix, the form sent the navigation name which didn't match
-            // what FormToJObject expected, causing FK constraint violations.
             var response = await _client.GetAsync("/admin/Restaurant/add/");
             var html = await response.Content.ReadAsStringAsync();
 
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             html.Should().Contain("name=\"CategoryId\"",
-                "FK dropdown should use the FK property name, not the navigation property name");
+                "FK field should use the FK property name, not the navigation property name");
             html.Should().NotContain("name=\"Category\"",
-                "FK dropdown should not use the navigation property name");
+                "FK field should not use the navigation property name");
         }
 
         [Fact]
@@ -87,13 +84,13 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
 
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             html.Should().Contain("name=\"RestaurantId\"",
-                "FK dropdown should use the FK property name");
+                "FK field should use the FK property name");
         }
 
         [Fact]
         public async Task EditFormFkDropdown_UsesDataAttributePropNameAsync()
         {
-            // The FK dropdown on edit forms should also use the data attribute prop name
+            // The FK field on edit forms should also use the data attribute prop name
             var response = await _client.GetAsync("/admin/Restaurant/1/change/");
             var html = await response.Content.ReadAsStringAsync();
 

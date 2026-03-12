@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using Newtonsoft.Json;
 
+
 namespace NDjango.Admin
 {
     /// <summary>
@@ -81,6 +82,12 @@ namespace NDjango.Admin
         /// </summary>
         /// <value>The type of the entity.</value>
         public Type ClrType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of property names that should be searchable.
+        /// Null means no IAdminSettings configured; empty list means configured but no search fields.
+        /// </summary>
+        public IReadOnlyList<string> SearchFields { get; internal set; }
 
 
         /// <summary>

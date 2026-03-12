@@ -714,6 +714,12 @@
             </summary>
             <value>The type of the entity.</value>
         </member>
+        <member name="P:NDjango.Admin.MetaEntity.SearchFields">
+            <summary>
+            Gets or sets the list of property names that should be searchable.
+            Null means no IAdminSettings configured; empty list means configured but no search fields.
+            </summary>
+        </member>
         <member name="P:NDjango.Admin.MetaEntity.DbSetName">
             <summary>
             Gets or sets the name of the DbSet associated with entity

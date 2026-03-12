@@ -5,6 +5,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 using Microsoft.EntityFrameworkCore;
 
+using NDjango.Admin;
+
 namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
 {
     public class TestDbContext : DbContext
@@ -28,7 +30,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         }
     }
 
-    public class Category
+    public class Category : IAdminSettings<Category>
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
@@ -38,6 +40,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public string Name { get; set; }
 
         public string Description { get; set; }
+
+        public PropertyList<Category> SearchFields => new(x => x.Name, x => x.Description);
     }
 
     public class Restaurant
@@ -66,7 +70,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public Restaurant Restaurant { get; set; }
     }
 
-    public class Ingredient
+    public class Ingredient : IAdminSettings<Ingredient>
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
@@ -75,6 +79,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public string Name { get; set; }
 
         public bool IsAllergen { get; set; }
+
+        public PropertyList<Ingredient> SearchFields => new(x => x.Name);
     }
 
     public class MenuItem

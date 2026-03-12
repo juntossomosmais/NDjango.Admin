@@ -1,12 +1,12 @@
 # NDjango.Admin Admin Dashboard
 
-A Django-admin-inspired CRUD dashboard for ASP.NET Core + Entity Framework Core. Automatically generates a full admin interface from your `DbContext` — list views with pagination/search/sorting, create/edit forms with FK dropdowns, and delete confirmations.
+A Django-admin-inspired CRUD dashboard for ASP.NET Core + Entity Framework Core. Automatically generates a full admin interface from your `DbContext` — list views with pagination/sorting and opt-in search, create/edit forms with FK lookup popups, and delete confirmations.
 
 ## What you get
 
 - **Dashboard home** at `/admin/` listing all entities with Add/Change links
-- **List view** with search, column sorting, and pagination
-- **Create/Edit forms** that auto-detect fields, hide auto-generated properties (`Id`, `CreatedAt`, `UpdatedAt`), and render FK relationships as dropdowns
+- **List view** with column sorting, pagination, and opt-in search via `IAdminSettings<T>`
+- **Create/Edit forms** that auto-detect fields, hide auto-generated properties (`Id`, `CreatedAt`, `UpdatedAt`), and render FK relationships as text input + lookup popup (like Django's `raw_id_fields`)
 - **Delete confirmation** page
 - **Sidebar** with model navigation and filtering
 - **Zero client-side framework dependency** — all HTML is server-rendered
@@ -15,7 +15,7 @@ A Django-admin-inspired CRUD dashboard for ASP.NET Core + Entity Framework Core.
 
 ### 1. Install packages
 
-Add a reference to the `NDjango.Admin.AspNetCore.AdminDashboard` project (or NuGet package when published).
+Add a reference to the `NDjango.Admin.AspNetCore.AdminDashboard` project.
 
 ### 2. Register services
 
@@ -157,6 +157,45 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 }
 ```
 
+### Conditional search fields
+
+By default, list views do **not** show a search box. Search is opt-in per entity, matching Django Admin's `search_fields` behavior. To enable search, implement `IAdminSettings<T>` on your entity class and specify which properties to search:
+
+```csharp
+using NDjango.Admin;
+
+public class Category : IAdminSettings<Category>
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+
+    // Search box appears on the Category list view, filtering by Name and Description
+    public PropertyList<Category> SearchFields => new(x => x.Name, x => x.Description);
+}
+```
+
+- Entities that implement `IAdminSettings<T>` with non-empty `SearchFields` show a search box on their list view. The search filters by substring match on the configured fields only.
+- Entities without `IAdminSettings<T>`, or with an empty `SearchFields`, do not show a search box and ignore `?q=` query parameters.
+- `PropertyList<T>` uses expression-based selectors (`x => x.Name`) for compile-time safety — typos in property names cause build errors, not runtime surprises.
+
+### FK lookup popup
+
+Foreign key fields render as a plain text input showing the raw FK ID plus a magnifying glass lookup icon, matching Django Admin's `raw_id_fields` pattern. Clicking the icon opens a popup window with the related entity's list view, where the user can search (if the related entity has `SearchFields` configured) and select a record. The popup closes and fills the FK ID automatically.
+
+This replaces preloaded `<select>` dropdowns, which don't scale when the related table has thousands of records.
+
+```
+┌──────────────────────────────────────────────────┐
+│ Restaurant: *                                    │
+│ ┌──────────┐  🔍                                 │
+│ │ 1        │  ← click to open popup              │
+│ └──────────┘                                     │
+└──────────────────────────────────────────────────┘
+```
+
+The popup opens a simplified version of the related entity's list view (no header, no sidebar) and respects conditional search — if the related entity has `SearchFields`, the popup includes a search box.
+
 ### Time-limited pagination COUNT
 
 On tables with millions of rows, `SELECT COUNT(*)` can take seconds and block the list view. The dashboard cancels the COUNT query if it exceeds `PaginationCountTimeoutMs` and shows a fallback value instead. Data rows load independently and are not affected.
@@ -219,41 +258,12 @@ cd sample-project/src
 dotnet run -- api
 ```
 
-Open `http://localhost:8000/admin/` to see the dashboard with restaurant domain models (Category, Restaurant, RestaurantProfile, Ingredient, MenuItem).
+Open `http://localhost:8000/admin/` to see the dashboard with restaurant domain models (Category, Restaurant, RestaurantProfile, Ingredient, MenuItem). Category and Restaurant have `IAdminSettings` with search fields configured; the other models demonstrate the no-search path. FK fields (e.g., MenuItem → Restaurant) use the lookup popup.
 
 ### sample-project-sso
 
 Demonstrates SAML SSO with AWS IAM Identity Center. See [`sample-project-sso/README.md`](sample-project-sso/README.md) for configuration details and known issues.
 
-## Running tests
+## Known Gaps
 
-```bash
-# Start SQL Server
-docker compose up -d db
-
-# Run all tests
-dotnet test NDjango.Admin.sln
-```
-
-## Project structure
-
-```
-src/
-  NDjango.Admin.Core/                              # Core metadata model
-  NDjango.Admin.AspNetCore/                        # ASP.NET Core integration
-  NDjango.Admin.EntityFrameworkCore.Relational/    # EF Core metadata loader
-  NDjango.Admin.AspNetCore.AdminDashboard/         # Admin dashboard (this package)
-    Authentication/                           # Login, permissions, password hashing, auth DB
-    Authorization/                            # Auth filters
-    Configuration/                            # DI extensions and options
-    Dispatchers/                              # View rendering and API handlers
-    Middleware/                               # Request pipeline
-    Routing/                                  # URL dispatch
-    Services/                                 # Metadata, entity grouping, composite manager
-    ViewModels/                               # Form and list models
-    wwwroot/                                  # Embedded CSS/JS
-
-test/                                         # Integration & unit tests
-sample-project/                               # Working example app
-sample-project-sso/                           # SSO example (AWS IAM Identity Center)
-```
+- **M2M relationships** not yet supported in the dashboard

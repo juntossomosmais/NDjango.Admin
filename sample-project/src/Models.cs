@@ -1,3 +1,5 @@
+using NDjango.Admin;
+
 public abstract class StandardEntity
 {
     public int Id { get; set; }
@@ -5,13 +7,15 @@ public abstract class StandardEntity
     public DateTime UpdatedAt { get; set; }
 }
 
-public class Category : StandardEntity
+public class Category : StandardEntity, IAdminSettings<Category>
 {
     public string Name { get; set; }
     public string Description { get; set; } = "";
+
+    public PropertyList<Category> SearchFields => new(x => x.Name, x => x.Description);
 }
 
-public class Restaurant : StandardEntity
+public class Restaurant : StandardEntity, IAdminSettings<Restaurant>
 {
     public string Name { get; set; }
     public string Address { get; set; }
@@ -19,6 +23,8 @@ public class Restaurant : StandardEntity
 
     public RestaurantProfile Profile { get; set; }
     public IList<MenuItem> MenuItems { get; set; }
+
+    public PropertyList<Restaurant> SearchFields => new(x => x.Name);
 }
 
 public class RestaurantProfile : StandardEntity
