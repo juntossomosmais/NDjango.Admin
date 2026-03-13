@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using FluentAssertions;
+
 using Xunit;
 
 namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
@@ -42,21 +42,21 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
                     .SetDisplayName(secondDisplayName);
             });
 
-            loaderOptions.ModelCustomizer.Should().NotBeNull();
+            Assert.NotNull(loaderOptions.ModelCustomizer);
 
             var metaData = new MetaData();
             metaData.LoadFromDbContext(_dbContext, loaderOptions);
 
             var entity = metaData.EntityRoot.FindSubEntity(e => e.ClrType == typeof(Category));
-            entity.Should().NotBeNull();
-            entity.Name.Should().Be(displayName);
-            entity.NamePlural.Should().Be(displayNamePlural);
-            entity.Description.Should().Be(description);
-            entity.IsEditable.Should().Be(editable);
+            Assert.NotNull(entity);
+            Assert.Equal(displayName, entity.Name);
+            Assert.Equal(displayNamePlural, entity.NamePlural);
+            Assert.Equal(description, entity.Description);
+            Assert.Equal(editable, entity.IsEditable);
 
             entity = metaData.EntityRoot.FindSubEntity(e => e.ClrType == typeof(Customer));
-            entity.Should().NotBeNull();
-            entity.Name.Should().Be(secondDisplayName);
+            Assert.NotNull(entity);
+            Assert.Equal(secondDisplayName, entity.Name);
         }
 
         /// <summary>
@@ -96,30 +96,30 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
                     .SetDescription(secondDescription);
             });
 
-            loaderOptions.ModelCustomizer.Should().NotBeNull();
+            Assert.NotNull(loaderOptions.ModelCustomizer);
 
             var metaData = new MetaData();
             metaData.LoadFromDbContext(_dbContext, loaderOptions);
 
             var entity = metaData.EntityRoot.FindSubEntity(e => e.ClrType == typeof(Category));
-            entity.Should().NotBeNull();
+            Assert.NotNull(entity);
             var attr = entity.FindAttribute(a => a.PropName == "Description");
-            attr.Should().NotBeNull();
-            attr.Caption.Should().Be(displayName);
-            attr.Description.Should().Be(description);
-            attr.IsEditable.Should().Be(editable);
-            attr.ShowOnView.Should().Be(showOnView);
-            attr.ShowOnCreate.Should().Be(showOnCreate);
-            attr.ShowOnEdit.Should().Be(showOnEdit);
-            attr.ShowInLookup.Should().Be(showInLookup);
-            attr.Sorting.Should().Be(sorting);
-            attr.Index.Should().Be(index);
+            Assert.NotNull(attr);
+            Assert.Equal(displayName, attr.Caption);
+            Assert.Equal(description, attr.Description);
+            Assert.Equal(editable, attr.IsEditable);
+            Assert.Equal(showOnView, attr.ShowOnView);
+            Assert.Equal(showOnCreate, attr.ShowOnCreate);
+            Assert.Equal(showOnEdit, attr.ShowOnEdit);
+            Assert.Equal(showInLookup, attr.ShowInLookup);
+            Assert.Equal(sorting, attr.Sorting);
+            Assert.Equal(index, attr.Index);
 
             entity = metaData.EntityRoot.FindSubEntity(e => e.ClrType == typeof(Order));
-            entity.Should().NotBeNull();
+            Assert.NotNull(entity);
             attr = entity.FindAttribute(a => a.PropName == "Id");
-            attr.Should().NotBeNull();
-            attr.Description.Should().Be(secondDescription);
+            Assert.NotNull(attr);
+            Assert.Equal(secondDescription, attr.Description);
         }
     }
 }

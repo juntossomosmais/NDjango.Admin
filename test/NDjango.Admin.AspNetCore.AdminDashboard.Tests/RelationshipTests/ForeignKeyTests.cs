@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -27,10 +26,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Restaurant/add/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("<input type=\"text\"");
-            html.Should().Contain("class=\"vForeignKeyRawIdAdminField\"");
-            html.Should().Contain("class=\"related-lookup\"");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("<input type=\"text\"", html);
+            Assert.Contains("class=\"vForeignKeyRawIdAdminField\"", html);
+            Assert.Contains("class=\"related-lookup\"", html);
         }
 
         [Fact]
@@ -46,7 +45,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
 
             var response = await _client.PostAsync("/admin/Restaurant/add/", formData);
 
-            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         }
 
         [Fact]
@@ -55,10 +54,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/MenuItem/add/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("<input type=\"text\"");
-            html.Should().Contain("class=\"vForeignKeyRawIdAdminField\"");
-            html.Should().Contain("class=\"related-lookup\"");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("<input type=\"text\"", html);
+            Assert.Contains("class=\"vForeignKeyRawIdAdminField\"", html);
+            Assert.Contains("class=\"related-lookup\"", html);
         }
 
         [Fact]
@@ -69,11 +68,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Restaurant/add/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("name=\"CategoryId\"",
-                "FK field should use the FK property name, not the navigation property name");
-            html.Should().NotContain("name=\"Category\"",
-                "FK field should not use the navigation property name");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("name=\"CategoryId\"", html);
+            Assert.DoesNotContain("name=\"Category\"", html);
         }
 
         [Fact]
@@ -82,9 +79,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/MenuItem/add/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("name=\"RestaurantId\"",
-                "FK field should use the FK property name");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("name=\"RestaurantId\"", html);
         }
 
         [Fact]
@@ -94,8 +90,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Restaurant/1/change/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("name=\"CategoryId\"");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("name=\"CategoryId\"", html);
         }
     }
 }

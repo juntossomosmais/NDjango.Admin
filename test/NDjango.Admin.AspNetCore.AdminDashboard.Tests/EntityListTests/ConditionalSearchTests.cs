@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -27,8 +26,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("search-box");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("search-box", html);
         }
 
         [Fact]
@@ -38,8 +37,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Restaurant/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().NotContain("search-box");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.DoesNotContain("search-box", html);
         }
 
         [Fact]
@@ -49,10 +48,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/?q=Italian");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("Italian");
-            html.Should().NotContain("Japanese");
-            html.Should().NotContain("Mexican");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("Italian", html);
+            Assert.DoesNotContain("Japanese", html);
+            Assert.DoesNotContain("Mexican", html);
         }
 
         [Fact]
@@ -67,8 +66,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var withQHtml = await withQResponse.Content.ReadAsStringAsync();
 
             // Both should show the same records since Restaurant has no SearchFields
-            allHtml.Should().Contain("Bella Roma");
-            withQHtml.Should().Contain("Bella Roma");
+            Assert.Contains("Bella Roma", allHtml);
+            Assert.Contains("Bella Roma", withQHtml);
         }
     }
 }

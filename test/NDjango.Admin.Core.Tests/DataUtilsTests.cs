@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Globalization;
+using System.Collections.Generic;
 
 using Xunit;
-using FluentAssertions;
-using System.Collections.Generic;
 
 namespace NDjango.Admin.Core.Tests
 {
@@ -14,8 +13,11 @@ namespace NDjango.Admin.Core.Tests
         [InlineData("order_details", "Order details")]
         public void PrettifyName_should_format_name(string name, string expectedResult)
         {
+            // Arrange & Act
             var result = DataUtils.PrettifyName(name);
-            result.Should().Be(expectedResult);
+
+            // Assert
+            Assert.Equal(expectedResult, result);
         }
 
         [Theory]
@@ -24,15 +26,18 @@ namespace NDjango.Admin.Core.Tests
         [InlineData("Test", "Test", "Test.Test")]
         public void ComposeKey_should_return_key(string parent, string child, string expectedKey)
         {
+            // Arrange & Act
             var key = DataUtils.ComposeKey(parent, child);
-            key.Should().Be(expectedKey);
+
+            // Assert
+            Assert.Equal(expectedKey, key);
         }
 
         [Fact]
         public void ComposeKey_should_throw_ArgumentNullException()
         {
-            this.Invoking(_ => DataUtils.ComposeKey(null, null))
-                .Should().ThrowExactly<ArgumentNullException>();
+            // Arrange & Act & Assert
+            Assert.Throws<ArgumentNullException>(() => DataUtils.ComposeKey(null, null));
         }
 
         [Theory]
@@ -44,8 +49,11 @@ namespace NDjango.Admin.Core.Tests
         [InlineData("Potato", "Potatoes")]
         public void MakePlural_should_convert_to_plural(string singular, string expectedPlural)
         {
+            // Arrange & Act
             var plural = DataUtils.MakePlural(singular);
-            plural.Should().Be(expectedPlural);
+
+            // Assert
+            Assert.Equal(expectedPlural, plural);
         }
 
         [Theory]
@@ -91,8 +99,11 @@ namespace NDjango.Admin.Core.Tests
         [InlineData(typeof(string), DataType.String)]
         public void GetDataTypeBySystemType_should_return_right_DataType(Type type, DataType expectedDataType)
         {
+            // Arrange & Act
             var dataType = DataUtils.GetDataTypeBySystemType(type);
-            dataType.Should().Be(expectedDataType);
+
+            // Assert
+            Assert.Equal(expectedDataType, dataType);
         }
 
         [Theory]
@@ -100,8 +111,11 @@ namespace NDjango.Admin.Core.Tests
         [InlineData(typeof(TestEnum2), "{0:SZero=0|One=1|Five=5|Ten=10}")]
         public void ComposeDisplayFormatForEnum_should_create_right_format(Type enumType, string expectedFormat)
         {
+            // Arrange & Act
             var format = DataUtils.ComposeDisplayFormatForEnum(enumType);
-            format.Should().Be(expectedFormat);
+
+            // Assert
+            Assert.Equal(expectedFormat, format);
         }
 
         private enum TestEnum1
@@ -127,16 +141,22 @@ namespace NDjango.Admin.Core.Tests
         [InlineData(DataType.DateTime, true, "yyyy'-'MM'-'dd HH':'mm")]
         public void GetDateTimeInternalFormat_should_return_right_format(DataType dataType, bool shortTime, string expectedFormat)
         {
+            // Arrange & Act
             var format = DataUtils.GetDateTimeInternalFormat(dataType, shortTime);
-            format.Should().Be(expectedFormat);
+
+            // Assert
+            Assert.Equal(expectedFormat, format);
         }
 
         [Theory]
         [MemberData(nameof(DateTimeToInternalFormatData))]
         public void DateTimeToInternalFormat_should_return_formatted_datetime_str(DateTime dateTime, DataType dataType, string expectedStr)
         {
+            // Arrange & Act
             var str = DataUtils.DateTimeToInternalFormat(dateTime, dataType);
-            str.Should().Be(expectedStr);
+
+            // Assert
+            Assert.Equal(expectedStr, str);
         }
 
         public static IEnumerable<object[]> DateTimeToInternalFormatData()
@@ -151,9 +171,14 @@ namespace NDjango.Admin.Core.Tests
         [MemberData(nameof(DateTimeToUserFormatData))]
         public void DateTimeToUserFormat_should_return_formatted_datetime_str(DateTime dateTime, DataType dataType, string format)
         {
+            // Arrange
             var ci = System.Globalization.DateTimeFormatInfo.CurrentInfo;
+
+            // Act
             var str = DataUtils.DateTimeToUserFormat(dateTime, dataType);
-            str.Should().Be(dateTime.ToString(format, ci));
+
+            // Assert
+            Assert.Equal(dateTime.ToString(format, ci), str);
         }
 
         public static IEnumerable<object[]> DateTimeToUserFormatData()

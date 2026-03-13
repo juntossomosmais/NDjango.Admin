@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -25,7 +24,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         {
             var response = await _client.GetAsync("/admin/nonexistent/bad/route/");
 
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
         [Fact]
@@ -33,8 +32,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         {
             var response = await _client.GetAsync("/admin/");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            response.Content.Headers.ContentType.MediaType.Should().Be("text/html");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("text/html", response.Content.Headers.ContentType.MediaType);
         }
 
         [Theory]
@@ -45,7 +44,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         {
             var response = await _client.GetAsync(url);
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
@@ -53,7 +52,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         {
             var response = await _client.GetAsync("/admin/Category/add/");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
@@ -61,7 +60,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         {
             var response = await _client.GetAsync("/admin/DoesNotExist/");
 
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
     }
 }

@@ -1,8 +1,7 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 using Xunit;
-using FluentAssertions;
 
 namespace NDjango.Admin.Core.Tests
 {
@@ -19,6 +18,7 @@ namespace NDjango.Admin.Core.Tests
         [Fact]
         public void Constructor_should_create_with_dict()
         {
+            // Arrange
             var dict = new Dictionary<DataType, List<DisplayFormatDescriptor>>
             {
                 [DataType.Date] = new List<DisplayFormatDescriptor>
@@ -33,13 +33,16 @@ namespace NDjango.Admin.Core.Tests
                 }
             };
 
+            // Act
             var target = new DisplayFormatStore(dict);
+
+            // Assert
             foreach (var (type, formats) in dict)
             {
                 foreach (var format in formats)
                 {
-                    target.TryGetFormat(type, format.Name, out var expectedFormat).Should().BeTrue();
-                    expectedFormat.Should().BeSameAs(format);
+                    Assert.True(target.TryGetFormat(type, format.Name, out var expectedFormat));
+                    Assert.Same(format, expectedFormat);
                 }
             }
         }
@@ -47,11 +50,15 @@ namespace NDjango.Admin.Core.Tests
         [Fact]
         public void Clear_should_clear()
         {
+            // Arrange
             _target.AddOrUpdate(DataType.Bool, "test", "{0:S0|1}", true);
-            _target.Should().NotBeEmpty();
+            Assert.True(_target.Any());
 
+            // Act
             _target.Clear();
-            _target.Should().BeEmpty();
+
+            // Assert
+            Assert.False(_target.Any());
         }
 
         [Theory]
@@ -59,12 +66,14 @@ namespace NDjango.Admin.Core.Tests
         [InlineData(DataType.String, "test", "{0:$${0}}", false)]
         public void AddOrUpdate_should_add_or_update_format(DataType type, string name, string format, bool isDefault)
         {
+            // Arrange & Act
             var formatDesc = _target.AddOrUpdate(type, name, format, isDefault);
-            _target.Should().NotBeEmpty();
 
-            formatDesc.IsDefault.Should().Be(isDefault);
-            formatDesc.Name.Should().Be(name);
-            formatDesc.Format.Should().Be(format);
+            // Assert
+            Assert.True(_target.Any());
+            Assert.Equal(isDefault, formatDesc.IsDefault);
+            Assert.Equal(name, formatDesc.Name);
+            Assert.Equal(format, formatDesc.Format);
         }
 
         [Fact]

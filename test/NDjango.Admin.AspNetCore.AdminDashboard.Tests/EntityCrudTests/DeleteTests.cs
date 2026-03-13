@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -26,10 +25,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             var response = await _client.GetAsync("/admin/Ingredient/1/delete/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("Are you sure");
-            html.Should().Contain("Yes, I");
-            html.Should().Contain("No, take me back");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("Are you sure", html);
+            Assert.Contains("Yes, I", html);
+            Assert.Contains("No, take me back", html);
         }
 
         [Fact]
@@ -43,18 +42,18 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             });
 
             var createResponse = await _client.PostAsync("/admin/Ingredient/add/", formData);
-            createResponse.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            Assert.Equal(HttpStatusCode.Redirect, createResponse.StatusCode);
 
             // Find the new ingredient's ID by listing
             var listResponse = await _client.GetAsync("/admin/Ingredient/");
             var listHtml = await listResponse.Content.ReadAsStringAsync();
-            listHtml.Should().Contain("ToDelete");
+            Assert.Contains("ToDelete", listHtml);
 
             // Delete using a known seeded ingredient (Id=3, "Basil")
             var deleteResponse = await _client.PostAsync("/admin/Ingredient/3/delete/", new FormUrlEncodedContent(System.Array.Empty<System.Collections.Generic.KeyValuePair<string, string>>()));
 
-            deleteResponse.StatusCode.Should().Be(HttpStatusCode.Redirect);
-            deleteResponse.Headers.Location.ToString().Should().Contain("/admin/Ingredient/");
+            Assert.Equal(HttpStatusCode.Redirect, deleteResponse.StatusCode);
+            Assert.Contains("/admin/Ingredient/", deleteResponse.Headers.Location.ToString());
         }
     }
 }

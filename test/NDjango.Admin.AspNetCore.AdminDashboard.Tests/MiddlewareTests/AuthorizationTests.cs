@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
@@ -38,7 +37,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
 
             var response = await client.GetAsync("/admin/");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
@@ -74,7 +73,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
             var client = host.GetTestClient();
             var response = await client.GetAsync("/admin/");
 
-            response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
 
         public void Dispose()

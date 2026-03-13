@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -26,11 +25,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("<table id=\"result_list\">");
-            html.Should().Contain("Italian");
-            html.Should().Contain("Japanese");
-            html.Should().Contain("Mexican");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("<table id=\"result_list\">", html);
+            Assert.Contains("Italian", html);
+            Assert.Contains("Japanese", html);
+            Assert.Contains("Mexican", html);
         }
 
         [Fact]
@@ -39,7 +38,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("3 categories");
+            Assert.Contains("3 categories", html);
         }
 
         [Fact]
@@ -48,8 +47,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("Id");
-            html.Should().Contain("Category Name");
+            Assert.Contains("Id", html);
+            Assert.Contains("Category Name", html);
         }
 
         [Fact]
@@ -58,7 +57,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("/change/");
+            Assert.Contains("/change/", html);
         }
 
         [Fact]
@@ -67,8 +66,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("/admin/Category/add/");
-            html.Should().Contain("Add category");
+            Assert.Contains("/admin/Category/add/", html);
+            Assert.Contains("Add category", html);
         }
 
         [Fact]
@@ -77,8 +76,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("id=\"sidebar\"");
-            html.Should().Contain("sidebar-model-item");
+            Assert.Contains("id=\"sidebar\"", html);
+            Assert.Contains("sidebar-model-item", html);
         }
 
         [Fact]
@@ -87,9 +86,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Restaurant/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("Bella Roma");
-            html.Should().Contain("Sakura");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("Bella Roma", html);
+            Assert.Contains("Sakura", html);
         }
     }
 }

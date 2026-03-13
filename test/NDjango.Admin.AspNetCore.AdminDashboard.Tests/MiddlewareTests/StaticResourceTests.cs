@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -25,8 +24,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         {
             var response = await _client.GetAsync("/admin/css/admin-dashboard.css");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            response.Content.Headers.ContentType.MediaType.Should().Be("text/css");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("text/css", response.Content.Headers.ContentType.MediaType);
         }
 
         [Fact]
@@ -34,8 +33,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         {
             var response = await _client.GetAsync("/admin/js/admin-dashboard.js");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            response.Content.Headers.ContentType.MediaType.Should().Be("application/javascript");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("application/javascript", response.Content.Headers.ContentType.MediaType);
         }
 
         [Fact]
@@ -43,7 +42,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         {
             var response = await _client.GetAsync("/admin/css/nonexistent.css");
 
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
     }
 }

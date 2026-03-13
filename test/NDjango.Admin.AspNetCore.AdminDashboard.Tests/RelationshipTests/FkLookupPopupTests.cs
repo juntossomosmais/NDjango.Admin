@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -26,9 +25,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Restaurant/add/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("vForeignKeyRawIdAdminField");
-            html.Should().Contain("related-lookup");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("vForeignKeyRawIdAdminField", html);
+            Assert.Contains("related-lookup", html);
         }
 
         [Fact]
@@ -37,10 +36,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Restaurant/add/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("_popup=1");
-            html.Should().Contain("_to_field=id");
-            html.Should().Contain("/admin/Category/");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("_popup=1", html);
+            Assert.Contains("_to_field=id", html);
+            Assert.Contains("/admin/Category/", html);
         }
 
         [Fact]
@@ -49,10 +48,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Category/?_popup=1");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().NotContain("id=\"sidebar\"");
-            html.Should().NotContain("id=\"header\"");
-            html.Should().Contain("class=\"popup\"");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.DoesNotContain("id=\"sidebar\"", html);
+            Assert.DoesNotContain("id=\"header\"", html);
+            Assert.Contains("class=\"popup\"", html);
         }
 
         [Fact]
@@ -61,9 +60,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Category/?_popup=1");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("class=\"popup-select\"");
-            html.Should().Contain("data-pk=");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("class=\"popup-select\"", html);
+            Assert.Contains("data-pk=", html);
         }
 
         [Fact]
@@ -73,8 +72,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Category/?_popup=1");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("search-box");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("search-box", html);
         }
 
         [Fact]
@@ -84,8 +83,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Restaurant/?_popup=1");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().NotContain("search-box");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.DoesNotContain("search-box", html);
         }
 
         [Fact]
@@ -95,9 +94,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.RelationshipTests
             var response = await _client.GetAsync("/admin/Category/?_popup=1&_to_field=id");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("name=\"_popup\" value=\"1\"");
-            html.Should().Contain("name=\"_to_field\" value=\"id\"");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("name=\"_popup\" value=\"1\"", html);
+            Assert.Contains("name=\"_to_field\" value=\"id\"", html);
         }
     }
 }

@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -25,9 +24,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/?q=Italian");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("Italian");
-            html.Should().NotContain("Japanese");
-            html.Should().NotContain("Mexican");
+            Assert.Contains("Italian", html);
+            Assert.DoesNotContain("Japanese", html);
+            Assert.DoesNotContain("Mexican", html);
         }
 
         [Fact]
@@ -36,7 +35,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/?q=Italian");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("1 category");
+            Assert.Contains("1 category", html);
         }
 
         [Fact]
@@ -45,7 +44,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/?q=NonExistentValue");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("0 categories");
+            Assert.Contains("0 categories", html);
         }
     }
 }

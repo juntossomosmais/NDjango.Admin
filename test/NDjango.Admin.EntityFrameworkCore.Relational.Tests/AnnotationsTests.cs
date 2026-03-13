@@ -5,7 +5,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
 using Xunit;
-using FluentAssertions;
+
 
 namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
 {
@@ -30,13 +30,13 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         [Fact]
         public void MetaEntityAttributeTest()
         {
-            _metaData.EntityRoot.SubEntities.Should().HaveCount(1);
+            Assert.Equal(1, _metaData.EntityRoot.SubEntities.Count);
 
             var entity = _metaData.EntityRoot.SubEntities.First();
 
-            entity.Name.Should().Be("Test");
-            entity.Description.Should().Be("Test Description");
-            entity.IsEditable.Should().Be(true);
+            Assert.Equal("Test", entity.Name);
+            Assert.Equal("Test Description", entity.Description);
+            Assert.True(entity.IsEditable);
         }
 
         /// <summary>
@@ -46,14 +46,14 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         public void MetaEntityAttrAttributeTest()
         {
             var entity = _metaData.EntityRoot.SubEntities.First();
-            entity.Attributes.Should().HaveCount(10);
+            Assert.Equal(10, entity.Attributes.Count);
 
             var attr = entity.FindAttributeById("CustomerWithAnnotations.Region");
-            attr.Should().NotBeNull();
-            attr.ShowOnView.Should().BeFalse();
-            attr.ShowInLookup.Should().BeTrue();
-            attr.IsEditable.Should().BeFalse();
-            attr.Caption.Should().Be("Test");
+            Assert.NotNull(attr);
+            Assert.False(attr.ShowOnView);
+            Assert.True(attr.ShowInLookup);
+            Assert.False(attr.IsEditable);
+            Assert.Equal("Test", attr.Caption);
         }
     }
 }

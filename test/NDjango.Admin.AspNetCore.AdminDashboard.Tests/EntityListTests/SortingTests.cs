@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -29,8 +28,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var japanesePos = html.IndexOf("Japanese");
             var mexicanPos = html.IndexOf("Mexican");
 
-            italianPos.Should().BeLessThan(japanesePos);
-            japanesePos.Should().BeLessThan(mexicanPos);
+            Assert.True(italianPos < japanesePos);
+            Assert.True(japanesePos < mexicanPos);
         }
 
         [Fact]
@@ -42,7 +41,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var italianPos = html.IndexOf("Italian");
             var mexicanPos = html.IndexOf("Mexican");
 
-            mexicanPos.Should().BeLessThan(italianPos);
+            Assert.True(mexicanPos < italianPos);
         }
 
         [Fact]
@@ -51,8 +50,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             var response = await _client.GetAsync("/admin/Category/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("sort=Name");
-            html.Should().Contain("dir=asc");
+            Assert.Contains("sort=Name", html);
+            Assert.Contains("dir=asc", html);
         }
     }
 }

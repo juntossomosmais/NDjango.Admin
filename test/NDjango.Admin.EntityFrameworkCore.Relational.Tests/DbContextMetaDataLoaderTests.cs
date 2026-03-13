@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 using Xunit;
-using FluentAssertions;
+
 
 
 namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
@@ -26,7 +26,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
 
             meta.LoadFromDbContext(_dbContext);
 
-            meta.EntityRoot.SubEntities.Should().HaveCount(8);
+            Assert.Equal(8, meta.EntityRoot.SubEntities.Count);
 
             var entityAttrCount = new Dictionary<string, int>()
             {
@@ -42,7 +42,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
 
             foreach (var entity in meta.EntityRoot.SubEntities)
             {
-                entity.Attributes.Should().HaveCount(entityAttrCount[entity.Name]);
+                Assert.Equal(entityAttrCount[entity.Name], entity.Attributes.Count);
             }
         }
 
@@ -62,14 +62,14 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             meta.LoadFromDbContext(_dbContext, loaderOptions);
 
             var entity = meta.FindEntity(ent => ent.ClrType.Equals(typeof(Category)));
-            entity.Should().BeNull();
+            Assert.Null(entity);
 
             entity = meta.FindEntity(ent => ent.ClrType.Equals(typeof(Customer)));
-            entity.Should().NotBeNull();
+            Assert.NotNull(entity);
 
-            entity.Attributes.Count.Should().Be(8);
+            Assert.Equal(8, entity.Attributes.Count);
             var attr = entity.FindAttribute(a => a.Id.Contains("Phone"));
-            attr.Should().BeNull();
+            Assert.Null(attr);
         }
 
         [Fact]
@@ -81,10 +81,10 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             meta.LoadFromDbContext(_dbContext, loaderOptions);
 
             var entity = meta.FindEntity(ent => ent.ClrType.Equals(typeof(Customer)));
-            entity.Should().NotBeNull();
+            Assert.NotNull(entity);
 
             var attr = entity.FindAttributeByExpression("Customer.TimeCreated");
-            attr.Should().BeNull();
+            Assert.Null(attr);
         }
     }
 }

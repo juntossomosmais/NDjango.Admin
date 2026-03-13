@@ -14,8 +14,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using Xunit;
-using FluentAssertions;
-using FluentAssertions.Json;
 
 namespace NDjango.Admin.AspNetCore.Tests
 {
@@ -36,22 +34,21 @@ namespace NDjango.Admin.AspNetCore.Tests
             var client = _host.GetTestClient();
             var response = await client.GetAsync($"{endpoint}/models/__default");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            response.Content.Headers.ContentType
-                    .ToString().Should().StartWith("application/json");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.StartsWith("application/json", response.Content.Headers.ContentType.ToString());
 
             var model = new MetaData();
 
             var jsonReader = new JsonTextReader(new StreamReader(await response.Content.ReadAsStreamAsync()));
             var responseObj = JObject.Load(jsonReader);
 
-            var modelObj = responseObj.Should().HaveElement("model").Subject;
-            modelObj.Should().NotBeNull();
+            var modelObj = responseObj["model"];
+            Assert.NotNull(modelObj);
 
             await model.ReadFromJsonAsync(modelObj.CreateReader(), MetaDataReadWriteOptions.Defaults);
 
-            model.EntityRoot.SubEntities.Should().HaveCount(8)
-                .And.Contain((ent) => ent.Id == "Category");
+            Assert.Equal(8, model.EntityRoot.SubEntities.Count);
+            Assert.Contains(model.EntityRoot.SubEntities, ent => ent.Id == "Category");
         }
 
         [Theory]
@@ -64,21 +61,19 @@ namespace NDjango.Admin.AspNetCore.Tests
             var client = _host.GetTestClient();
             var response = await client.PostAsync($"{endpoint}/models/__default/sources/{sourceId}/fetch", new StringContent("{ \"needTotal\": true }"));
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response.Content.Headers.ContentType
-                    .ToString().Should().StartWith("application/json");
+            Assert.StartsWith("application/json", response.Content.Headers.ContentType.ToString());
 
             var jsonReader = new JsonTextReader(new StreamReader(await response.Content.ReadAsStreamAsync()));
             var responseObj = JObject.Load(jsonReader);
 
-            var resultSet = responseObj.Should().HaveElement("resultSet").Subject;
-            resultSet.Should().NotBeNull();
+            var resultSet = responseObj["resultSet"];
+            Assert.NotNull(resultSet);
 
-            var meta = responseObj.Should().HaveElement("meta").Subject;
-            meta.Should().NotBeNull().And
-                .HaveElement("totalRecords").Subject
-                .ToObject<int>().Should().Be(count);
+            var meta = responseObj["meta"];
+            Assert.NotNull(meta);
+            Assert.Equal(count, meta["totalRecords"].ToObject<int>());
         }
 
         [Theory]
@@ -91,17 +86,16 @@ namespace NDjango.Admin.AspNetCore.Tests
             var client = _host.GetTestClient();
             var response = await client.GetAsync($"{endpoint}/models/__default/sources/{sourceId}/fetch?{keyProperty}={recordId}");
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response.Content.Headers.ContentType
-                    .ToString().Should().StartWith("application/json");
+            Assert.StartsWith("application/json", response.Content.Headers.ContentType.ToString());
 
             var responseContentStream = await response.Content.ReadAsStreamAsync();
             var jsonReader = new JsonTextReader(new StreamReader(responseContentStream));
             var responseObj = JObject.Load(jsonReader);
 
-            var entityObj = responseObj.Should().HaveElement("record").Subject;
-            entityObj.Should().NotBeNull();
+            var entityObj = responseObj["record"];
+            Assert.NotNull(entityObj);
         }
 
         [Theory]
@@ -112,10 +106,9 @@ namespace NDjango.Admin.AspNetCore.Tests
             var content = new StringContent(data.ToString());
             var response = await client.PostAsync($"{endpoint}/models/__default/sources/{sourceId}/create", content);
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response.Content.Headers.ContentType
-                    .ToString().Should().StartWith("application/json");
+            Assert.StartsWith("application/json", response.Content.Headers.ContentType.ToString());
 
             var dbContext = _host.Services.GetRequiredService<TestDbContext>();
 
@@ -123,14 +116,14 @@ namespace NDjango.Admin.AspNetCore.Tests
             {
                 var id = data["Id"].ToObject<int>();
                 var result = await dbContext.Set<Category>().FindAsync(id);
-                result.Should().NotBeNull();
+                Assert.NotNull(result);
                 CompareWithJObject(result, data);
             }
             else if (sourceId == "Shipper")
             {
                 var id = data["Id"].ToObject<int>();
                 var result = await dbContext.Set<Shipper>().FindAsync(id);
-                result.Should().NotBeNull();
+                Assert.NotNull(result);
                 CompareWithJObject(result, data);
             }
         }
@@ -143,7 +136,7 @@ namespace NDjango.Admin.AspNetCore.Tests
                 var prop = obj.GetType().GetProperty(kv.Key);
                 if (prop != null)
                 {
-                    prop.GetValue(obj).Should().Be(kv.Value.ToObject(prop.PropertyType));
+                    Assert.Equal(kv.Value.ToObject(prop.PropertyType), prop.GetValue(obj));
                 }
             }
         }
@@ -192,10 +185,9 @@ namespace NDjango.Admin.AspNetCore.Tests
             var content = new StringContent(data.ToString());
             var response = await client.PostAsync($"{endpoint}/models/__default/sources/{sourceId}/update", content);
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response.Content.Headers.ContentType
-                    .ToString().Should().StartWith("application/json");
+            Assert.StartsWith("application/json", response.Content.Headers.ContentType.ToString());
 
             var dbContext = _host.Services.GetRequiredService<TestDbContext>();
 
@@ -203,14 +195,14 @@ namespace NDjango.Admin.AspNetCore.Tests
             {
                 var id = data["Id"].ToObject<int>();
                 var result = await dbContext.Set<Category>().FindAsync(id);
-                result.Should().NotBeNull();
+                Assert.NotNull(result);
                 CompareWithJObject(result, data);
             }
             else if (sourceId == "Employee")
             {
                 var id = data["Id"].ToObject<int>();
                 var result = await dbContext.Set<Employee>().FindAsync(id);
-                result.Should().NotBeNull();
+                Assert.NotNull(result);
                 CompareWithJObject(result, data);
             }
         }
@@ -262,22 +254,21 @@ namespace NDjango.Admin.AspNetCore.Tests
             var content = new StringContent($"{{\"{keyPropery}\": {entityId}}}");
             var response = await client.PostAsync($"{endpoint}/models/__default/sources/{sourceId}/delete", content);
             var body = await response.Content.ReadAsStringAsync();
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response.Content.Headers.ContentType
-                    .ToString().Should().StartWith("application/json");
+            Assert.StartsWith("application/json", response.Content.Headers.ContentType.ToString());
 
             var dbContext = _host.Services.GetRequiredService<TestDbContext>();
 
             if (sourceId == "Category")
             {
                 var result = await dbContext.Set<Category>().FindAsync(int.Parse(entityId));
-                result.Should().BeNull();
+                Assert.Null(result);
             }
             else if (sourceId == "Shipper")
             {
                 var result = await dbContext.Set<Shipper>().FindAsync(int.Parse(entityId));
-                result.Should().BeNull();
+                Assert.Null(result);
             }
         }
     }

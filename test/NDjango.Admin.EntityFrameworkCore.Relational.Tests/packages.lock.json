@@ -27,15 +27,6 @@
           "NETStandard.Library": "2.0.3"
         }
       },
-      "FluentAssertions": {
-        "type": "Direct",
-        "requested": "[6.11.0, )",
-        "resolved": "6.11.0",
-        "contentHash": "aBaagwdNtVKkug1F3imGXUlmoBd8ZUZX8oQ5niThaJhF79SpESe1Gzq7OFuZkQdKD5Pa4Mone+jrbas873AT4g==",
-        "dependencies": {
-          "System.Configuration.ConfigurationManager": "4.4.0"
-        }
-      },
       "Microsoft.EntityFrameworkCore.Sqlite": {
         "type": "Direct",
         "requested": "[8.0.0, )",
@@ -288,14 +279,6 @@
           "SQLitePCLRaw.core": "2.1.6"
         }
       },
-      "System.Configuration.ConfigurationManager": {
-        "type": "Transitive",
-        "resolved": "4.4.0",
-        "contentHash": "gWwQv/Ug1qWJmHCmN17nAbxJYmQBM/E94QxKLksvUiiKB1Ld3Sc/eK1lgmbSjDFxkQhVuayI/cGFZhpBSodLrg==",
-        "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "4.4.0"
-        }
-      },
       "System.Memory": {
         "type": "Transitive",
         "resolved": "4.5.3",
@@ -310,11 +293,6 @@
         "type": "Transitive",
         "resolved": "4.7.1",
         "contentHash": "zOHkQmzPCn5zm/BH+cxC1XbUS3P4Yoi3xzW7eRgVpDR2tPGSzyMZ17Ig1iRkfJuY0nhxkQQde8pgePNiA7z7TQ=="
-      },
-      "System.Security.Cryptography.ProtectedData": {
-        "type": "Transitive",
-        "resolved": "4.4.0",
-        "contentHash": "cJV7ScGW7EhatRsjehfvvYVBvtiSMKgN8bOVI0bQhnF5bU7vnHVIsH49Kva7i7GWaWYvmEzkYVk1TC+gZYBEog=="
       },
       "System.Text.Encodings.Web": {
         "type": "Transitive",

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using FluentAssertions;
+
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -44,10 +44,10 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             metaData.LoadFromDbContext(_dbContext, loaderOptions);
 
             var entity = metaData.EntityRoot.FindSubEntity(e => e.ClrType == typeof(Category));
-            entity.Name.Should().Be(optionsDisplayName);
-            entity.NamePlural.Should().Be(optionsDisplayNamePlural);
-            entity.Description.Should().Be("Categories description");
-            entity.IsEditable.Should().Be(editable);
+            Assert.Equal(optionsDisplayName, entity.Name);
+            Assert.Equal(optionsDisplayNamePlural, entity.NamePlural);
+            Assert.Equal("Categories description", entity.Description);
+            Assert.Equal(editable, entity.IsEditable);
         }
 
         /// <summary>
@@ -74,9 +74,9 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
 
             var entity = metaData.EntityRoot.SubEntities.First(e => e.ClrType == typeof(Category));
             var attribute = entity.Attributes.First(a => a.PropInfo.Name == nameof(Category.Description));
-            attribute.Caption.Should().Be(optionsDisplayName);
-            attribute.Description.Should().Be(optionsDescription);
-            attribute.Index.Should().Be(2);
+            Assert.Equal(optionsDisplayName, attribute.Caption);
+            Assert.Equal(optionsDescription, attribute.Description);
+            Assert.Equal(2, attribute.Index);
         }
     }
 }

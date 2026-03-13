@@ -7,7 +7,6 @@ using Newtonsoft.Json.Linq;
 
 using Moq;
 using Xunit;
-using FluentAssertions;
 
 using NDjango.Admin.Services;
 using Newtonsoft.Json;
@@ -26,7 +25,11 @@ namespace NDjango.Admin.Core.Services.Tests
         [Fact]
         public void Endpoint_should_have_default_value()
         {
-            _target.Endpoint.Should().Be("/api/ndjango-admin");
+            // Arrange & Act
+            var endpoint = _target.Endpoint;
+
+            // Assert
+            Assert.Equal("/api/ndjango-admin", endpoint);
         }
 
         [Theory]
@@ -34,61 +37,86 @@ namespace NDjango.Admin.Core.Services.Tests
         [InlineData("")]
         public void RegisterFilter_should_throw_ArgumentException_on_wrong_class(string filterClass)
         {
-            _target.Invoking(x => x.RegisterFilter(filterClass, typeof(EasyFilter)))
-                .Should().ThrowExactly<ArgumentException>();
+            // Arrange & Act & Assert
+            Assert.Throws<ArgumentException>(() => _target.RegisterFilter(filterClass, typeof(EasyFilter)));
         }
 
         [Fact]
         public void RegisterFilter_should_throw_ArgumentException_on_wrong_type()
         {
-            _target.Invoking(x => x.RegisterFilter("test", typeof(object)))
-                .Should().ThrowExactly<ArgumentException>();
+            // Arrange & Act & Assert
+            Assert.Throws<ArgumentException>(() => _target.RegisterFilter("test", typeof(object)));
         }
 
         [Fact]
         public void RegisterFilter_should_register_filter()
         {
+            // Arrange & Act
             _target.RegisterFilter("dummyFilter", typeof(DummyFilter));
             var filter = _target.ResolveFilter("dummyFilter", new MetaData());
-            filter.Should().NotBeNull().And.BeOfType<DummyFilter>();
+
+            // Assert
+            Assert.NotNull(filter);
+            Assert.IsType<DummyFilter>(filter);
         }
 
         [Fact]
         public void RegisterFilterGeneric_should_register_filter()
         {
+            // Arrange & Act
             _target.RegisterFilter<DummyFilter>("dummyFilter");
             var filter = _target.ResolveFilter("dummyFilter", new MetaData());
-            filter.Should().NotBeNull().And.BeOfType<DummyFilter>();
+
+            // Assert
+            Assert.NotNull(filter);
+            Assert.IsType<DummyFilter>(filter);
         }
 
         [Fact]
         public void ResolveFilter_should_return_null_if_no_filter()
         {
-            _target.ResolveFilter("test", new MetaData()).Should().BeNull();
+            // Arrange & Act
+            var filter = _target.ResolveFilter("test", new MetaData());
+
+            // Assert
+            Assert.Null(filter);
         }
 
         [Fact]
         public void UseModelTuner_should_set_ModelTuner()
         {
+            // Arrange
             Action<MetaData> tuner = (_) => { };
+
+            // Act
             _target.UseModelTuner(tuner);
-            _target.ModelTuner.Should().Be(tuner);
+
+            // Assert
+            Assert.Same(tuner, _target.ModelTuner);
         }
 
         [Fact]
         public void UseManager_should_set_NDjangoAdminManagerResolver()
         {
+            // Arrange
             NDjangoAdminManagerResolver resolver = (services, options) => Mock.Of<NDjangoAdminManager>();
+
+            // Act
             _target.UseManager(resolver);
-            _target.ManagerResolver.Should().Be(resolver);
+
+            // Assert
+            Assert.Same(resolver, _target.ManagerResolver);
         }
 
         [Fact]
         public void UseManagerGeneric_should_get_manager_from_service_provider()
         {
+            // Arrange & Act
             _target.UseManager<DummyNDjangoAdminManager>();
-            _target.ManagerResolver.Should().NotBeNull();
-            _target.ManagerResolver(Mock.Of<IServiceProvider>(), _target).Should().BeOfType<DummyNDjangoAdminManager>();
+
+            // Assert
+            Assert.NotNull(_target.ManagerResolver);
+            Assert.IsType<DummyNDjangoAdminManager>(_target.ManagerResolver(Mock.Of<IServiceProvider>(), _target));
         }
 
         [Fact]

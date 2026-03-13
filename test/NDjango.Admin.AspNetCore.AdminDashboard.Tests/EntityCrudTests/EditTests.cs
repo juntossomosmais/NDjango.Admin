@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -28,9 +27,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             var response = await _client.GetAsync("/admin/Category/1/change/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("Change category");
-            html.Should().Contain("Italian");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("Change category", html);
+            Assert.Contains("Italian", html);
         }
 
         [Fact]
@@ -39,8 +38,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             var response = await _client.GetAsync("/admin/Category/1/change/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("/admin/Category/1/delete/");
-            html.Should().Contain("Delete");
+            Assert.Contains("/admin/Category/1/delete/", html);
+            Assert.Contains("Delete", html);
         }
 
         [Fact]
@@ -55,8 +54,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
 
             var response = await _client.PostAsync("/admin/Category/1/change/", formData);
 
-            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-            response.Headers.Location.ToString().Should().Contain("/admin/Category/");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.Contains("/admin/Category/", response.Headers.Location.ToString());
         }
 
         [Fact]
@@ -71,8 +70,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
 
             var response = await _client.PostAsync("/admin/Category/1/change/", formData);
 
-            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-            response.Headers.Location.ToString().Should().Contain("/admin/Category/1/change/");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.Contains("/admin/Category/1/change/", response.Headers.Location.ToString());
         }
 
         [Fact]
@@ -81,13 +80,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             var response = await _client.GetAsync("/admin/Category/1/change/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             // Id is value-generated (DatabaseGeneratedOption.Identity) so it should
             // render as read-only text, not an editable input field
-            html.Should().Contain("readonly-value");
-            html.Should().NotContain("name=\"Id\"",
-                "auto-generated fields should not be rendered as form inputs");
+            Assert.Contains("readonly-value", html);
+            Assert.DoesNotContain("name=\"Id\"", html);
         }
 
         [Fact]
@@ -105,8 +103,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
 
             var response = await _client.PostAsync("/admin/Category/2/change/", formData);
 
-            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-            response.Headers.Location.ToString().Should().Contain("/admin/Category/");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.Contains("/admin/Category/", response.Headers.Location.ToString());
         }
     }
 }

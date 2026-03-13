@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -27,12 +26,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             var response = await _client.GetAsync("/admin/Category/add/");
             var html = await response.Content.ReadAsStringAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            html.Should().Contain("Add category");
-            html.Should().Contain("Category Name");
-            html.Should().Contain("Description");
-            html.Should().Contain("<form");
-            html.Should().Contain("method=\"post\"");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("Add category", html);
+            Assert.Contains("Category Name", html);
+            Assert.Contains("Description", html);
+            Assert.Contains("<form", html);
+            Assert.Contains("method=\"post\"", html);
         }
 
         [Fact]
@@ -41,9 +40,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             var response = await _client.GetAsync("/admin/Category/add/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("Save");
-            html.Should().Contain("Save and add another");
-            html.Should().Contain("Save and continue editing");
+            Assert.Contains("Save", html);
+            Assert.Contains("Save and add another", html);
+            Assert.Contains("Save and continue editing", html);
         }
 
         [Fact]
@@ -58,8 +57,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
 
             var response = await _client.PostAsync("/admin/Category/add/", formData);
 
-            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-            response.Headers.Location.ToString().Should().Contain("/admin/Category/");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.Contains("/admin/Category/", response.Headers.Location.ToString());
         }
 
         [Fact]
@@ -74,8 +73,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
 
             var response = await _client.PostAsync("/admin/Category/add/", formData);
 
-            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-            response.Headers.Location.ToString().Should().Contain("/admin/Category/add/");
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.Contains("/admin/Category/add/", response.Headers.Location.ToString());
         }
     }
 }

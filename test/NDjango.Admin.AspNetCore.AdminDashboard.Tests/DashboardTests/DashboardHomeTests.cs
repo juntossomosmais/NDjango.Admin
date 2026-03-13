@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.TestHost;
 
-using FluentAssertions;
 using Xunit;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
@@ -25,11 +24,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.DashboardTests
             var response = await _client.GetAsync("/admin/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("Categories");
-            html.Should().Contain("Restaurants");
-            html.Should().Contain("Restaurant Profiles");
-            html.Should().Contain("Ingredients");
-            html.Should().Contain("Menu Items");
+            Assert.Contains("Categories", html);
+            Assert.Contains("Restaurants", html);
+            Assert.Contains("Restaurant Profiles", html);
+            Assert.Contains("Ingredients", html);
+            Assert.Contains("Menu Items", html);
         }
 
         [Fact]
@@ -38,9 +37,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.DashboardTests
             var response = await _client.GetAsync("/admin/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("/admin/Category/add/");
-            html.Should().Contain("/admin/Restaurant/add/");
-            html.Should().Contain("/admin/Ingredient/add/");
+            Assert.Contains("/admin/Category/add/", html);
+            Assert.Contains("/admin/Restaurant/add/", html);
+            Assert.Contains("/admin/Ingredient/add/", html);
         }
 
         [Fact]
@@ -49,9 +48,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.DashboardTests
             var response = await _client.GetAsync("/admin/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("/admin/Category/");
-            html.Should().Contain("/admin/Restaurant/");
-            html.Should().Contain("/admin/Ingredient/");
+            Assert.Contains("/admin/Category/", html);
+            Assert.Contains("/admin/Restaurant/", html);
+            Assert.Contains("/admin/Ingredient/", html);
         }
 
         [Fact]
@@ -60,8 +59,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.DashboardTests
             var response = await _client.GetAsync("/admin/");
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain("Test Admin");
-            html.Should().Contain("Site administration");
+            Assert.Contains("Test Admin", html);
+            Assert.Contains("Site administration", html);
         }
     }
 }

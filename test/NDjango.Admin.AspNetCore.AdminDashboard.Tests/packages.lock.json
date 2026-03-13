@@ -8,15 +8,6 @@
         "resolved": "6.0.0",
         "contentHash": "tW3lsNS+dAEII6YGUX/VMoJjBS1QvsxqJeqLaJXub08y1FSjasFPtQ4UBUsudE9PNrzLjooClMsPtY2cZLdXpQ=="
       },
-      "FluentAssertions": {
-        "type": "Direct",
-        "requested": "[6.11.0, )",
-        "resolved": "6.11.0",
-        "contentHash": "aBaagwdNtVKkug1F3imGXUlmoBd8ZUZX8oQ5niThaJhF79SpESe1Gzq7OFuZkQdKD5Pa4Mone+jrbas873AT4g==",
-        "dependencies": {
-          "System.Configuration.ConfigurationManager": "4.4.0"
-        }
-      },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
         "requested": "[8.0.0, )",
