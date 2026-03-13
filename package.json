@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "scripts": {
+    "test": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "coverageProvider": "v8",
+    "collectCoverageFrom": [
+      "src/NDjango.Admin.AspNetCore.AdminDashboard/wwwroot/js/admin-dashboard.js"
+    ]
+  }
+}

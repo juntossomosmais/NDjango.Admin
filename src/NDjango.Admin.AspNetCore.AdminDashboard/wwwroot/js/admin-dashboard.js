@@ -1,22 +1,22 @@
 // Sidebar filter
 document.addEventListener('DOMContentLoaded', function () {
-    var searchInput = document.getElementById('sidebar-search');
+    const searchInput = document.getElementById('sidebar-search');
     if (searchInput) {
         searchInput.addEventListener('input', function () {
-            var filter = this.value.toLowerCase();
-            var items = document.querySelectorAll('.sidebar-model-item');
+            const filter = this.value.toLowerCase();
+            const items = document.querySelectorAll('.sidebar-model-item');
             items.forEach(function (item) {
-                var text = item.textContent.toLowerCase();
+                const text = item.textContent.toLowerCase();
                 item.style.display = text.indexOf(filter) !== -1 ? '' : 'none';
             });
         });
     }
 
     // Bulk action checkbox management
-    var actionToggle = document.getElementById('action-toggle');
-    var actionCheckboxes = document.querySelectorAll('.action-select');
-    var actionCounter = document.querySelector('.action-counter');
-    var changelistForm = document.getElementById('changelist-form');
+    const actionToggle = document.getElementById('action-toggle');
+    const actionCheckboxes = document.querySelectorAll('.action-select');
+    const actionCounter = document.querySelector('.action-counter');
+    const changelistForm = document.getElementById('changelist-form');
 
     if (actionToggle) {
         actionToggle.addEventListener('change', function () {
@@ -40,25 +40,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateActionCounter() {
         if (!actionCounter) return;
-        var checked = document.querySelectorAll('.action-select:checked').length;
-        var total = actionCheckboxes.length;
+        const checked = document.querySelectorAll('.action-select:checked').length;
+        const total = actionCheckboxes.length;
         actionCounter.textContent = checked + ' of ' + total + ' selected';
     }
 
     if (changelistForm) {
         changelistForm.addEventListener('submit', function (e) {
-            var select = changelistForm.querySelector('select[name="action"]');
-            if (!select || !select.value) {
+            const select = changelistForm.querySelector('select[name="action"]');
+            if (!select?.value) {
                 e.preventDefault();
                 return;
             }
-            var selected = select.options[select.selectedIndex];
-            var allowEmpty = selected.getAttribute('data-allow-empty') === 'true';
-            var checkedCount = document.querySelectorAll('.action-select:checked').length;
+            const selected = select.options[select.selectedIndex];
+            const allowEmpty = selected.dataset.allowEmpty === 'true';
+            const checkedCount = document.querySelectorAll('.action-select:checked').length;
             if (checkedCount === 0 && !allowEmpty) {
                 e.preventDefault();
                 alert('Please select at least one item.');
-                return;
             }
         });
     }
@@ -66,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Popup dismiss delegation — handles clicks on .popup-select links
     // rendered in the popup list view instead of inline onclick handlers.
     document.addEventListener('click', function (e) {
-        var link = e.target.closest('.popup-select');
+        const link = e.target.closest('.popup-select');
         if (!link) return;
         e.preventDefault();
         if (window.opener && typeof window.opener.dismissRelatedLookupPopup === 'function') {
@@ -76,10 +75,10 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function showRelatedObjectLookupPopup(triggerLink) {
-    var inputId = triggerLink.id.replace(/^lookup_/, '');
-    var href = triggerLink.href;
+    const inputId = triggerLink.id.replace(/^lookup_/, '');
+    let href = triggerLink.href;
     if (href.indexOf('?') === -1) href += '?';
-    var win = window.open(href, 'lookup_' + inputId, 'height=500,width=800,resizable=yes,scrollbars=yes');
+    const win = window.open(href, 'lookup_' + inputId, 'height=500,width=800,resizable=yes,scrollbars=yes');
     if (win) {
         win.focus();
     }
@@ -87,10 +86,14 @@ function showRelatedObjectLookupPopup(triggerLink) {
 }
 
 function dismissRelatedLookupPopup(win, chosenId) {
-    var inputId = win.name.replace(/^lookup_/, '');
-    var input = document.getElementById(inputId);
+    const inputId = win.name.replace(/^lookup_/, '');
+    const input = document.getElementById(inputId);
     if (input) {
         input.value = chosenId;
     }
     win.close();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { showRelatedObjectLookupPopup, dismissRelatedLookupPopup };
 }

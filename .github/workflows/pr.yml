@@ -31,6 +31,14 @@ jobs:
       - name: Check if the project is well formatted
         run: |
           ./scripts/start-check-formatting.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Run JavaScript tests
+        run: |
+          npm ci
+          npm test
       - name: Build the project, run all tests, and publish the test results
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

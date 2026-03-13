@@ -28,6 +28,14 @@ jobs:
       - name: Install dotnet-sonarscanner
         run: |
           dotnet tool install --global dotnet-sonarscanner
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Run JavaScript tests
+        run: |
+          npm ci
+          npm test
       - name: Build the project, run all tests and publish to SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -24,6 +24,23 @@ cd sample-project/src && dotnet run -- api
 # Dashboard at http://localhost:8000/admin/
 ```
 
+### JavaScript (admin-dashboard.js)
+
+Any change to `src/NDjango.Admin.AspNetCore.AdminDashboard/wwwroot/js/admin-dashboard.js` **must** include corresponding updates to its spec file (`admin-dashboard.spec.js` in the same directory). Tests must pass and maintain >99% code coverage.
+
+```bash
+# Install dependencies (once)
+npm install
+
+# Run JS tests with coverage
+npm test
+
+# Run a single test by name
+npx jest --coverage --coverageReporters=text -t "filters items matching"
+```
+
+The spec uses `jest` + `jest-environment-jsdom`. The source file exposes global functions via a conditional CommonJS export (`if (typeof module !== 'undefined')`) so they are testable through `require()` while remaining transparent in the browser.
+
 ## Architecture
 
 ### Project Dependency Graph
