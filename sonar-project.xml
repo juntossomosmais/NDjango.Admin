@@ -7,5 +7,6 @@
     <Property Name="sonar.coverage.exclusions">
         sample-project/**/*,
         sample-project-sso/**/*
+        test/**/*
     </Property>
 </SonarQubeAnalysisProperties> 
