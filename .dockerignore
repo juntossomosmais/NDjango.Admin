@@ -7,3 +7,4 @@
 !NDjango.Admin.sln
 !scripts/*.sh
 !runsettings.xml
+!.config

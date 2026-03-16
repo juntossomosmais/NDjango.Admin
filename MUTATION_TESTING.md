@@ -6,7 +6,7 @@ This document is a guide for running mutation testing with [Stryker.NET](https:/
 
 - Stryker.NET installed as a dotnet tool (`dotnet stryker`)
 - SQL Server running — required by integration tests (see below)
-- The helper script `scripts/parse-stryker-report.py` for reading HTML reports
+- The helper script `scripts/parse-stryker-report.csx` for reading HTML reports
 
 ### SQL Server Setup
 
@@ -72,7 +72,7 @@ dotnet stryker \
 Parse the HTML report using the helper script:
 
 ```bash
-python3 scripts/parse-stryker-report.py \
+dotnet dotnet-script ./scripts/parse-stryker-report.csx -- \
   test/<TestProject>/StrykerOutput/<timestamp>/reports/mutation-report.html \
   <TargetClassName>
 ```
@@ -93,7 +93,7 @@ This prints every survived and uncovered mutant with its line, mutator type, and
 For each killable survivor, write a test that fails when the mutation is applied and passes with the original code. Then run focused tests:
 
 ```bash
-dotnet test NDjango.Admin.sln --filter "NewTestClass" | bash ./scripts/filter-failed-tests.sh
+dotnet test NDjango.Admin.sln --filter "NewTestClass" | dotnet dotnet-script ./scripts/filter-failed-tests.csx
 ```
 
 **Test design tips for mutation killing:**
@@ -107,7 +107,7 @@ dotnet test NDjango.Admin.sln --filter "NewTestClass" | bash ./scripts/filter-fa
 Run the entire suite to ensure new tests don't break anything:
 
 ```bash
-dotnet test NDjango.Admin.sln | bash ./scripts/filter-failed-tests.sh
+dotnet test NDjango.Admin.sln | dotnet dotnet-script ./scripts/filter-failed-tests.csx
 ```
 
 Only proceed to Phase 5 if all tests pass.
@@ -117,7 +117,7 @@ Only proceed to Phase 5 if all tests pass.
 Run the same command from Phase 1. Compare the new score against baseline.
 
 ```bash
-python3 scripts/parse-stryker-report.py \
+dotnet dotnet-script ./scripts/parse-stryker-report.csx -- \
   test/<TestProject>/StrykerOutput/<new-timestamp>/reports/mutation-report.html \
   <TargetClassName>
 ```

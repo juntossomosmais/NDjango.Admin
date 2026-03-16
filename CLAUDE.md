@@ -2,7 +2,7 @@
 
 ## Build & Test Commands
 
-ALWAYS use `./scripts/filter-failed-tests.sh` when running tests.
+ALWAYS use `./scripts/filter-failed-tests.csx` when running tests.
 
 ```bash
 # Start SQL Server (required for integration tests and sample project)
@@ -13,22 +13,24 @@ dotnet build NDjango.Admin.sln
 dotnet tool restore
 
 # Run selective unit testing focusing on the classes you have changed
-dotnet test NDjango.Admin.sln --filter "ForeignKeyTests" | bash ./scripts/filter-failed-tests.sh
+dotnet test NDjango.Admin.sln --filter "ForeignKeyTests" | dotnet dotnet-script ./scripts/filter-failed-tests.csx
 # Run all tests when the selective runs are successful to ensure overall integrity (you MUST execute exactly like this):
-dotnet test NDjango.Admin.sln | bash ./scripts/filter-failed-tests.sh
+dotnet test NDjango.Admin.sln | dotnet dotnet-script ./scripts/filter-failed-tests.csx
 
 # Run a single test
-dotnet test NDjango.Admin.sln --filter "FullyQualifiedName~ForeignKeyTests.RestaurantAddForm_RendersCategory_LookupFieldAsync" | bash ./scripts/filter-failed-tests.sh
+dotnet test NDjango.Admin.sln --filter "FullyQualifiedName~ForeignKeyTests.RestaurantAddForm_RendersCategory_LookupFieldAsync" | dotnet dotnet-script ./scripts/filter-failed-tests.csx
 
 # Run the sample project (requires SQL Server running)
 cd sample-project/src && dotnet run -- api
 # Dashboard at http://localhost:8000/admin/
 
 # Coverage report (pipe any dotnet test or docker compose run through it)
-dotnet test NDjango.Admin.sln --settings "./runsettings.xml" | bash ./scripts/generate-coverage-report.sh
-# Filter report to specific file(s) (case-insensitive substring match)
-dotnet test NDjango.Admin.sln --settings "./runsettings.xml" --filter "ForeignKeyTests" | bash ./scripts/generate-coverage-report.sh "ApiDispatcher"
-dotnet test NDjango.Admin.sln --settings "./runsettings.xml" --filter "FkLookupPopupTests" | bash ./scripts/generate-coverage-report.sh
+# Shows per-file line/branch percentages + uncovered lines and partial branches
+dotnet test NDjango.Admin.sln --settings "./runsettings.xml" | dotnet dotnet-script ./scripts/generate-coverage-report.csx
+# Filter report to specific file(s) (case-insensitive substring match on path)
+# The filter matches any file whose path contains the substring, so multiple files may appear
+dotnet test NDjango.Admin.sln --settings "./runsettings.xml" --filter "ForeignKeyTests" | dotnet dotnet-script ./scripts/generate-coverage-report.csx -- "ApiDispatcher"
+dotnet test NDjango.Admin.sln --settings "./runsettings.xml" --filter "FkLookupPopupTests" | dotnet dotnet-script ./scripts/generate-coverage-report.csx
 ```
 
 ### JavaScript (admin-dashboard.js)
