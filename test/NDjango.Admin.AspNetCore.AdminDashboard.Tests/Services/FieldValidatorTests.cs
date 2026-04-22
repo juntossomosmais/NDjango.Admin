@@ -985,5 +985,160 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             // Assert
             Assert.Empty(errors);
         }
+
+        [Fact]
+        public void Validate_EditFormPasswordMissing_IsSkipped()
+        {
+            // Arrange — password left blank on edit means "keep the current hash"
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Password", DataType.String, isNullable: false);
+                attr.InputType = InputTypeHint.Password;
+            });
+            var props = new JObject();
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props, isEdit: true);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_CreateFormPasswordMissing_ReturnsRequiredError()
+        {
+            // Arrange — the password skip must be edit-only
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Password", DataType.String, isNullable: false);
+                attr.InputType = InputTypeHint.Password;
+            });
+            var props = new JObject();
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props, isEdit: false);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("This field is required.", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_NullableStringEmpty_ReturnsNoError()
+        {
+            // Arrange — empty value on a nullable field is valid and should not trigger any rule
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Note", DataType.String, isNullable: true);
+                attr.MinLength = 5;
+            });
+            var props = new JObject { ["Note"] = "" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_Int64Unparseable_ReturnsEnterValidInteger()
+        {
+            // Arrange
+            var entity = CreateEntity((model, ent) =>
+                AddAttr(model, ent, "BigCount", DataType.Int64, isNullable: false));
+            var props = new JObject { ["BigCount"] = "not-a-number" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("Enter a valid integer number.", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_WordUnparseable_ReturnsEnterValidInteger()
+        {
+            // Arrange
+            var entity = CreateEntity((model, ent) =>
+                AddAttr(model, ent, "SmallNum", DataType.Word, isNullable: false));
+            var props = new JObject { ["SmallNum"] = "abc" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("Enter a valid integer number.", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_ByteNonNumeric_ReturnsByteRangeError()
+        {
+            // Arrange — distinct from the overflow case, which already has coverage
+            var entity = CreateEntity((model, ent) =>
+                AddAttr(model, ent, "Flag", DataType.Byte, isNullable: false));
+            var props = new JObject { ["Flag"] = "nope" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("Enter a valid integer number between 0 and 255.", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_FloatUnparseable_ReturnsEnterValidNumber()
+        {
+            // Arrange
+            var entity = CreateEntity((model, ent) =>
+                AddAttr(model, ent, "Ratio", DataType.Float, isNullable: false));
+            var props = new JObject { ["Ratio"] = "not-a-float" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("Enter a valid number.", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_TimeUnparseable_ReturnsEnterValidTime()
+        {
+            // Arrange
+            var entity = CreateEntity((model, ent) =>
+                AddAttr(model, ent, "StartAt", DataType.Time, isNullable: false));
+            var props = new JObject { ["StartAt"] = "25:99" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("Enter a valid time.", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_PrecisionWithScaleEqualPrecision_ReturnsNoError()
+        {
+            // Arrange — scale == precision leaves zero integer digits; rule disables itself rather than
+            // rejecting every value, since the config is an edge case more than an authoring error.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Fraction", DataType.Currency, isNullable: false);
+                attr.Precision = 4;
+                attr.Scale = 4;
+            });
+            var props = new JObject { ["Fraction"] = "0.1234" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
     }
 }
