@@ -32,6 +32,24 @@
             Maps to HTML5 typed inputs (Django's EmailInput/URLInput/TelInput/ColorInput).
             </summary>
         </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Auto">
+            <summary>Default — input type is inferred from the attribute's <see cref="T:NDjango.Admin.DataType"/>.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Email">
+            <summary>HTML5 <c>type="email"</c> — browser performs basic email validation.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Url">
+            <summary>HTML5 <c>type="url"</c> — browser performs basic URL validation.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Tel">
+            <summary>HTML5 <c>type="tel"</c> — hints numeric keypad on mobile; no format enforced.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Color">
+            <summary>HTML5 <c>type="color"</c> — renders the native color picker.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Password">
+            <summary>HTML5 <c>type="password"</c> — masks input; edit forms leave it blank to preserve the existing value.</summary>
+        </member>
         <member name="T:NDjango.Admin.MetaEntityAttr">
             <summary>
             Represents one entity attribute of data model.
@@ -1091,6 +1109,29 @@
             Initializes a new instance of the <see cref="!:Error"/> class.
             </summary>
             <param name="message">Message.</param>
+        </member>
+        <member name="M:NDjango.Admin.NDjangoAdminManagerException.#ctor(System.String,System.Exception)">
+            <summary>Initializes a new instance with the specified error message and inner exception.</summary>
+        </member>
+        <member name="T:NDjango.Admin.DataIntegrityException">
+            <summary>
+            Thrown when a write operation fails a database constraint (unique, foreign key, NOT NULL, length, range).
+            The message is translated from the provider-specific error when recognized.
+            </summary>
+        </member>
+        <member name="M:NDjango.Admin.DataIntegrityException.#ctor(System.String)">
+            <summary>Initializes a new instance with the specified error message.</summary>
+        </member>
+        <member name="M:NDjango.Admin.DataIntegrityException.#ctor(System.String,System.Exception)">
+            <summary>Initializes a new instance with the specified error message and inner exception.</summary>
+        </member>
+        <member name="T:NDjango.Admin.InvalidRecordKeyException">
+            <summary>
+            Thrown when a record key supplied via URL or form cannot be converted to the CLR type of the key property.
+            </summary>
+        </member>
+        <member name="M:NDjango.Admin.InvalidRecordKeyException.#ctor(System.String)">
+            <summary>Initializes a new instance with the specified error message.</summary>
         </member>
         <member name="T:NDjango.Admin.Export.BasicDataExportSettings">
             <summary>

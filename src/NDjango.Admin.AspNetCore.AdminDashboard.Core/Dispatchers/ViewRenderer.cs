@@ -573,9 +573,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             if (string.IsNullOrEmpty(pattern))
                 return pattern;
             var stripped = pattern;
-            if (stripped.StartsWith("^"))
+            if (stripped.StartsWith('^'))
                 stripped = stripped.Substring(1);
-            if (stripped.EndsWith("$") && !stripped.EndsWith("\\$")) {
+            if (stripped.EndsWith('$') && !stripped.EndsWith("\\$")) {
                 stripped = stripped.Substring(0, stripped.Length - 1);
             }
             return stripped;
