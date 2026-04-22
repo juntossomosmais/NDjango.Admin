@@ -451,10 +451,10 @@ namespace NDjango.Admin
         public DateTime? MaxDateTime { get; set; }
 
         /// <summary>Regex pattern for string validation (from [RegularExpression]).</summary>
-        public string RegexPattern { get; set; }
+        public string? RegexPattern { get; set; }
 
         /// <summary>Error message to surface when regex validation fails.</summary>
-        public string RegexErrorMessage { get; set; }
+        public string? RegexErrorMessage { get; set; }
 
         /// <summary>Total digits for decimal values (from EF Core HasPrecision).</summary>
         public int? Precision { get; set; }

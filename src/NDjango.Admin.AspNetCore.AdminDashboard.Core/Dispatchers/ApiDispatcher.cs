@@ -337,7 +337,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
         {
             var groupingService = new EntityGroupingService(metadataService, context.Options);
             var errorDict = errors.ToDictionary(e => e.PropName, e => e.Message);
-            var submittedValues = new Dictionary<string, object>();
+            var submittedValues = new Dictionary<string, object?>();
             foreach (var p in props.Properties()) {
                 submittedValues[p.Name] = p.Value.Type == JTokenType.Null ? null : p.Value.ToObject<object>();
             }

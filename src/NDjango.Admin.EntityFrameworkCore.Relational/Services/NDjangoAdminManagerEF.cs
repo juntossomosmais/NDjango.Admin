@@ -367,7 +367,8 @@ namespace NDjango.Admin.Services
             foreach (var prop in keyProps) {
                 var raw = keys[prop.Name];
                 try {
-                    result[prop] = TypeDescriptor.GetConverter(prop.ClrType).ConvertFromString(raw);
+                    var converted = TypeDescriptor.GetConverter(prop.ClrType).ConvertFromString(raw) ?? throw new InvalidRecordKeyException($"Invalid value for key '{prop.Name}': '{raw}'.");
+                    result[prop] = converted;
                 }
                 catch (Exception ex) when (ex is FormatException || ex is OverflowException || ex is ArgumentException || ex is NotSupportedException) {
                     throw new InvalidRecordKeyException($"Invalid value for key '{prop.Name}': '{raw}'.");

@@ -107,10 +107,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             }
 
             var sorters = new List<NDjango.Admin.Services.EasySorter>();
-            var isSortFieldValid = !string.IsNullOrEmpty(sortField)
+            if (!string.IsNullOrEmpty(sortField)
                 && entity.Attributes.Any(a => a.Kind != EntityAttrKind.Lookup
-                    && string.Equals(a.PropName, sortField, StringComparison.Ordinal));
-            if (isSortFieldValid) {
+                    && string.Equals(a.PropName, sortField, StringComparison.Ordinal))) {
                 sorters.Add(new NDjango.Admin.Services.EasySorter
                 {
                     FieldName = sortField,
@@ -231,7 +230,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
 
         internal async Task RenderEntityFormWithErrorsAsync(AdminDashboardContext context, DashboardRouteMatch match,
             AdminMetadataService metadataService, EntityGroupingService groupingService, bool isEdit,
-            IReadOnlyDictionary<string, object>? submittedValues, IReadOnlyDictionary<string, string>? errors,
+            IReadOnlyDictionary<string, object?>? submittedValues, IReadOnlyDictionary<string, string>? errors,
             CancellationToken ct)
         {
             context.HttpContext.Response.StatusCode = 400;
@@ -241,7 +240,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
 
         private async Task RenderEntityFormAsync(AdminDashboardContext context, DashboardRouteMatch match,
             AdminMetadataService metadataService, EntityGroupingService groupingService, bool isEdit,
-            IReadOnlyDictionary<string, object>? submittedValues, IReadOnlyDictionary<string, string>? errors,
+            IReadOnlyDictionary<string, object?>? submittedValues, IReadOnlyDictionary<string, string>? errors,
             CancellationToken ct)
         {
             var entityId = match.Values["entityId"];
@@ -394,8 +393,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                     ? new Dictionary<string, string>(errors)
                     : new Dictionary<string, string>(),
                 SubmittedValues = submittedValues != null
-                    ? new Dictionary<string, object>(submittedValues)
-                    : new Dictionary<string, object>()
+                    ? new Dictionary<string, object?>(submittedValues)
+                    : new Dictionary<string, object?>()
             };
 
             await ViewRenderer.RenderEntityFormViewAsync(context.HttpContext, viewModel, context.AuthenticatedUsername);

@@ -25,7 +25,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         /// Raw submitted values from the failed POST, keyed by prop name.
         /// Used to preserve user input on validation failure (Django's bound-form behavior).
         /// </summary>
-        public Dictionary<string, object> SubmittedValues { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object?> SubmittedValues { get; set; } = new Dictionary<string, object?>();
     }
 
     public class FieldViewModel
@@ -49,8 +49,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         public decimal? MaxValue { get; set; }
         public DateTime? MinDateTime { get; set; }
         public DateTime? MaxDateTime { get; set; }
-        public string RegexPattern { get; set; }
-        public string RegexErrorMessage { get; set; }
+        public string? RegexPattern { get; set; }
+        public string? RegexErrorMessage { get; set; }
         public int? Precision { get; set; }
         public int? Scale { get; set; }
         public InputTypeHint InputType { get; set; } = InputTypeHint.Auto;
