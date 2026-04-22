@@ -231,7 +231,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
 
         internal async Task RenderEntityFormWithErrorsAsync(AdminDashboardContext context, DashboardRouteMatch match,
             AdminMetadataService metadataService, EntityGroupingService groupingService, bool isEdit,
-            IReadOnlyDictionary<string, object> submittedValues, IReadOnlyDictionary<string, string> errors,
+            IReadOnlyDictionary<string, object>? submittedValues, IReadOnlyDictionary<string, string>? errors,
             CancellationToken ct)
         {
             context.HttpContext.Response.StatusCode = 400;
@@ -241,7 +241,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
 
         private async Task RenderEntityFormAsync(AdminDashboardContext context, DashboardRouteMatch match,
             AdminMetadataService metadataService, EntityGroupingService groupingService, bool isEdit,
-            IReadOnlyDictionary<string, object> submittedValues, IReadOnlyDictionary<string, string> errors,
+            IReadOnlyDictionary<string, object>? submittedValues, IReadOnlyDictionary<string, string>? errors,
             CancellationToken ct)
         {
             var entityId = match.Values["entityId"];
