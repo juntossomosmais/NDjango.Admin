@@ -180,8 +180,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             if (maxIntegerDigits <= 0)
                 return null;
 
+            // Count digits on the decimal directly — casting to double and using Math.Log10 loses
+            // precision past ~15–17 significant digits (e.g. Precision=20 on SQL Server/Postgres),
+            // which can under-count the digits and silently accept overflowing values.
             var integerPart = decimal.Truncate(Math.Abs(numeric));
-            var digits = integerPart == 0 ? 1 : (int)Math.Floor(Math.Log10((double)integerPart) + 1);
+            var digits = integerPart == 0 ? 1 : integerPart.ToString("F0", CultureInfo.InvariantCulture).Length;
             if (digits > maxIntegerDigits) {
                 return $"Ensure that there are no more than {maxIntegerDigits} digits before the decimal point.";
             }

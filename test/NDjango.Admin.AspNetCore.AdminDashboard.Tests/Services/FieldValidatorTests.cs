@@ -1140,5 +1140,49 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             // Assert
             Assert.Empty(errors);
         }
+
+        [Fact]
+        public void Validate_PrecisionLargeDecimalOverflow_ReturnsDigitsBeforeDecimalError()
+        {
+            // Arrange — Precision=20, Scale=2 => 18 integer digits allowed. 19-digit integer part
+            // exceeds double's ~15-17 significant-digit range, so a Math.Log10((double)integerPart)
+            // calculation can floor to 18 and under-count the digits. Counting on the decimal directly
+            // must still reject the value.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "BigPrice", DataType.Currency, isNullable: false);
+                attr.Precision = 20;
+                attr.Scale = 2;
+            });
+            var props = new JObject { ["BigPrice"] = "1234567890123456789.99" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Contains("no more than 18 digits before the decimal point", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_PrecisionPowerOfTenAtBoundary_AcceptsExactDigitCount()
+        {
+            // Arrange — 10^7 has exactly 8 integer digits; Precision=10, Scale=2 allows 8. Math.Log10(1e7)
+            // can return 6.99999... due to FP rounding, which would incorrectly pass "7 digits" when the
+            // value actually has 8. String-length digit counting avoids the trap.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "EdgePrice", DataType.Currency, isNullable: false);
+                attr.Precision = 10;
+                attr.Scale = 2;
+            });
+            var props = new JObject { ["EdgePrice"] = "10000000.00" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
     }
 }
