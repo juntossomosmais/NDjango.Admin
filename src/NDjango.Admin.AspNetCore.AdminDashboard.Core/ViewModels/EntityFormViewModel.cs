@@ -38,7 +38,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         public bool IsPrimaryKey { get; set; }
         public bool IsRequired { get; set; }
         public bool IsEditable { get; set; }
-        public object Value { get; set; }
+        public object? Value { get; set; }
         public Type ClrType { get; set; }
         public string DisplayFormat { get; set; }
         public string LookupEntityId { get; set; }
