@@ -42,11 +42,17 @@ namespace NDjango.Admin
     /// </summary>
     public enum InputTypeHint
     {
+        /// <summary>Default — input type is inferred from the attribute's <see cref="DataType"/>.</summary>
         Auto = 0,
+        /// <summary>HTML5 <c>type="email"</c> — browser performs basic email validation.</summary>
         Email = 1,
+        /// <summary>HTML5 <c>type="url"</c> — browser performs basic URL validation.</summary>
         Url = 2,
+        /// <summary>HTML5 <c>type="tel"</c> — hints numeric keypad on mobile; no format enforced.</summary>
         Tel = 3,
+        /// <summary>HTML5 <c>type="color"</c> — renders the native color picker.</summary>
         Color = 4,
+        /// <summary>HTML5 <c>type="password"</c> — masks input; edit forms leave it blank to preserve the existing value.</summary>
         Password = 5
     }
 
