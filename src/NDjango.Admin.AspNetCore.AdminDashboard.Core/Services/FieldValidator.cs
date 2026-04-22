@@ -48,8 +48,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
                 if (string.IsNullOrEmpty(propName))
                     continue;
 
+                JToken? token = null;
                 var hasValue = props != null
-                    && props.TryGetValue(propName, out var token)
+                    && props.TryGetValue(propName, out token)
                     && token != null
                     && token.Type != JTokenType.Null;
 
@@ -62,10 +63,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
                     continue;
                 }
 
-                var raw = props[propName];
-                var stringValue = raw.Type == JTokenType.String
-                    ? raw.Value<string>()
-                    : raw.ToString();
+                var stringValue = token!.Type == JTokenType.String
+                    ? token.Value<string>()
+                    : token.ToString();
 
                 if (!attr.IsNullable && string.IsNullOrEmpty(stringValue) && attr.DataType != DataType.Bool) {
                     errors.Add(new FieldError(propName, "This field is required."));
@@ -84,7 +84,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return errors;
         }
 
-        private static string ValidateAttribute(MetaEntityAttr attr, string value)
+        private static string? ValidateAttribute(MetaEntityAttr attr, string value)
         {
             var nullByteError = ValidateNoNullBytes(attr, value);
             if (nullByteError != null)
@@ -121,7 +121,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return null;
         }
 
-        private static string ValidateParse(MetaEntityAttr attr, string value)
+        private static string? ValidateParse(MetaEntityAttr attr, string value)
         {
             switch (attr.DataType) {
                 case DataType.Int32:
@@ -165,7 +165,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return null;
         }
 
-        private static string ValidatePrecision(MetaEntityAttr attr, string value)
+        private static string? ValidatePrecision(MetaEntityAttr attr, string value)
         {
             if (attr.DataType != DataType.Currency && attr.DataType != DataType.Float)
                 return null;
@@ -189,7 +189,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return null;
         }
 
-        private static string ValidateNoNullBytes(MetaEntityAttr attr, string value)
+        private static string? ValidateNoNullBytes(MetaEntityAttr attr, string value)
         {
             if (attr.DataType != DataType.String
                 && attr.DataType != DataType.Memo
@@ -202,7 +202,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return null;
         }
 
-        private static string ValidateLength(MetaEntityAttr attr, string value)
+        private static string? ValidateLength(MetaEntityAttr attr, string value)
         {
             if (attr.MaxLength.HasValue && value.Length > attr.MaxLength.Value) {
                 return $"Ensure this value has at most {attr.MaxLength.Value} characters (it has {value.Length}).";
@@ -215,7 +215,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return null;
         }
 
-        private static string ValidateRange(MetaEntityAttr attr, string value)
+        private static string? ValidateRange(MetaEntityAttr attr, string value)
         {
             if (!attr.MinValue.HasValue && !attr.MaxValue.HasValue)
                 return null;
@@ -237,7 +237,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return null;
         }
 
-        private static string ValidateDateRange(MetaEntityAttr attr, string value)
+        private static string? ValidateDateRange(MetaEntityAttr attr, string value)
         {
             if (!attr.MinDateTime.HasValue && !attr.MaxDateTime.HasValue)
                 return null;
@@ -257,7 +257,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return null;
         }
 
-        private static string ValidateRegex(MetaEntityAttr attr, string value)
+        private static string? ValidateRegex(MetaEntityAttr attr, string value)
         {
             if (string.IsNullOrEmpty(attr.RegexPattern))
                 return null;
@@ -279,7 +279,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return null;
         }
 
-        private static string ValidateInputType(MetaEntityAttr attr, string value)
+        private static string? ValidateInputType(MetaEntityAttr attr, string value)
         {
             switch (attr.InputType) {
                 case InputTypeHint.Email:

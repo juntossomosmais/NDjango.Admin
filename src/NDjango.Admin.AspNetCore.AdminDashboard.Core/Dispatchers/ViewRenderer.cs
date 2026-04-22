@@ -303,7 +303,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 content.Append("</label>");
 
                 if (hasError) {
-                    content.Append($"<ul class=\"errorlist\"><li>{Encode(fieldError)}</li></ul>");
+                    content.Append($"<ul class=\"errorlist\"><li>{Encode(fieldError!)}</li></ul>");
                 }
 
                 if (!field.IsEditable) {

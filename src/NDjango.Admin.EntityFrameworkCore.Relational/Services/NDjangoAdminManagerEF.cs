@@ -260,7 +260,7 @@ namespace NDjango.Admin.Services
                 if (prop == null)
                     continue;
                 try {
-                    prop.SetValue(entity, entProp.Value.ToObject(prop.PropertyType));
+                    prop.SetValue(entity, entProp.Value?.ToObject(prop.PropertyType));
                 }
                 catch (Exception ex) when (ex is FormatException || ex is OverflowException
                     || ex is ArgumentException || ex is Newtonsoft.Json.JsonException
@@ -281,7 +281,7 @@ namespace NDjango.Admin.Services
                 ?? "Unable to save the record due to a data constraint violation.";
         }
 
-        private static string TranslateByProviderCode(Exception inner)
+        private static string? TranslateByProviderCode(Exception? inner)
         {
             if (inner == null)
                 return null;
@@ -345,12 +345,12 @@ namespace NDjango.Admin.Services
             return (int?)prop.GetValue(obj);
         }
 
-        private static string GetStringProperty(object obj, string name)
+        private static string? GetStringProperty(object obj, string name)
         {
             var prop = obj.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
             if (prop == null || prop.PropertyType != typeof(string))
                 return null;
-            return (string)prop.GetValue(obj);
+            return (string?)prop.GetValue(obj);
         }
 
         private static Dictionary<IProperty, object> GetKeys(IEntityType entityType, Dictionary<string, string> keys)
