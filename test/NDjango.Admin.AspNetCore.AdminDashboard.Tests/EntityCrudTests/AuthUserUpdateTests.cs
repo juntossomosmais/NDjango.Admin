@@ -218,6 +218,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             catch { }
 
             _host?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
