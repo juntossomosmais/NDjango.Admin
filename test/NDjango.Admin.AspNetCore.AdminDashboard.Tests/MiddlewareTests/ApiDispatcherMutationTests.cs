@@ -125,6 +125,97 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
             Assert.Equal(false, result);
         }
 
+        // ── ConvertValue culture-invariance (must match FieldValidator) ─
+
+        [Fact]
+        public void ConvertValue_DateTimeWithSlashSeparator_ParsesUnderInvariantCultureRegardlessOfThreadCulture()
+        {
+            // Arrange — under pt-BR thread culture, default TryParse reads "03/12/2025" as dd/MM (3-Dec).
+            // Binder must align with FieldValidator (InvariantCulture, MM/dd/yyyy), so the parsed value
+            // is March 12 regardless of the host thread culture.
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("pt-BR");
+            try
+            {
+                // Act
+                var result = ApiDispatcher.ConvertValue("03/12/2025", DataType.DateTime);
+
+                // Assert
+                Assert.IsType<DateTime>(result);
+                Assert.Equal(new DateTime(2025, 3, 12), result);
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
+
+        [Fact]
+        public void ConvertValue_DateOnlyWithSlashSeparator_ParsesUnderInvariantCultureRegardlessOfThreadCulture()
+        {
+            // Arrange
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("pt-BR");
+            try
+            {
+                // Act
+                var result = ApiDispatcher.ConvertValue("03/12/2025", DataType.Date, typeof(DateOnly));
+
+                // Assert
+                Assert.IsType<DateOnly>(result);
+                Assert.Equal(new DateOnly(2025, 3, 12), result);
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
+
+        [Fact]
+        public void ConvertValue_DateTimeOffsetWithSlashSeparator_ParsesUnderInvariantCultureRegardlessOfThreadCulture()
+        {
+            // Arrange
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("pt-BR");
+            try
+            {
+                // Act
+                var result = ApiDispatcher.ConvertValue("03/12/2025", DataType.DateTime, typeof(DateTimeOffset));
+
+                // Assert
+                Assert.IsType<DateTimeOffset>(result);
+                var dto = (DateTimeOffset)result;
+                Assert.Equal(2025, dto.Year);
+                Assert.Equal(3, dto.Month);
+                Assert.Equal(12, dto.Day);
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
+
+        [Fact]
+        public void ConvertValue_TimeSpanWithColonSeparator_ParsesUnderInvariantCulture()
+        {
+            // Arrange — TimeSpan parsing also pinned to InvariantCulture for binder/validator parity.
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("pt-BR");
+            try
+            {
+                // Act
+                var result = ApiDispatcher.ConvertValue("14:30:00", DataType.Time);
+
+                // Assert
+                Assert.IsType<TimeSpan>(result);
+                Assert.Equal(new TimeSpan(14, 30, 0), result);
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
+
         // ── Create: missing _save_action defaults to "save" ─────────────
 
         [Fact]
