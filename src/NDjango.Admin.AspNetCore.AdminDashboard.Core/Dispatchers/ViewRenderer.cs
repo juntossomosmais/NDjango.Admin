@@ -292,9 +292,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             content.Append("<fieldset class=\"module aligned\">");
 
             foreach (var field in model.Fields) {
+                string? fieldError = null;
                 var hasError = model.Errors != null
-                    && model.Errors.TryGetValue(field.PropName, out var fieldError);
-                var errorMessage = hasError ? model.Errors[field.PropName] : null;
+                    && model.Errors.TryGetValue(field.PropName, out fieldError);
                 var rowClass = hasError ? "form-row errors" : "form-row";
                 content.Append($"<div class=\"{rowClass}\">");
                 content.Append($"<label for=\"id_{field.PropName}\">{Encode(field.Caption)}:");
@@ -303,7 +303,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 content.Append("</label>");
 
                 if (hasError) {
-                    content.Append($"<ul class=\"errorlist\"><li>{Encode(errorMessage)}</li></ul>");
+                    content.Append($"<ul class=\"errorlist\"><li>{Encode(fieldError)}</li></ul>");
                 }
 
                 if (!field.IsEditable) {
