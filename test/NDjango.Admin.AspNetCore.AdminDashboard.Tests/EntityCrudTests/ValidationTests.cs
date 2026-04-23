@@ -512,5 +512,76 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.Contains("invalid content type", html);
         }
+
+        [Fact]
+        public async Task UpdatePost_ValidationFailure_Returns400AndRendersFormWithErrorsAsync()
+        {
+            // Arrange — seed a Category, then attempt to update it with an invalid (too long) name.
+            // Covers the RazorViewDispatcher.RenderEntityFormWithErrorsAsync edit-path: must set HTTP 400
+            // and re-render the form including the errorlist, not redirect.
+            var createForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", "UpdateValidation_" + Guid.NewGuid().ToString("N")[..8]),
+                new KeyValuePair<string, string>("Quantity", "10"),
+                new KeyValuePair<string, string>("_save_action", "continue"),
+            });
+            var createResp = await _client.PostAsync("/admin/ValidatedProduct/add/", createForm);
+            Assert.Equal(HttpStatusCode.Redirect, createResp.StatusCode);
+            var id = System.Text.RegularExpressions.Regex
+                .Match(createResp.Headers.Location.ToString(), @"/admin/ValidatedProduct/(\d+)/change/")
+                .Groups[1].Value;
+
+            var longName = new string('z', 60);
+            var updateForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", longName),
+                new KeyValuePair<string, string>("Quantity", "10"),
+                new KeyValuePair<string, string>("_save_action", "save"),
+            });
+
+            // Act
+            var response = await _client.PostAsync($"/admin/ValidatedProduct/{id}/change/", updateForm);
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("errorlist", html);
+            Assert.Contains("at most 50 characters", html);
+            Assert.Contains("entity-form", html); // confirms a bound form re-render, not a redirect
+        }
+
+        [Fact]
+        public async Task UpdatePost_ValidationFailure_PreservesSubmittedValuesAsync()
+        {
+            // Arrange — on edit, a failed validation must re-render the form with the user's submitted
+            // values (not the stored record's values), mirroring Django's bound-form behavior.
+            var uniqueValidPart = "SubmittedOnEdit_" + Guid.NewGuid().ToString("N")[..6];
+            var createForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", uniqueValidPart),
+                new KeyValuePair<string, string>("Quantity", "10"),
+                new KeyValuePair<string, string>("_save_action", "continue"),
+            });
+            var createResp = await _client.PostAsync("/admin/ValidatedProduct/add/", createForm);
+            var id = System.Text.RegularExpressions.Regex
+                .Match(createResp.Headers.Location.ToString(), @"/admin/ValidatedProduct/(\d+)/change/")
+                .Groups[1].Value;
+
+            var updateForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", "KeepThisTyped"),
+                new KeyValuePair<string, string>("Quantity", "99999"),
+                new KeyValuePair<string, string>("_save_action", "save"),
+            });
+
+            // Act
+            var response = await _client.PostAsync($"/admin/ValidatedProduct/{id}/change/", updateForm);
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("KeepThisTyped", html);
+            Assert.DoesNotContain(uniqueValidPart, html);
+        }
     }
 }

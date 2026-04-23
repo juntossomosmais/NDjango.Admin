@@ -270,7 +270,7 @@ namespace NDjango.Admin.Services
             }
         }
 
-        private static string TranslateDbUpdateException(DbUpdateException ex)
+        internal static string TranslateDbUpdateException(DbUpdateException ex)
         {
             // Locale-independent provider error codes only. The previous English-substring fallback
             // silently degraded on non-English database servers (e.g. a Spanish/Portuguese/German
@@ -281,7 +281,7 @@ namespace NDjango.Admin.Services
                 ?? "Unable to save the record due to a data constraint violation.";
         }
 
-        private static string? TranslateByProviderCode(Exception? inner)
+        internal static string? TranslateByProviderCode(Exception? inner)
         {
             if (inner == null)
                 return null;

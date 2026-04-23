@@ -14,8 +14,12 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.*" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.*" />
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="NDjango.Admin.EntityFrameworkCore.Relational.Tests" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\NDjango.Admin.Core\NDjango.Admin.Core.csproj" />
-  </ItemGroup>  
+  </ItemGroup>
 </Project>

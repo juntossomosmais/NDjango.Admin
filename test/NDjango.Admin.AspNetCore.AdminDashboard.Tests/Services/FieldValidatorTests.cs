@@ -1,5 +1,7 @@
 using System;
+using System.Globalization;
 using System.Linq;
+using System.Threading;
 
 using NDjango.Admin.AspNetCore.AdminDashboard.Services;
 
@@ -1183,6 +1185,179 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
 
             // Assert
             Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_DateTimeOffsetTokenUnderNonUSCulture_ReturnsNoError()
+        {
+            // Arrange — Mirrors the POST pipeline: ApiDispatcher.ConvertValue parses a DateTimeOffset
+            // string into a typed DateTimeOffset, then JToken.FromObject wraps it as a JValue(Date).
+            // FieldValidator must not reject the already-parsed value under locales that format
+            // DateTimeOffset with culture-specific date separators (e.g. pt-BR "dd/MM/yyyy").
+            var entity = CreateEntity((model, ent) =>
+                AddAttr(model, ent, "ShippedAt", DataType.DateTime, isNullable: false));
+            var dto = new DateTimeOffset(2028, 6, 15, 10, 30, 0, TimeSpan.FromMinutes(330));
+            var props = new JObject { ["ShippedAt"] = JToken.FromObject(dto) };
+
+            var originalCulture = Thread.CurrentThread.CurrentCulture;
+            try
+            {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("pt-BR");
+
+                // Act
+                var errors = FieldValidator.Validate(entity, props);
+
+                // Assert
+                Assert.Empty(errors);
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = originalCulture;
+            }
+        }
+
+        [Fact]
+        public void Validate_DateTimeOffsetTokenWithDateRangeUnderNonUSCulture_ReturnsNoError()
+        {
+            // Arrange — DateTimeOffset value wrapped as typed JToken must also pass ValidateDateRange
+            // (which re-parses the string representation) when the server culture is non-US.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "ShippedAt", DataType.DateTime, isNullable: false);
+                attr.MinDateTime = new DateTime(2020, 1, 1);
+                attr.MaxDateTime = new DateTime(2030, 12, 31);
+            });
+            var dto = new DateTimeOffset(2028, 6, 15, 10, 30, 0, TimeSpan.FromMinutes(330));
+            var props = new JObject { ["ShippedAt"] = JToken.FromObject(dto) };
+
+            var originalCulture = Thread.CurrentThread.CurrentCulture;
+            try
+            {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("pt-BR");
+
+                // Act
+                var errors = FieldValidator.Validate(entity, props);
+
+                // Assert
+                Assert.Empty(errors);
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = originalCulture;
+            }
+        }
+
+        [Fact]
+        public void Validate_RegexOnNumericDataType_IsSkipped()
+        {
+            // Arrange — a [RegularExpression] accidentally placed on an Int32 would otherwise run
+            // against the already-parsed value. Regex rule must be string-only.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Quantity", DataType.Int32, isNullable: false);
+                attr.RegexPattern = @"^\d{5}$";
+            });
+            var props = new JObject { ["Quantity"] = "42" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_RegexOnGuidDataType_IsSkipped()
+        {
+            // Arrange — Guid.TryParse accepts both 32- and 36-char shapes; a regex pattern added
+            // to a Guid property must not gate those.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Uid", DataType.Guid, isNullable: false);
+                attr.RegexPattern = "^will-not-match$";
+            });
+            var props = new JObject { ["Uid"] = "11111111-1111-1111-1111-111111111111" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_RegexOnMemoDataType_StillEnforced()
+        {
+            // Arrange — Memo is text; regex should still apply.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Notes", DataType.Memo, isNullable: false);
+                attr.RegexPattern = @"^\d+$";
+            });
+            var props = new JObject { ["Notes"] = "letters" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("Enter a valid value.", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_EmailInputTypeOnNonStringDataType_IsSkipped()
+        {
+            // Arrange — Email hint mistakenly applied to an Int32. The parsed value must not be
+            // re-evaluated as an email string.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Code", DataType.Int32, isNullable: false);
+                attr.InputType = InputTypeHint.Email;
+            });
+            var props = new JObject { ["Code"] = "42" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_UrlInputTypeOnDateDataType_IsSkipped()
+        {
+            // Arrange
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "WhenAt", DataType.DateTime, isNullable: false);
+                attr.InputType = InputTypeHint.Url;
+            });
+            var props = new JObject { ["WhenAt"] = "2025-05-01" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_EmailInputTypeOnFixedCharDataType_StillEnforced()
+        {
+            // Arrange — FixedChar is a text type; Email hint should still be enforced.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Contact", DataType.FixedChar, isNullable: false);
+                attr.InputType = InputTypeHint.Email;
+            });
+            var props = new JObject { ["Contact"] = "not-an-email" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("Enter a valid email address.", errors[0].Message);
         }
     }
 }

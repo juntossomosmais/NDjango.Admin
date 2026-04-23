@@ -65,7 +65,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
 
                 var stringValue = token!.Type == JTokenType.String
                     ? token.Value<string>()
-                    : token.ToString();
+                    : FormatTokenInvariant(token);
 
                 if (!attr.IsNullable && string.IsNullOrEmpty(stringValue) && attr.DataType != DataType.Bool) {
                     errors.Add(new FieldError(propName, "This field is required."));
@@ -82,6 +82,21 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             }
 
             return errors;
+        }
+
+        // Non-String JTokens (numbers, dates, Guids) are produced by ApiDispatcher.ConvertValue after
+        // successful parsing. Converting those back to a string must use InvariantCulture so the
+        // downstream InvariantCulture-based validators (ValidateParse, ValidateDateRange) see the
+        // same format — JValue.ToString() without a provider uses CurrentCulture, which breaks on
+        // non-US locales like pt-BR ("15/06/2028") since InvariantCulture expects "MM/dd/yyyy".
+        private static string FormatTokenInvariant(JToken token)
+        {
+            if (token is JValue jv) {
+                if (jv.Value is IFormattable formattable)
+                    return formattable.ToString(null, CultureInfo.InvariantCulture);
+                return jv.Value?.ToString() ?? string.Empty;
+            }
+            return token.ToString();
         }
 
         private static string? ValidateAttribute(MetaEntityAttr attr, string value)
@@ -264,6 +279,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
         {
             if (string.IsNullOrEmpty(attr.RegexPattern))
                 return null;
+            // Regex rules only apply to text fields. A [RegularExpression] accidentally placed on a
+            // numeric/date/Guid property would otherwise run against the already-parsed value and
+            // produce confusing errors; mirrors the gating in ViewRenderer.BuildValidationAttrs.
+            if (!IsStringLikeDataType(attr.DataType))
+                return null;
 
             try {
                 if (!Regex.IsMatch(value, attr.RegexPattern, RegexOptions.None, TimeSpan.FromMilliseconds(250))) {
@@ -284,6 +304,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
 
         private static string? ValidateInputType(MetaEntityAttr attr, string value)
         {
+            // Email/Url/Tel/Password hints are meaningful only for text fields. If applied to a
+            // non-string attribute by mistake, the already-parsed typed value must not be
+            // re-validated as free text.
+            if (!IsStringLikeDataType(attr.DataType))
+                return null;
+
             switch (attr.InputType) {
                 case InputTypeHint.Email:
                     if (!new EmailAddressAttribute().IsValid(value))
@@ -308,6 +334,13 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
                 || dataType == DataType.Byte
                 || dataType == DataType.Float
                 || dataType == DataType.Currency;
+        }
+
+        private static bool IsStringLikeDataType(DataType dataType)
+        {
+            return dataType == DataType.String
+                || dataType == DataType.Memo
+                || dataType == DataType.FixedChar;
         }
     }
 }
