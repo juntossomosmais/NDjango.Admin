@@ -189,6 +189,53 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             Assert.NotEqual(originalHash, afterUser.Value.PasswordHash);
         }
 
+        [Fact]
+        public async Task UpdatePost_WithWhitespaceOnlyPassword_UpdatesHashAsync()
+        {
+            // Arrange — a whitespace-only password is a deliberate (if weak) value the user submitted.
+            // StripBlankPasswordFields must use IsNullOrEmpty (not IsNullOrWhiteSpace) so the value
+            // reaches HashPasswordInProps and replaces the stored hash; switching to IsNullOrWhiteSpace
+            // would silently keep the old hash while the user thinks they set a new password.
+            var client = _host.GetTestClient();
+            var cookie = await LoginAsync(client, "admin", "admin");
+
+            var createForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Username", "whitespacepass_user"),
+                new KeyValuePair<string, string>("Password", "originalPass123"),
+                new KeyValuePair<string, string>("_save_action", "continue"),
+            });
+            var createReq = new HttpRequestMessage(HttpMethod.Post, "/admin/AuthUser/add/") { Content = createForm };
+            createReq.Headers.Add("Cookie", cookie);
+            var createResp = await client.SendAsync(createReq);
+            var userId = ExtractIdFromRedirect(createResp.Headers.Location.ToString(), "AuthUser");
+
+            var beforeUser = await GetAuthUserAsync("whitespacepass_user");
+            Assert.NotNull(beforeUser);
+            var originalHash = beforeUser.Value.PasswordHash;
+
+            // Act — submit three spaces as the password
+            var updateForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Username", "whitespacepass_user"),
+                new KeyValuePair<string, string>("Password", "   "),
+                new KeyValuePair<string, string>("IsActive", "true"),
+                new KeyValuePair<string, string>("_save_action", "save"),
+            });
+            var updateReq = new HttpRequestMessage(HttpMethod.Post, $"/admin/AuthUser/{userId}/change/") { Content = updateForm };
+            updateReq.Headers.Add("Cookie", cookie);
+            var updateResp = await client.SendAsync(updateReq);
+
+            // Assert — redirect (whitespace passes [Required] since it is not empty) and the hash must
+            // be different from the original, proving the whitespace was NOT stripped from props.
+            Assert.Equal(HttpStatusCode.Redirect, updateResp.StatusCode);
+
+            var afterUser = await GetAuthUserAsync("whitespacepass_user");
+            Assert.NotNull(afterUser);
+            Assert.NotEqual(originalHash, afterUser.Value.PasswordHash);
+            Assert.False(string.IsNullOrEmpty(afterUser.Value.PasswordHash));
+        }
+
         private static string ExtractIdFromRedirect(string locationHeader, string entity)
         {
             var match = Regex.Match(locationHeader, $@"/admin/{entity}/(\d+)/change/");
