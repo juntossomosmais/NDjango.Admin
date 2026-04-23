@@ -81,6 +81,27 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
         }
 
         [Fact]
+        public async Task CreateForm_PasswordField_RendersAsPasswordInputWithNewPasswordAutocompleteAsync()
+        {
+            // Arrange — AuthUser.PasswordHash maps to a Password input by convention. The rendered HTML
+            // must use type="password" (not text) and autocomplete="new-password" to keep the cleartext
+            // out of form history and prevent the browser from pre-filling a stored credential.
+            var client = _host.GetTestClient();
+            var cookie = await LoginAsync(client, "admin", "admin");
+            var request = new HttpRequestMessage(HttpMethod.Get, "/admin/AuthUser/add/");
+            request.Headers.Add("Cookie", cookie);
+
+            // Act
+            var response = await client.SendAsync(request);
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("type=\"password\"", html);
+            Assert.Contains("autocomplete=\"new-password\"", html);
+        }
+
+        [Fact]
         public async Task UpdatePost_WithBlankPassword_PreservesExistingHashAsync()
         {
             // Arrange — create a user, capture its initial hash

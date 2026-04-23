@@ -109,6 +109,35 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
         }
 
         [Fact]
+        public async Task CreateForm_DecimalWithScale_EmitsStepMatchingScaleAsync()
+        {
+            // Arrange — MenuItem.Price is configured as decimal(10,2); step should match the scale.
+
+            // Act
+            var response = await _client.GetAsync("/admin/MenuItem/add/");
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("step=\"0.01\"", html);
+        }
+
+        [Fact]
+        public async Task CreateForm_FloatWithoutScale_EmitsStepAnyAsync()
+        {
+            // Arrange — Gift.Weight is a double with no HasPrecision, so the step must fall back to "any"
+            // so browsers accept arbitrary fractional digits instead of rejecting non-integer input.
+
+            // Act
+            var response = await _client.GetAsync("/admin/Gift/add/");
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Contains("step=\"any\"", html);
+        }
+
+        [Fact]
         public async Task CreatePost_MissingRequiredField_Returns400WithErrorlistAsync()
         {
             // Arrange
