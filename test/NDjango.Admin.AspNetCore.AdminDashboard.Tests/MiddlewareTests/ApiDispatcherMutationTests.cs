@@ -698,5 +698,137 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
             var location = response.Headers.Location.ToString();
             Assert.Contains("_msg_level=error", location);
         }
+
+        // ── Action POST without form content type returns 400 ───────────
+
+        [Fact]
+        public async Task ActionPost_WithoutFormContentType_Returns400Async()
+        {
+            // Arrange — JSON body must be rejected: HandleActionAsync gates on HasFormContentType.
+            var jsonContent = new StringContent(
+                "{\"action\":\"delete_selected\"}",
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+            // Act
+            var response = await _client.PostAsync("/admin/Category/action/", jsonContent);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        // ── Validation re-render uses the create form, not the edit form ─
+
+        [Fact]
+        public async Task CreatePost_ValidationError_RendersCreateFormNotEditFormAsync()
+        {
+            // Arrange — empty required Name fails validation and triggers re-render.
+            var formData = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", ""),
+            });
+
+            // Act
+            var response = await _client.PostAsync("/admin/Category/add/", formData);
+
+            // Assert — validation re-render returns 400 by design.
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var html = await response.Content.ReadAsStringAsync();
+            Assert.Contains("This field is required.", html);
+            // "Add" path renders the add breadcrumb; the Edit form would render "Change".
+            Assert.Contains("Add ", html);
+            Assert.DoesNotContain("Change ", html);
+        }
+
+        // ── Validation re-render on edit uses the edit form, not create ─
+
+        [Fact]
+        public async Task UpdatePost_ValidationError_RendersEditFormNotCreateFormAsync()
+        {
+            // Arrange — seed a record, then submit an edit with an empty required field.
+            var createForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", "MutTest_EditRender_" + Guid.NewGuid().ToString("N")[..6]),
+                new KeyValuePair<string, string>("_save_action", "continue"),
+            });
+            var createResponse = await _client.PostAsync("/admin/Ingredient/add/", createForm);
+            var id = ExtractIdFromRedirect(createResponse.Headers.Location.ToString(), "Ingredient");
+
+            var updateForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", ""),
+            });
+
+            // Act
+            var response = await _client.PostAsync($"/admin/Ingredient/{id}/change/", updateForm);
+
+            // Assert — validation re-render returns 400 by design.
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var html = await response.Content.ReadAsStringAsync();
+            Assert.Contains("This field is required.", html);
+            Assert.Contains("Change ", html);
+            Assert.DoesNotContain("Add ", html);
+        }
+
+        // ── Custom action with empty selection is blocked by descriptor guard ─
+
+        [Fact]
+        public async Task ActionPost_CustomActionEmptySelection_GuardsByDescriptorAsync()
+        {
+            // Arrange — test_action is registered without AllowEmptySelection = true, so the
+            // empty-selection guard must short-circuit before the handler runs. If the guard
+            // fires, we redirect to the list without a _msg= query param (handler not invoked).
+            var formData = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("action", "test_action"),
+            });
+
+            // Act
+            var response = await _client.PostAsync("/admin/Category/action/", formData);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            var location = response.Headers.Location.ToString();
+            Assert.EndsWith("/admin/Category/", location);
+            Assert.DoesNotContain("_msg=", location);
+        }
+
+        // Mutants left uncovered by design (documented for future Stryker re-runs):
+        //
+        // - FetchDatasetAsync isLookup "true" → "false" (id=349): hard to kill without asserting
+        //   that the lookup JSON excludes non-lookup attributes. The provider decides the shape,
+        //   and the current seed doesn't give us a way to distinguish both projections reliably
+        //   at the HTTP level.
+        //
+        // - StripBlankPasswordFields "continue" removals on non-Password / empty-prop / missing-
+        //   key branches (id=355/359/361): a mutation that strips an empty nullable string from
+        //   props is not observable through the HTTP layer — the persisted value round-trips the
+        //   same as "" in form controls, so both produce the same re-render.
+        //
+        // - Token ternary "Type == JTokenType.String ? Value<string>() : ToString()" (id=362/363/
+        //   364): equivalent under the current POST pipeline. Every password-typed attribute that
+        //   reaches StripBlankPasswordFields is a JValue whose Value<string>() and ToString() are
+        //   byte-identical.
+        //
+        // - FormToJObject Lookup attr "DataAttr == null" → "!= null" (id=373 / id=374 NoCoverage):
+        //   the mutation either NREs on DataAttr.PropName (no DataAttr) or silently drops FK
+        //   values. The existing FK-persist test should kill it, but the assertion only inspects
+        //   the edit form, and the FK-missing case degrades to an integration error that isn't
+        //   exercised consistently enough to kill the boolean flip.
+        //
+        // - formValue.FirstOrDefault() → First() (id=378): equivalent. FormCollection never
+        //   returns an empty StringValues entry for a key that TryGetValue matched.
+        //
+        // - "p.Value.Type == JTokenType.Null ? null : ToObject<object>()" forced to else
+        //   (id=395): equivalent. ToObject<object>() on a JTokenType.Null value also returns null.
+        //
+        // - ActionDescriptors?.FirstOrDefault(a => a.Name == actionName) mutations (id=483/484/
+        //   485): equivalent under the test fixture. Every registered handler has a matching
+        //   descriptor with AllowEmptySelection=false, so FirstOrDefault vs First and == vs !=
+        //   resolve to the same descriptor instance. Requires fixture changes to differentiate.
+        //
+        // - Custom action catch-block error message mutations (id=497/498/499 NoCoverage): the
+        //   handler delegates registered in the fixture never throw; covering these would
+        //   require adding a throwing action, which is out of scope for this test file.
     }
 }

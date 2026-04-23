@@ -1359,5 +1359,221 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             Assert.Single(errors);
             Assert.Equal("Enter a valid email address.", errors[0].Message);
         }
+
+        [Fact]
+        public void Validate_PrecisionOnFloatType_EnforcesDigits()
+        {
+            // Arrange — the "!= Currency && != Float" guard in ValidatePrecision must include Float.
+            // Removing the Float branch would let oversized Float values pass silently.
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Ratio", DataType.Float, isNullable: false);
+                attr.Precision = 5;
+                attr.Scale = 2;
+            });
+            var props = new JObject { ["Ratio"] = "1234567.89" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Contains("no more than 3 digits before the decimal point", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_NullByteAtStartOfValue_ReturnsNullCharacterError()
+        {
+            // Arrange — null byte at index 0 must still be rejected. Check is "IndexOf >= 0", not "> 0".
+            var entity = CreateEntity((model, ent) =>
+                AddAttr(model, ent, "Name", DataType.String, isNullable: false));
+            var props = new JObject { ["Name"] = "\0leading" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Equal("Null characters are not allowed.", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_MinLengthAtBoundary_ReturnsNoError()
+        {
+            // Arrange — value length exactly equal to MinLength satisfies the rule (strict <).
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Code", DataType.String, isNullable: false);
+                attr.MinLength = 5;
+            });
+            var props = new JObject { ["Code"] = "12345" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_RangeWithOnlyMaxValueAboveLimit_ReturnsLessThanError()
+        {
+            // Arrange — MaxValue alone (no MinValue) must still trigger range enforcement. The
+            // early-return requires BOTH bounds absent (AND, not OR).
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Quantity", DataType.Int32, isNullable: false);
+                attr.MaxValue = 10;
+            });
+            var props = new JObject { ["Quantity"] = "20" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Contains("less than or equal to 10", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_NumericRangeAtMinValueBoundary_ReturnsNoError()
+        {
+            // Arrange — value equal to MinValue passes (strict <, not <=).
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Quantity", DataType.Int32, isNullable: false);
+                attr.MinValue = 5;
+                attr.MaxValue = 100;
+            });
+            var props = new JObject { ["Quantity"] = "5" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_NumericRangeAtMaxValueBoundary_ReturnsNoError()
+        {
+            // Arrange — value equal to MaxValue passes (strict >, not >=).
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Quantity", DataType.Int32, isNullable: false);
+                attr.MinValue = 1;
+                attr.MaxValue = 100;
+            });
+            var props = new JObject { ["Quantity"] = "100" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_DateRangeWithOnlyMinDateTime_ReturnsOnOrAfterError()
+        {
+            // Arrange — MinDateTime alone must still be enforced. The early-return requires BOTH
+            // Min and Max absent (AND, not OR).
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Birthday", DataType.DateTime, isNullable: false);
+                attr.MinDateTime = new DateTime(2020, 1, 1);
+            });
+            var props = new JObject { ["Birthday"] = "2019-06-01" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Single(errors);
+            Assert.Contains("on or after 2020-01-01", errors[0].Message);
+        }
+
+        [Fact]
+        public void Validate_DateTimeRangeAtMinBoundary_ReturnsNoError()
+        {
+            // Arrange — value equal to MinDateTime passes (strict <, not <=).
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Birthday", DataType.DateTime, isNullable: false);
+                attr.MinDateTime = new DateTime(2020, 1, 1);
+            });
+            var props = new JObject { ["Birthday"] = "2020-01-01" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_DateTimeRangeAtMaxBoundary_ReturnsNoError()
+        {
+            // Arrange — value equal to MaxDateTime passes (strict >, not >=).
+            var entity = CreateEntity((model, ent) =>
+            {
+                var attr = AddAttr(model, ent, "Birthday", DataType.DateTime, isNullable: false);
+                attr.MaxDateTime = new DateTime(2030, 12, 31);
+            });
+            var props = new JObject { ["Birthday"] = "2030-12-31" };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        [Fact]
+        public void Validate_StringFieldWithBooleanToken_TreatsAsNonEmpty()
+        {
+            // Arrange — FormatTokenInvariant's "?? string.Empty" fallback must use the token's
+            // ToString result, not collapse to "". The only reachable non-IFormattable JValue
+            // payload is a bool. If the fallback dropped the value, the empty stringValue would
+            // trip "This field is required." on a non-nullable non-Bool attribute.
+            var entity = CreateEntity((model, ent) =>
+                AddAttr(model, ent, "Flag", DataType.String, isNullable: false));
+            var props = new JObject { ["Flag"] = new JValue(true) };
+
+            // Act
+            var errors = FieldValidator.Validate(entity, props);
+
+            // Assert
+            Assert.Empty(errors);
+        }
+
+        // Mutants left uncovered by design (documented for future Stryker re-runs):
+        //
+        // - Validate hasValue "&& token != null" → "|| token != null" (id=2341):
+        //   equivalent. For a JValue(null) token the mutation flips hasValue to true, but the
+        //   resulting empty stringValue still triggers the same "required" error (or is skipped
+        //   for nullable/bool attributes), so the outcome is identical.
+        //
+        // - Ternary in stringValue "Type == String ? token.Value<string>() : FormatTokenInvariant"
+        //   forced to else branch (id=2361): equivalent. Both branches produce the same string for
+        //   string-typed JValue tokens (FormatTokenInvariant falls through to jv.Value.ToString()).
+        //
+        // - "continue;" on the required-empty branch removed (id=2373): equivalent. The next
+        //   "if (string.IsNullOrEmpty(stringValue)) continue;" on the following line produces the
+        //   same outcome after the FieldError has already been added.
+        //
+        // - "Precision.Value <= 0" → "< 0" (id=2426) and "integerPart == 0 ? 1 : .Length" forced
+        //   to else (id=2434) and ToString format "F0" → "" (id=2436): equivalent. maxIntegerDigits
+        //   becomes 0 when Precision == 0 and the next guard returns null regardless. The ternary
+        //   and format-string changes produce the exact same digit count for a Truncated decimal.
+        //
+        // NoCoverage survivors flagged as unreachable under the documented invariants:
+        // - FormatTokenInvariant fallback "Stryker was here" (id=2386): unreachable. Null-typed
+        //   JTokens are filtered out earlier via hasValue.
+        // - ValidateRange "Enter a valid number." (id=2475) and ValidateDateRange "Enter a valid
+        //   date." (id=2495): unreachable via the ValidateAttribute pipeline. ValidateParse runs
+        //   first with the same parser/culture, so any value reaching here already parsed once.
+        // - ValidateRegex RegexMatchTimeoutException "Enter a valid value." (id=2523): requires a
+        //   ReDoS-crafted pattern exceeding 250ms. Skipped to keep the test suite deterministic.
     }
 }
