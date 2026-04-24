@@ -121,7 +121,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
         }
 
         [Fact]
-        public async Task PostCreate_InvalidForeignKey_ThrowsAsync()
+        public async Task PostCreate_InvalidForeignKey_Returns400WithErrorAsync()
         {
             // Arrange
             var formData = new FormUrlEncodedContent(new[]
@@ -132,9 +132,13 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
                 new KeyValuePair<string, string>("_save_action", "save"),
             });
 
-            // Act & Assert
-            await Assert.ThrowsAnyAsync<Exception>(
-                () => _client.PostAsync("/admin/Restaurant/add/", formData));
+            // Act
+            var response = await _client.PostAsync("/admin/Restaurant/add/", formData);
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("Referenced record does not exist", html);
         }
     }
 }

@@ -378,3 +378,52 @@ describe('dismissRelatedLookupPopup', () => {
         expect(mockWin.close).toHaveBeenCalled();
     });
 });
+
+// ─── focusFirstFormError ───
+
+describe('focusFirstFormError', () => {
+    test('focuses the first input inside a .form-row.errors and scrolls it into view', () => {
+        document.body.innerHTML = `
+            <form class="entity-form">
+                <div class="form-row"><label>Name</label><input id="id_name" name="name" /></div>
+                <div class="form-row errors">
+                    <label>Email</label>
+                    <ul class="errorlist"><li>Enter a valid email address.</li></ul>
+                    <input id="id_email" name="email" />
+                </div>
+            </form>
+        `;
+
+        const focusSpy = jest.fn();
+        const scrollSpy = jest.fn();
+        const email = document.getElementById('id_email');
+        email.focus = focusSpy;
+        const errorRow = document.querySelector('.form-row.errors');
+        errorRow.scrollIntoView = scrollSpy;
+
+        loadScript();
+
+        expect(focusSpy).toHaveBeenCalled();
+        expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    });
+
+    test('does nothing when no .form-row.errors is present', () => {
+        document.body.innerHTML = `
+            <form class="entity-form">
+                <div class="form-row"><input id="id_name" /></div>
+            </form>
+        `;
+
+        expect(() => loadScript()).not.toThrow();
+    });
+
+    test('does not throw when error row has no input', () => {
+        document.body.innerHTML = `
+            <div class="form-row errors">
+                <ul class="errorlist"><li>oops</li></ul>
+            </div>
+        `;
+
+        expect(() => loadScript()).not.toThrow();
+    });
+});

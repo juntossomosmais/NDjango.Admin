@@ -125,6 +125,97 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
             Assert.Equal(false, result);
         }
 
+        // ── ConvertValue culture-invariance (must match FieldValidator) ─
+
+        [Fact]
+        public void ConvertValue_DateTimeWithSlashSeparator_ParsesUnderInvariantCultureRegardlessOfThreadCulture()
+        {
+            // Arrange — under pt-BR thread culture, default TryParse reads "03/12/2025" as dd/MM (3-Dec).
+            // Binder must align with FieldValidator (InvariantCulture, MM/dd/yyyy), so the parsed value
+            // is March 12 regardless of the host thread culture.
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("pt-BR");
+            try
+            {
+                // Act
+                var result = ApiDispatcher.ConvertValue("03/12/2025", DataType.DateTime);
+
+                // Assert
+                Assert.IsType<DateTime>(result);
+                Assert.Equal(new DateTime(2025, 3, 12), result);
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
+
+        [Fact]
+        public void ConvertValue_DateOnlyWithSlashSeparator_ParsesUnderInvariantCultureRegardlessOfThreadCulture()
+        {
+            // Arrange
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("pt-BR");
+            try
+            {
+                // Act
+                var result = ApiDispatcher.ConvertValue("03/12/2025", DataType.Date, typeof(DateOnly));
+
+                // Assert
+                Assert.IsType<DateOnly>(result);
+                Assert.Equal(new DateOnly(2025, 3, 12), result);
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
+
+        [Fact]
+        public void ConvertValue_DateTimeOffsetWithSlashSeparator_ParsesUnderInvariantCultureRegardlessOfThreadCulture()
+        {
+            // Arrange
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("pt-BR");
+            try
+            {
+                // Act
+                var result = ApiDispatcher.ConvertValue("03/12/2025", DataType.DateTime, typeof(DateTimeOffset));
+
+                // Assert
+                Assert.IsType<DateTimeOffset>(result);
+                var dto = (DateTimeOffset)result;
+                Assert.Equal(2025, dto.Year);
+                Assert.Equal(3, dto.Month);
+                Assert.Equal(12, dto.Day);
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
+
+        [Fact]
+        public void ConvertValue_TimeSpanWithColonSeparator_ParsesUnderInvariantCulture()
+        {
+            // Arrange — TimeSpan parsing also pinned to InvariantCulture for binder/validator parity.
+            var previous = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("pt-BR");
+            try
+            {
+                // Act
+                var result = ApiDispatcher.ConvertValue("14:30:00", DataType.Time);
+
+                // Assert
+                Assert.IsType<TimeSpan>(result);
+                Assert.Equal(new TimeSpan(14, 30, 0), result);
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = previous;
+            }
+        }
+
         // ── Create: missing _save_action defaults to "save" ─────────────
 
         [Fact]
@@ -298,9 +389,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
             var decodedLocation = Uri.UnescapeDataString(location).Replace(" ", "+").ToLower();
             Assert.Contains("deleted+1+ingredient.", decodedLocation);
 
-            // Verify record is actually gone (fetching a deleted record throws)
-            await Assert.ThrowsAnyAsync<Exception>(
-                () => _client.GetAsync($"/admin/Ingredient/{id}/change/"));
+            // Verify record is actually gone (fetching a deleted record returns 404)
+            var fetchResponse = await _client.GetAsync($"/admin/Ingredient/{id}/change/");
+            Assert.Equal(HttpStatusCode.NotFound, fetchResponse.StatusCode);
         }
 
         [Fact]
@@ -607,5 +698,137 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
             var location = response.Headers.Location.ToString();
             Assert.Contains("_msg_level=error", location);
         }
+
+        // ── Action POST without form content type returns 400 ───────────
+
+        [Fact]
+        public async Task ActionPost_WithoutFormContentType_Returns400Async()
+        {
+            // Arrange — JSON body must be rejected: HandleActionAsync gates on HasFormContentType.
+            var jsonContent = new StringContent(
+                "{\"action\":\"delete_selected\"}",
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+            // Act
+            var response = await _client.PostAsync("/admin/Category/action/", jsonContent);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        // ── Validation re-render uses the create form, not the edit form ─
+
+        [Fact]
+        public async Task CreatePost_ValidationError_RendersCreateFormNotEditFormAsync()
+        {
+            // Arrange — empty required Name fails validation and triggers re-render.
+            var formData = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", ""),
+            });
+
+            // Act
+            var response = await _client.PostAsync("/admin/Category/add/", formData);
+
+            // Assert — validation re-render returns 400 by design.
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var html = await response.Content.ReadAsStringAsync();
+            Assert.Contains("This field is required.", html);
+            // "Add" path renders the add breadcrumb; the Edit form would render "Change".
+            Assert.Contains("Add ", html);
+            Assert.DoesNotContain("Change ", html);
+        }
+
+        // ── Validation re-render on edit uses the edit form, not create ─
+
+        [Fact]
+        public async Task UpdatePost_ValidationError_RendersEditFormNotCreateFormAsync()
+        {
+            // Arrange — seed a record, then submit an edit with an empty required field.
+            var createForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", "MutTest_EditRender_" + Guid.NewGuid().ToString("N")[..6]),
+                new KeyValuePair<string, string>("_save_action", "continue"),
+            });
+            var createResponse = await _client.PostAsync("/admin/Ingredient/add/", createForm);
+            var id = ExtractIdFromRedirect(createResponse.Headers.Location.ToString(), "Ingredient");
+
+            var updateForm = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", ""),
+            });
+
+            // Act
+            var response = await _client.PostAsync($"/admin/Ingredient/{id}/change/", updateForm);
+
+            // Assert — validation re-render returns 400 by design.
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var html = await response.Content.ReadAsStringAsync();
+            Assert.Contains("This field is required.", html);
+            Assert.Contains("Change ", html);
+            Assert.DoesNotContain("Add ", html);
+        }
+
+        // ── Custom action with empty selection is blocked by descriptor guard ─
+
+        [Fact]
+        public async Task ActionPost_CustomActionEmptySelection_GuardsByDescriptorAsync()
+        {
+            // Arrange — test_action is registered without AllowEmptySelection = true, so the
+            // empty-selection guard must short-circuit before the handler runs. If the guard
+            // fires, we redirect to the list without a _msg= query param (handler not invoked).
+            var formData = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("action", "test_action"),
+            });
+
+            // Act
+            var response = await _client.PostAsync("/admin/Category/action/", formData);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            var location = response.Headers.Location.ToString();
+            Assert.EndsWith("/admin/Category/", location);
+            Assert.DoesNotContain("_msg=", location);
+        }
+
+        // Mutants left uncovered by design (documented for future Stryker re-runs):
+        //
+        // - FetchDatasetAsync isLookup "true" → "false" (id=349): hard to kill without asserting
+        //   that the lookup JSON excludes non-lookup attributes. The provider decides the shape,
+        //   and the current seed doesn't give us a way to distinguish both projections reliably
+        //   at the HTTP level.
+        //
+        // - StripBlankPasswordFields "continue" removals on non-Password / empty-prop / missing-
+        //   key branches (id=355/359/361): a mutation that strips an empty nullable string from
+        //   props is not observable through the HTTP layer — the persisted value round-trips the
+        //   same as "" in form controls, so both produce the same re-render.
+        //
+        // - Token ternary "Type == JTokenType.String ? Value<string>() : ToString()" (id=362/363/
+        //   364): equivalent under the current POST pipeline. Every password-typed attribute that
+        //   reaches StripBlankPasswordFields is a JValue whose Value<string>() and ToString() are
+        //   byte-identical.
+        //
+        // - FormToJObject Lookup attr "DataAttr == null" → "!= null" (id=373 / id=374 NoCoverage):
+        //   the mutation either NREs on DataAttr.PropName (no DataAttr) or silently drops FK
+        //   values. The existing FK-persist test should kill it, but the assertion only inspects
+        //   the edit form, and the FK-missing case degrades to an integration error that isn't
+        //   exercised consistently enough to kill the boolean flip.
+        //
+        // - formValue.FirstOrDefault() → First() (id=378): equivalent. FormCollection never
+        //   returns an empty StringValues entry for a key that TryGetValue matched.
+        //
+        // - "p.Value.Type == JTokenType.Null ? null : ToObject<object>()" forced to else
+        //   (id=395): equivalent. ToObject<object>() on a JTokenType.Null value also returns null.
+        //
+        // - ActionDescriptors?.FirstOrDefault(a => a.Name == actionName) mutations (id=483/484/
+        //   485): equivalent under the test fixture. Every registered handler has a matching
+        //   descriptor with AllowEmptySelection=false, so FirstOrDefault vs First and == vs !=
+        //   resolve to the same descriptor instance. Requires fixture changes to differentiate.
+        //
+        // - Custom action catch-block error message mutations (id=497/498/499 NoCoverage): the
+        //   handler delegates registered in the fixture never throw; covering these would
+        //   require adding a throwing action, which is out of scope for this test file.
     }
 }

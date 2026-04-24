@@ -474,6 +474,21 @@ namespace NDjango.Admin.EntityFrameworkCore
 
             entityAttr.IsNullable = property.IsNullable;
 
+            var maxLen = property.GetMaxLength();
+            if (maxLen.HasValue && maxLen.Value > 0) {
+                entityAttr.MaxLength = maxLen;
+            }
+
+            var precision = property.GetPrecision();
+            if (precision.HasValue) {
+                entityAttr.Precision = precision;
+            }
+
+            var scale = property.GetScale();
+            if (scale.HasValue) {
+                entityAttr.Scale = scale;
+            }
+
             if (entityAttr.DataType == DataType.Blob) {
                 // HIDE blob fields by default
                 entityAttr.ShowOnCreate = false;
@@ -504,6 +519,11 @@ namespace NDjango.Admin.EntityFrameworkCore
                 var enabled = ApplyMetaEntityAttrAnnotation(entityAttr, propInfo);
                 if (!enabled)
                     return null;
+
+                // Run after the annotation so the password auto-detection
+                // (InputType + ShowOnView=false) is not clobbered by the
+                // annotation's default ShowOnView=true.
+                DataUtils.ApplyValidationAttributes(entityAttr, propInfo);
             }
 
             if (property.ValueGenerated.HasFlag(ValueGenerated.OnAdd) && entityAttr.DefaultValue == null)

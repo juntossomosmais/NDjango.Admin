@@ -19,6 +19,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public DbSet<MenuItem> MenuItems { get; set; }
         public DbSet<MenuItemIngredient> MenuItemIngredients { get; set; }
         public DbSet<Gift> Gifts { get; set; }
+        public DbSet<ValidatedProduct> ValidatedProducts { get; set; }
 
         public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
@@ -33,6 +34,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
 
             modelBuilder.Entity<Gift>()
                 .Property(g => g.Price).HasPrecision(10, 2);
+
+            modelBuilder.Entity<MenuItem>()
+                .Property(m => m.Price).HasPrecision(10, 2);
 
             modelBuilder.Entity<MenuItemIngredient>(entity =>
             {
@@ -156,5 +160,30 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public TimeOnly AvailableFrom { get; set; }
         public string Description { get; set; } = "";
         public string Notes { get; set; } = "";
+    }
+
+    public class ValidatedProduct
+    {
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        public string Name { get; set; }
+
+        [Range(1, 1000)]
+        public int Quantity { get; set; }
+
+        [RegularExpression(@"^\d{5}$", ErrorMessage = "Must be 5 digits")]
+        public string PostalCode { get; set; }
+
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Url]
+        public string Website { get; set; }
+
+        [RegularExpression(@"(?i)^allowed$")]
+        public string CaseInsensitive { get; set; }
     }
 }

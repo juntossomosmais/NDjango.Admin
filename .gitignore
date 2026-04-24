@@ -403,3 +403,5 @@ prompts
 .playwright-mcp
 *.png
 coverage
+# Ignore the shared rules directory
+.claude/rules/shared/*

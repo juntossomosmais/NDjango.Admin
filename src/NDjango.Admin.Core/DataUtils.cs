@@ -1,13 +1,136 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace NDjango.Admin
 {
     public class DataUtils
     {
+        /// <summary>
+        /// Scrapes validation-related DataAnnotations from a property and populates the matching
+        /// fields on <paramref name="attr"/>. Shared by the EF Core and Mongo metadata loaders.
+        /// </summary>
+        /// <remarks>
+        /// Rules mirror Django's field/widget mapping:
+        /// <list type="bullet">
+        /// <item>[Required] is a no-op (handled by IsNullable upstream).</item>
+        /// <item>[MaxLength]/[StringLength] populate MaxLength (smaller wins when both present
+        /// or an EF-derived MaxLength was set earlier).</item>
+        /// <item>[MinLength]/[StringLength] populate MinLength only when the value is greater than 0.</item>
+        /// <item>[Range] populates numeric MinValue/MaxValue, or MinDateTime/MaxDateTime when the
+        /// operand type is DateTime.</item>
+        /// <item>[RegularExpression] populates RegexPattern and RegexErrorMessage.</item>
+        /// <item>[EmailAddress]/[Url]/[Phone] set the InputType hint (no regex generation).</item>
+        /// </list>
+        /// </remarks>
+        public static void ApplyValidationAttributes(MetaEntityAttr attr, PropertyInfo prop)
+        {
+            if (attr == null || prop == null)
+                return;
+
+            var maxLenAttr = prop.GetCustomAttribute<MaxLengthAttribute>();
+            if (maxLenAttr != null) {
+                ApplyMaxLength(attr, maxLenAttr.Length);
+            }
+
+            var stringLenAttr = prop.GetCustomAttribute<StringLengthAttribute>();
+            if (stringLenAttr != null) {
+                ApplyMaxLength(attr, stringLenAttr.MaximumLength);
+                if (stringLenAttr.MinimumLength > 0) {
+                    attr.MinLength = stringLenAttr.MinimumLength;
+                }
+            }
+
+            var minLenAttr = prop.GetCustomAttribute<MinLengthAttribute>();
+            if (minLenAttr != null && minLenAttr.Length > 0) {
+                attr.MinLength = minLenAttr.Length;
+            }
+
+            var rangeAttr = prop.GetCustomAttribute<RangeAttribute>();
+            if (rangeAttr != null) {
+                ApplyRange(attr, rangeAttr);
+            }
+
+            var regexAttr = prop.GetCustomAttribute<RegularExpressionAttribute>();
+            if (regexAttr != null) {
+                attr.RegexPattern = regexAttr.Pattern;
+                if (!string.IsNullOrEmpty(regexAttr.ErrorMessage)) {
+                    attr.RegexErrorMessage = regexAttr.ErrorMessage;
+                }
+            }
+
+            var dataTypeAttr = prop.GetCustomAttribute<DataTypeAttribute>();
+            if (dataTypeAttr != null && dataTypeAttr.DataType == System.ComponentModel.DataAnnotations.DataType.Password) {
+                attr.InputType = InputTypeHint.Password;
+            }
+            else if (IsPasswordPropertyName(prop.Name)) {
+                attr.InputType = InputTypeHint.Password;
+            }
+            else if (prop.GetCustomAttribute<EmailAddressAttribute>() != null) {
+                attr.InputType = InputTypeHint.Email;
+            }
+            else if (prop.GetCustomAttribute<UrlAttribute>() != null) {
+                attr.InputType = InputTypeHint.Url;
+            }
+            else if (prop.GetCustomAttribute<PhoneAttribute>() != null) {
+                attr.InputType = InputTypeHint.Tel;
+            }
+
+            if (attr.InputType == InputTypeHint.Password) {
+                attr.ShowOnView = false;
+            }
+        }
+
+        private static bool IsPasswordPropertyName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return false;
+            return string.Equals(name, "Password", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, "PasswordHash", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void ApplyMaxLength(MetaEntityAttr attr, int value)
+        {
+            if (value <= 0)
+                return;
+            attr.MaxLength = attr.MaxLength.HasValue
+                ? Math.Min(attr.MaxLength.Value, value)
+                : value;
+        }
+
+        private static void ApplyRange(MetaEntityAttr attr, RangeAttribute rangeAttr)
+        {
+            if (rangeAttr.OperandType == typeof(DateTime)) {
+                if (DateTime.TryParse(rangeAttr.Minimum?.ToString(), CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeLocal, out var minDt))
+                    attr.MinDateTime = minDt;
+                if (DateTime.TryParse(rangeAttr.Maximum?.ToString(), CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeLocal, out var maxDt))
+                    attr.MaxDateTime = maxDt;
+                return;
+            }
+
+            try {
+                if (rangeAttr.Minimum != null)
+                    attr.MinValue = Convert.ToDecimal(rangeAttr.Minimum, CultureInfo.InvariantCulture);
+            }
+            catch (Exception ex) when (ex is InvalidCastException || ex is FormatException || ex is OverflowException) {
+                // Unsupported operand type — leave MinValue null.
+            }
+
+            try {
+                if (rangeAttr.Maximum != null)
+                    attr.MaxValue = Convert.ToDecimal(rangeAttr.Maximum, CultureInfo.InvariantCulture);
+            }
+            catch (Exception ex) when (ex is InvalidCastException || ex is FormatException || ex is OverflowException) {
+                // Unsupported operand type — leave MaxValue null.
+            }
+        }
+
         public static string PrettifyName(string name)
         {
 

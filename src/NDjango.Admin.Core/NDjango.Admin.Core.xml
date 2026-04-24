@@ -26,6 +26,30 @@
             It usually correspond to a navigation property in a model class.
             </summary>
         </member>
+        <member name="T:NDjango.Admin.InputTypeHint">
+            <summary>
+            Hint for the HTML input type used when rendering a field.
+            Maps to HTML5 typed inputs (Django's EmailInput/URLInput/TelInput/ColorInput).
+            </summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Auto">
+            <summary>Default — input type is inferred from the attribute's <see cref="T:NDjango.Admin.DataType"/>.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Email">
+            <summary>HTML5 <c>type="email"</c> — browser performs basic email validation.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Url">
+            <summary>HTML5 <c>type="url"</c> — browser performs basic URL validation.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Tel">
+            <summary>HTML5 <c>type="tel"</c> — hints numeric keypad on mobile; no format enforced.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Color">
+            <summary>HTML5 <c>type="color"</c> — renders the native color picker.</summary>
+        </member>
+        <member name="F:NDjango.Admin.InputTypeHint.Password">
+            <summary>HTML5 <c>type="password"</c> — masks input; edit forms leave it blank to preserve the existing value.</summary>
+        </member>
         <member name="T:NDjango.Admin.MetaEntityAttr">
             <summary>
             Represents one entity attribute of data model.
@@ -226,6 +250,39 @@
             Gets or sets the size of data represented by attribute.
             </summary>
             <value></value>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.MaxLength">
+            <summary>Maximum string length (from EF Core or [MaxLength]/[StringLength]).</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.MinLength">
+            <summary>Minimum string length. Set only when &gt; 0 to avoid redundant `minlength=0` emission.</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.MinValue">
+            <summary>Minimum numeric value (from [Range] on numeric types).</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.MaxValue">
+            <summary>Maximum numeric value (from [Range] on numeric types).</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.MinDateTime">
+            <summary>Minimum DateTime value (from [Range(typeof(DateTime), ...)]).</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.MaxDateTime">
+            <summary>Maximum DateTime value (from [Range(typeof(DateTime), ...)]).</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.RegexPattern">
+            <summary>Regex pattern for string validation (from [RegularExpression]).</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.RegexErrorMessage">
+            <summary>Error message to surface when regex validation fails.</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.Precision">
+            <summary>Total digits for decimal values (from EF Core HasPrecision).</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.Scale">
+            <summary>Fractional digits for decimal values (from EF Core HasPrecision).</summary>
+        </member>
+        <member name="P:NDjango.Admin.MetaEntityAttr.InputType">
+            <summary>Hint for which HTML input type to emit.</summary>
         </member>
         <member name="P:NDjango.Admin.MetaEntityAttr.Expr">
             <summary>
@@ -603,6 +660,25 @@
             <param name="encoded">The encoded composite key string from the URL.</param>
             <param name="pkPropNames">The ordered list of PK property names.</param>
             <returns>A dictionary mapping each PK property name to its decoded value.</returns>
+        </member>
+        <member name="M:NDjango.Admin.DataUtils.ApplyValidationAttributes(NDjango.Admin.MetaEntityAttr,System.Reflection.PropertyInfo)">
+            <summary>
+            Scrapes validation-related DataAnnotations from a property and populates the matching
+            fields on <paramref name="attr"/>. Shared by the EF Core and Mongo metadata loaders.
+            </summary>
+            <remarks>
+            Rules mirror Django's field/widget mapping:
+            <list type="bullet">
+            <item>[Required] is a no-op (handled by IsNullable upstream).</item>
+            <item>[MaxLength]/[StringLength] populate MaxLength (smaller wins when both present
+            or an EF-derived MaxLength was set earlier).</item>
+            <item>[MinLength]/[StringLength] populate MinLength only when the value is greater than 0.</item>
+            <item>[Range] populates numeric MinValue/MaxValue, or MinDateTime/MaxDateTime when the
+            operand type is DateTime.</item>
+            <item>[RegularExpression] populates RegexPattern and RegexErrorMessage.</item>
+            <item>[EmailAddress]/[Url]/[Phone] set the InputType hint (no regex generation).</item>
+            </list>
+            </remarks>
         </member>
         <member name="M:NDjango.Admin.DataUtils.ReplaceChar(System.String,System.Char,System.Int32)">
             <summary>
@@ -1033,6 +1109,29 @@
             Initializes a new instance of the <see cref="!:Error"/> class.
             </summary>
             <param name="message">Message.</param>
+        </member>
+        <member name="M:NDjango.Admin.NDjangoAdminManagerException.#ctor(System.String,System.Exception)">
+            <summary>Initializes a new instance with the specified error message and inner exception.</summary>
+        </member>
+        <member name="T:NDjango.Admin.DataIntegrityException">
+            <summary>
+            Thrown when a write operation fails a database constraint (unique, foreign key, NOT NULL, length, range).
+            The message is translated from the provider-specific error when recognized.
+            </summary>
+        </member>
+        <member name="M:NDjango.Admin.DataIntegrityException.#ctor(System.String)">
+            <summary>Initializes a new instance with the specified error message.</summary>
+        </member>
+        <member name="M:NDjango.Admin.DataIntegrityException.#ctor(System.String,System.Exception)">
+            <summary>Initializes a new instance with the specified error message and inner exception.</summary>
+        </member>
+        <member name="T:NDjango.Admin.InvalidRecordKeyException">
+            <summary>
+            Thrown when a record key supplied via URL or form cannot be converted to the CLR type of the key property.
+            </summary>
+        </member>
+        <member name="M:NDjango.Admin.InvalidRecordKeyException.#ctor(System.String)">
+            <summary>Initializes a new instance with the specified error message.</summary>
         </member>
         <member name="T:NDjango.Admin.Export.BasicDataExportSettings">
             <summary>

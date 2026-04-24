@@ -67,7 +67,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
         }
 
         [Fact]
-        public async Task PostUpdate_NonExistentId_ThrowsAsync()
+        public async Task PostUpdate_NonExistentId_Returns404Async()
         {
             // Arrange
             var formData = new FormUrlEncodedContent(new[]
@@ -76,9 +76,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
                 new KeyValuePair<string, string>("_save_action", "save"),
             });
 
-            // Act & Assert
-            await Assert.ThrowsAnyAsync<Exception>(
-                () => _client.PostAsync("/admin/Ingredient/999999/change/", formData));
+            // Act
+            var response = await _client.PostAsync("/admin/Ingredient/999999/change/", formData);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
         [Fact]

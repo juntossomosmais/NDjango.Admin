@@ -143,5 +143,51 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
             // Assert
             Assert.Contains("<span class=\"this-page\">2</span>", html);
         }
+
+        [Fact]
+        public async Task GetIngredientList_NegativePage_DoesNotThrowAsync()
+        {
+            // Arrange & Act — negative page would produce negative offset and crash EF Core Skip()
+            var response = await _client.GetAsync(ScopedListUrl + "&page=-1");
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task GetIngredientList_ExtremelyLargePage_DoesNotOverflowOffsetAsync()
+        {
+            // Arrange & Act — (page-1)*pageSize would overflow int without long arithmetic; expect a graceful empty render
+            var response = await _client.GetAsync(ScopedListUrl + "&page=99999999");
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(0, CountTableBodyRows(html));
+        }
+
+        [Fact]
+        public async Task GetIngredientList_ZeroPage_ClampsToFirstPageAsync()
+        {
+            // Arrange & Act
+            var response = await _client.GetAsync(ScopedListUrl + "&page=0");
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(BulkDataFixture.DefaultPageSize, CountTableBodyRows(html));
+        }
+
+        [Fact]
+        public async Task GetIngredientList_NonNumericPage_DefaultsToPage1Async()
+        {
+            // Arrange & Act
+            var response = await _client.GetAsync(ScopedListUrl + "&page=abc");
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(BulkDataFixture.DefaultPageSize, CountTableBodyRows(html));
+        }
     }
 }

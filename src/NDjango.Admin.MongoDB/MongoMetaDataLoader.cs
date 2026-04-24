@@ -220,6 +220,10 @@ namespace NDjango.Admin.MongoDB
                 entityAttr.ShowOnView = false;
             }
 
+            // Run after the visibility defaults so the password auto-detection
+            // (InputType + ShowOnView=false) is not clobbered by ShowOnView=true above.
+            DataUtils.ApplyValidationAttributes(entityAttr, property);
+
             // Handle enum types
             var actualType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
             if (actualType.IsEnum) {
