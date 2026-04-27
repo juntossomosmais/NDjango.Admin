@@ -14,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication.Storage;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
 using Xunit;
 
@@ -48,10 +47,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddDbContext<TestDbContext>(options =>
                                 options.UseSqlServer(connectionString));
                             services.AddNDjangoAdminDashboard<TestDbContext>(
-                                new AdminDashboardOptions
-                                {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                });
+                                new AdminDashboardOptions());
                         })
                         .Configure(app =>
                         {
@@ -74,112 +70,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var body = await response.Content.ReadAsStringAsync();
             Assert.Equal("downstream-reached", body);
-        }
-
-        [Fact]
-        public async Task EmptyAuthorizationList_DoesNotBlock_Returns200Async()
-        {
-            // Arrange — Authorization is an empty array (not null, but no filters)
-            var connectionString = string.Format(ConnectionStringTemplate, _dbName);
-            var dbOptions = new DbContextOptionsBuilder<TestDbContext>()
-                .UseSqlServer(connectionString)
-                .Options;
-            using (var context = new TestDbContext(dbOptions))
-            {
-                context.Database.EnsureCreated();
-            }
-
-            using var host = new HostBuilder()
-                .ConfigureWebHost(webBuilder =>
-                {
-                    webBuilder
-                        .UseTestServer()
-                        .ConfigureServices(services =>
-                        {
-                            services.AddDbContext<TestDbContext>(options =>
-                                options.UseSqlServer(connectionString));
-                            services.AddNDjangoAdminDashboard<TestDbContext>(
-                                new AdminDashboardOptions
-                                {
-                                    Authorization = Array.Empty<IAdminDashboardAuthorizationFilter>(),
-                                    CreateDefaultAdminUser = true,
-                                    DefaultAdminPassword = "admin",
-                                });
-                        })
-                        .Configure(app =>
-                        {
-                            app.UseNDjangoAdminDashboard("/admin");
-                        });
-                })
-                .Start();
-
-            var readiness = host.Services.GetRequiredService<AuthBootstrapReadinessState>();
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            await readiness.WaitForReadyAsync(cts.Token);
-
-            var client = host.GetTestClient();
-            var cookie = await LoginAsync(client, "admin", "admin");
-
-            // Act
-            var request = new HttpRequestMessage(HttpMethod.Get, "/admin/");
-            request.Headers.Add("Cookie", cookie);
-            var response = await client.SendAsync(request);
-
-            // Assert — empty authorization list should not block access
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task NullAuthorizationList_DoesNotBlock_Returns200Async()
-        {
-            // Arrange — Authorization is null
-            var connectionString = string.Format(ConnectionStringTemplate, _dbName);
-            var dbOptions = new DbContextOptionsBuilder<TestDbContext>()
-                .UseSqlServer(connectionString)
-                .Options;
-            using (var context = new TestDbContext(dbOptions))
-            {
-                context.Database.EnsureCreated();
-            }
-
-            using var host = new HostBuilder()
-                .ConfigureWebHost(webBuilder =>
-                {
-                    webBuilder
-                        .UseTestServer()
-                        .ConfigureServices(services =>
-                        {
-                            services.AddDbContext<TestDbContext>(options =>
-                                options.UseSqlServer(connectionString));
-                            services.AddNDjangoAdminDashboard<TestDbContext>(
-                                new AdminDashboardOptions
-                                {
-                                    Authorization = null,
-                                    CreateDefaultAdminUser = true,
-                                    DefaultAdminPassword = "admin",
-                                });
-                        })
-                        .Configure(app =>
-                        {
-                            app.UseNDjangoAdminDashboard("/admin");
-                        });
-                })
-                .Start();
-
-            var readiness = host.Services.GetRequiredService<AuthBootstrapReadinessState>();
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-            await readiness.WaitForReadyAsync(cts.Token);
-
-            var client = host.GetTestClient();
-            var cookie = await LoginAsync(client, "admin", "admin");
-
-            // Act
-            var request = new HttpRequestMessage(HttpMethod.Get, "/admin/");
-            request.Headers.Add("Cookie", cookie);
-            var response = await client.SendAsync(request);
-
-            // Assert — null authorization should not block access
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
@@ -209,7 +99,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     CreateDefaultAdminUser = false,
                                 });
                         })
@@ -278,7 +167,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     CreateDefaultAdminUser = false,
                                 });
                         })
@@ -361,10 +249,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddDbContext<TestDbContext>(options =>
                                 options.UseSqlServer(connectionString));
                             services.AddNDjangoAdminDashboard<TestDbContext>(
-                                new AdminDashboardOptions
-                                {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                });
+                                new AdminDashboardOptions());
                         })
                         .Configure(app =>
                         {

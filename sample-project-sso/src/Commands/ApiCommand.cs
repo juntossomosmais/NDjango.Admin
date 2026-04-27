@@ -1,7 +1,6 @@
 using CliFx;
 using CliFx.Attributes;
 using CliFx.Infrastructure;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +29,6 @@ public class ApiCommand : ICommand
             services.AddNDjangoAdminDashboard<AppDbContext>(
                 new NDjango.Admin.AspNetCore.AdminDashboard.AdminDashboardOptions
                 {
-                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                     DashboardTitle = "Sample Admin (SSO)",
                     CreateDefaultAdminUser = true,
                     DefaultAdminPassword = "admin",

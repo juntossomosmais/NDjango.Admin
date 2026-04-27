@@ -1,15 +1,10 @@
 using System;
 using System.Collections.Generic;
 
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
-
 namespace NDjango.Admin.AspNetCore.AdminDashboard
 {
     public class AdminDashboardOptions
     {
-        public IEnumerable<IAdminDashboardAuthorizationFilter> Authorization { get; set; }
-            = new[] { new LocalRequestsOnlyAuthorizationFilter() };
-
         public string DashboardTitle { get; set; } = "Admin";
 
         public string AppPath { get; set; } = "/";

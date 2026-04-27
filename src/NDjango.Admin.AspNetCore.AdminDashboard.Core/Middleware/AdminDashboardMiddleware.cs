@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.AspNetCore.DataProtection;
@@ -91,15 +90,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
                     var user = await authQueries.GetUserByUsernameAsync(authResult.Value.Username, httpContext.RequestAborted);
                     if (user != null) {
                         dashboardContext.IsSuperuser = user.Value.IsSuperuser;
-                    }
-                }
-            }
-
-            if (_options.Authorization != null && _options.Authorization.Any()) {
-                foreach (var filter in _options.Authorization) {
-                    if (!filter.Authorize(dashboardContext)) {
-                        httpContext.Response.StatusCode = 403;
-                        return;
                     }
                 }
             }

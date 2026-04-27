@@ -13,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication.Storage;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
 using Xunit;
 
@@ -50,7 +49,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     SkipStorageInitialization = true,
                                 });
                         })
@@ -92,7 +90,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "testadmin",
                                 });
@@ -144,7 +141,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     SkipStorageInitialization = true,
                                 });
                         })
@@ -184,7 +180,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     SkipStorageInitialization = true,
                                 });
                         })
@@ -224,7 +219,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     SkipStorageInitialization = true,
                                 });
                         })
@@ -292,7 +286,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
                                 });

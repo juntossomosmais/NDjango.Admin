@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using Xunit;
 
 namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
@@ -48,7 +47,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Admin",
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = AdminLoginHelper.DefaultPassword,

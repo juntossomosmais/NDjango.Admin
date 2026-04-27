@@ -2,7 +2,6 @@ using CliFx;
 using CliFx.Attributes;
 using CliFx.Infrastructure;
 using NDjango.Admin.AspNetCore.AdminDashboard;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.MongoDB;
 using MongoDB.Driver;
 using Serilog;
@@ -54,7 +53,6 @@ public class ApiCommand : ICommand
             services.AddNDjangoAdminDashboardMongo(
                 new AdminDashboardOptions
                 {
-                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                     DashboardTitle = "Sample Admin (MongoDB)",
                     CreateDefaultAdminUser = true,
                     DefaultAdminPassword = "admin",

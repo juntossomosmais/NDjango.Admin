@@ -12,7 +12,6 @@ using MongoDB.Driver;
 
 using NDjango.Admin.AspNetCore.AdminDashboard;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.MongoDB;
 
 using Xunit;
@@ -65,7 +64,6 @@ namespace NDjango.Admin.MongoDB.Tests.Fixtures
                             services.AddNDjangoAdminDashboardMongo(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Mongo Auth Admin",
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
