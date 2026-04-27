@@ -42,21 +42,19 @@ namespace NDjango.Admin.MongoDB
             services.AddSingleton<ISearchFilterFactory, MongoSearchFilterFactory>();
             services.AddSingleton<AuthBootstrapReadinessState>();
 
-            if (dashboardOptions.RequireAuthentication) {
-                _pendingMongoOptionsBuilder = mongoOptionsBuilder;
-                DataProtectionConfigurator.ConfigureDataProtection(services);
+            _pendingMongoOptionsBuilder = mongoOptionsBuilder;
+            DataProtectionConfigurator.ConfigureDataProtection(services);
 
-                services.AddScoped<IAdminAuthQueries>(sp => {
-                    var database = sp.GetRequiredService<IMongoDatabase>();
-                    return new MongoAuthStorageQueries(database);
-                });
+            services.AddScoped<IAdminAuthQueries>(sp => {
+                var database = sp.GetRequiredService<IMongoDatabase>();
+                return new MongoAuthStorageQueries(database);
+            });
 
-                AdminDashboardApplicationBuilderExtensions.AuthManagerConfigurator =
-                    ConfigureCompositeMongoManager;
+            AdminDashboardApplicationBuilderExtensions.AuthManagerConfigurator =
+                ConfigureCompositeMongoManager;
 
-                if (!dashboardOptions.SkipStorageInitialization) {
-                    services.AddHostedService<MongoAuthBootstrapperHostedService>();
-                }
+            if (!dashboardOptions.SkipStorageInitialization) {
+                services.AddHostedService<MongoAuthBootstrapperHostedService>();
             }
 
             return services;

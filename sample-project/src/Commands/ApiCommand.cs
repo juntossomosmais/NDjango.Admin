@@ -32,7 +32,6 @@ public class ApiCommand : ICommand
                 {
                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                     DashboardTitle = "Sample Admin",
-                    RequireAuthentication = true,
                     CreateDefaultAdminUser = true,
                     DefaultAdminPassword = "admin",
                 });

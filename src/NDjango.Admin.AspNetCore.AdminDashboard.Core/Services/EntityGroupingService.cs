@@ -32,7 +32,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
 
             foreach (var entity in entities) {
                 var name = AdminMetadataService.GetEntityName(entity);
-                if (_options.RequireAuthentication && AuthEntityNames.Contains(name))
+                if (AuthEntityNames.Contains(name))
                     authEntities.Add(entity);
                 else
                     nonAuthEntities.Add(entity);

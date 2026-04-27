@@ -20,8 +20,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
 
         public Dictionary<string, string[]> EntityGroups { get; set; }
 
-        public bool RequireAuthentication { get; set; } = false;
-
         public string CookieName { get; set; } = ".NDjango.Admin.Auth";
 
         public TimeSpan CookieExpiration { get; set; } = TimeSpan.FromHours(24);

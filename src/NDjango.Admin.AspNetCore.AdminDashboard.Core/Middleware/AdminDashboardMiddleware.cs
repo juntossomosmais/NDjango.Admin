@@ -28,7 +28,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
             NDjangoAdminOptions ndjangoAdminOptions,
             string basePath,
             AuthBootstrapReadinessState readinessState,
-            IDataProtectionProvider dataProtectionProvider = null)
+            IDataProtectionProvider dataProtectionProvider)
         {
             _next = next;
             _options = options;
@@ -36,10 +36,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
             _basePath = basePath.TrimEnd('/');
             _routes = DashboardRoutes.Routes;
             _readinessState = readinessState;
-
-            if (options.RequireAuthentication && dataProtectionProvider != null) {
-                _cookieAuthService = new AdminCookieAuthService(dataProtectionProvider, options);
-            }
+            _cookieAuthService = new AdminCookieAuthService(dataProtectionProvider, options);
         }
 
         public async Task InvokeAsync(HttpContext httpContext)
@@ -51,7 +48,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
                 return;
             }
 
-            if (_options.RequireAuthentication && !_readinessState.IsReady) {
+            if (!_readinessState.IsReady) {
                 httpContext.Response.StatusCode = 503;
                 httpContext.Response.Headers["Retry-After"] = "1";
                 await httpContext.Response.WriteAsync("Admin dashboard is initializing...");
@@ -74,13 +71,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
             var dashboardContext = new AdminDashboardContext(httpContext, _options, manager, _basePath);
 
             // Store cookie auth service in HttpContext.Items so dispatchers can access it
-            if (_cookieAuthService != null) {
-                httpContext.Items["NDjango.Admin.CookieAuthService"] = _cookieAuthService;
-            }
+            httpContext.Items["NDjango.Admin.CookieAuthService"] = _cookieAuthService;
 
             // Authentication check
-            if (_options.RequireAuthentication && !IsAuthExempt(relativePath)) {
-                var authResult = _cookieAuthService?.ValidateCookie(httpContext);
+            if (!IsAuthExempt(relativePath)) {
+                var authResult = _cookieAuthService.ValidateCookie(httpContext);
 
                 if (authResult == null) {
                     var nextUrl = System.Net.WebUtility.UrlEncode(path);
@@ -116,7 +111,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
             }
 
             // Permission enforcement
-            if (_options.RequireAuthentication && !IsAuthExempt(relativePath)) {
+            if (!IsAuthExempt(relativePath)) {
                 var requiredPermission = GetRequiredPermission(relativePath, routeMatch);
                 if (requiredPermission != null) {
                     var authQueries = httpContext.RequestServices.GetService(typeof(IAdminAuthQueries)) as IAdminAuthQueries;

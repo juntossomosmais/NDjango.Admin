@@ -102,6 +102,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                                 new AdminDashboardOptions
                                 {
                                     Authorization = Array.Empty<IAdminDashboardAuthorizationFilter>(),
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = "admin",
                                 });
                         })
                         .Configure(app =>
@@ -111,10 +113,17 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                 })
                 .Start();
 
+            var readiness = host.Services.GetRequiredService<AuthBootstrapReadinessState>();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await readiness.WaitForReadyAsync(cts.Token);
+
             var client = host.GetTestClient();
+            var cookie = await LoginAsync(client, "admin", "admin");
 
             // Act
-            var response = await client.GetAsync("/admin/");
+            var request = new HttpRequestMessage(HttpMethod.Get, "/admin/");
+            request.Headers.Add("Cookie", cookie);
+            var response = await client.SendAsync(request);
 
             // Assert — empty authorization list should not block access
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -146,6 +155,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                                 new AdminDashboardOptions
                                 {
                                     Authorization = null,
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = "admin",
                                 });
                         })
                         .Configure(app =>
@@ -155,10 +166,17 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                 })
                 .Start();
 
+            var readiness = host.Services.GetRequiredService<AuthBootstrapReadinessState>();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await readiness.WaitForReadyAsync(cts.Token);
+
             var client = host.GetTestClient();
+            var cookie = await LoginAsync(client, "admin", "admin");
 
             // Act
-            var response = await client.GetAsync("/admin/");
+            var request = new HttpRequestMessage(HttpMethod.Get, "/admin/");
+            request.Headers.Add("Cookie", cookie);
+            var response = await client.SendAsync(request);
 
             // Assert — null authorization should not block access
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -192,7 +210,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                                 new AdminDashboardOptions
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = false,
                                 });
                         })
@@ -262,7 +279,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                                 new AdminDashboardOptions
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = false,
                                 });
                         })
@@ -320,86 +336,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         }
 
         [Fact]
-        public async Task LoginPost_AuthDisabled_DoesNotSetAuthCookieAsync()
+        public async Task AdminPathWithoutTrailingSlash_NormalizesRelativePath_RedirectsToLoginAsync()
         {
-            // Arrange — RequireAuthentication = false; cookie auth service should NOT be created
-            var connectionString = string.Format(ConnectionStringTemplate, _dbName);
-            var dbOptions = new DbContextOptionsBuilder<TestDbContext>()
-                .UseSqlServer(connectionString)
-                .Options;
-            using (var context = new TestDbContext(dbOptions))
-            {
-                context.Database.EnsureCreated();
-            }
-
-            // Create auth tables and a user so the login handler succeeds.
-            // auth_user must be created via raw SQL because EnsureCreated is a no-op
-            // when the database already exists from TestDbContext.EnsureCreated().
-            var authOptions = new DbContextOptionsBuilder<AuthDbContext>()
-                .UseSqlServer(connectionString)
-                .Options;
-            using (var authDb = new AuthDbContext(authOptions))
-            {
-                await authDb.Database.ExecuteSqlRawAsync(@"
-                    IF OBJECT_ID('auth_user','U') IS NULL
-                    CREATE TABLE auth_user (
-                        id INT IDENTITY PRIMARY KEY,
-                        username NVARCHAR(150) NOT NULL UNIQUE,
-                        password NVARCHAR(256) NOT NULL,
-                        is_superuser BIT NOT NULL DEFAULT 0,
-                        is_active BIT NOT NULL DEFAULT 1,
-                        date_joined DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
-                        last_login DATETIME2 NULL
-                    )");
-                var hashed = PasswordHasher.HashPassword("test123");
-                await authDb.Database.ExecuteSqlRawAsync(
-                    @"INSERT INTO auth_user (username, password, is_superuser, is_active, date_joined)
-                      VALUES (N'testuser', {0}, 0, 1, GETUTCDATE())", hashed);
-            }
-
-            using var host = new HostBuilder()
-                .ConfigureWebHost(webBuilder =>
-                {
-                    webBuilder
-                        .UseTestServer()
-                        .ConfigureServices(services =>
-                        {
-                            services.AddDbContext<TestDbContext>(options =>
-                                options.UseSqlServer(connectionString));
-                            services.AddNDjangoAdminDashboard<TestDbContext>(
-                                new AdminDashboardOptions
-                                {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = false,
-                                });
-                        })
-                        .Configure(app =>
-                        {
-                            app.UseNDjangoAdminDashboard("/admin");
-                        });
-                })
-                .Start();
-
-            var client = host.GetTestClient();
-
-            // Act — POST valid credentials with auth disabled
-            var formContent = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("username", "testuser"),
-                new KeyValuePair<string, string>("password", "test123"),
-            });
-            var response = await client.PostAsync("/admin/login/", formContent);
-
-            // Assert — no auth cookie should be set when RequireAuthentication is false
-            var hasCookie = response.Headers.TryGetValues("Set-Cookie", out var cookies)
-                && cookies.Any(c => c.Contains(".NDjango.Admin.Auth"));
-            Assert.False(hasCookie, "Auth cookie should not be set when RequireAuthentication is false");
-        }
-
-        [Fact]
-        public async Task AdminPathWithoutTrailingSlash_NormalizesRelativePath_Returns200Async()
-        {
-            // Arrange — request "/admin" (no trailing slash) so relativePath is empty and gets normalized to "/"
+            // Arrange — request "/admin" (no trailing slash) so relativePath is empty and gets
+            // normalized to "/". With auth required, an unauthenticated request should redirect to
+            // /admin/login/. If normalization were broken, the request would 404 before reaching
+            // the auth check.
             var connectionString = string.Format(ConnectionStringTemplate, _dbName);
             var dbOptions = new DbContextOptionsBuilder<TestDbContext>()
                 .UseSqlServer(connectionString)
@@ -430,14 +372,19 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                         });
                 })
                 .Start();
+
+            var readiness = host.Services.GetRequiredService<AuthBootstrapReadinessState>();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await readiness.WaitForReadyAsync(cts.Token);
 
             var client = host.GetTestClient();
 
             // Act — "/admin" without trailing slash
             var response = await client.GetAsync("/admin");
 
-            // Assert — should get 200 (dashboard home), not 404
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            // Assert — should redirect to /admin/login/ (not 404, which would mean normalization broke)
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            Assert.Contains("/admin/login/", response.Headers.Location.ToString());
         }
 
         private async Task<string> LoginAsync(HttpClient client, string username, string password)

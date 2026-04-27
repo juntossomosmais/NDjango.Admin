@@ -15,7 +15,7 @@ cd sample-project/src && dotnet run -- api
 - **App URL:** `http://localhost:8000/admin/`
 - **DB:** SQL Server on `localhost:1433`, sa/Password1, database `SampleProject`
 - **Auto-setup:** The app calls `EnsureCreated()` on startup — no migrations needed
-- **Authentication:** The sample project has `RequireAuthentication = true` and `CreateDefaultAdminUser = true`. Default credentials: **admin / admin**
+- **Authentication:** Authentication is always enabled. The sample project sets `CreateDefaultAdminUser = true`, so default credentials are **admin / admin**.
 
 **Important:** `EnsureCreated()` must run **before** `UseNDjangoAdminDashboard()` in `Configure()`. The auth bootstrap creates tables in the existing database — if the database doesn't exist yet, it will fail.
 
@@ -42,7 +42,7 @@ rm -rf ~/Library/Caches/ms-playwright/mcp-chrome-*
 
 ## Authentication Flow
 
-When `RequireAuthentication = true`, all dashboard pages require login. The auth system uses cookie-based sessions with DataProtection encryption.
+All dashboard pages require login. The auth system uses cookie-based sessions with DataProtection encryption.
 
 ### Login
 

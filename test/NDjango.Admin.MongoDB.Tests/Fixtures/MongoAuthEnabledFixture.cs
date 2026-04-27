@@ -67,7 +67,6 @@ namespace NDjango.Admin.MongoDB.Tests.Fixtures
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Mongo Auth Admin",
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
                                 },

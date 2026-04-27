@@ -153,7 +153,7 @@ Format tasks as:
 8. **Mirror Django Admin conventions.** When in doubt about UX decisions, reference how Django Admin handles the same scenario. Deviations from Django conventions need explicit justification.
 9. **Respect the architecture.** Task decomposition must align with the provider-agnostic core / provider shell separation. Never propose changes that would add provider-specific dependencies to the core.
 10. **Consider backwards compatibility.** NDjango.Admin is a library consumed by other projects. New features should not break existing consumer configurations. New `AdminDashboardOptions` properties must have sensible defaults.
-11. **Consider the authentication dimension.** Features may behave differently when `RequireAuthentication = true` vs. `false`. Specify both scenarios.
+11. **Consider the authentication dimension.** Authentication is always enabled — every request reaches the dashboard already authenticated and bound to a user. Specify how the feature interacts with permissions (`add_`, `view_`, `change_`, `delete_`) and whether superusers behave differently.
 
 ## Output Quality Checklist
 

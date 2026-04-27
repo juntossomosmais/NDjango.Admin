@@ -52,7 +52,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Admin",
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
                                 });

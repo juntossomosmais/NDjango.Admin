@@ -1,6 +1,6 @@
 using System;
 using System.Net;
-using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
 using Xunit;
@@ -29,18 +30,66 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         [Fact]
         public async Task Dashboard_WithAllowAllFilter_Returns200Async()
         {
-            using var fixture = new AdminDashboardFixture();
-            var client = fixture.GetTestHost().GetTestClient();
+            // Arrange
+            var connectionString = string.Format(ConnectionStringTemplate, _dbName);
 
+            var dbOptions = new DbContextOptionsBuilder<TestDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+            using (var context = new TestDbContext(dbOptions))
+            {
+                context.Database.EnsureCreated();
+            }
+
+            using var host = new HostBuilder()
+                .ConfigureWebHost(webBuilder =>
+                {
+                    webBuilder
+                        .UseTestServer()
+                        .ConfigureServices(services =>
+                        {
+                            services.AddDbContext<TestDbContext>(options =>
+                                options.UseSqlServer(connectionString));
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = AdminLoginHelper.DefaultPassword,
+                                });
+                        })
+                        .Configure(app =>
+                        {
+                            app.UseNDjangoAdminDashboard("/admin");
+                        });
+                })
+                .Start();
+
+            await AdminLoginHelper.WaitForReadinessAsync(host);
+            var cookie = await AdminLoginHelper.LoginAndGetCookieAsync(host);
+            var client = AdminLoginHelper.CreateAuthenticatedClient(host, cookie);
+
+            // Act
             var response = await client.GetAsync("/admin/");
 
+            // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
         public async Task Dashboard_WithDenyingFilter_Returns403Async()
         {
+            // Arrange — DenyAllFilter rejects every request. Hit /admin/login/ which is auth-exempt
+            // but still goes through the authorization filter chain.
             var connectionString = string.Format(ConnectionStringTemplate, _dbName);
+
+            var dbOptions = new DbContextOptionsBuilder<TestDbContext>()
+                .UseSqlServer(connectionString)
+                .Options;
+            using (var context = new TestDbContext(dbOptions))
+            {
+                context.Database.EnsureCreated();
+            }
 
             using var host = new HostBuilder()
                 .ConfigureWebHost(webBuilder =>
@@ -67,9 +116,14 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                 })
                 .Start();
 
-            var client = host.GetTestClient();
-            var response = await client.GetAsync("/admin/");
+            await AdminLoginHelper.WaitForReadinessAsync(host);
 
+            var client = host.GetTestClient();
+
+            // Act
+            var response = await client.GetAsync("/admin/login/");
+
+            // Assert
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
 

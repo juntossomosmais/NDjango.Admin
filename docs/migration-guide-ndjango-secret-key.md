@@ -8,12 +8,10 @@ The library now derives the cookie protection key deterministically from the `ND
 
 ## Breaking change
 
-Starting with this version, when `RequireAuthentication = true` the library throws `InvalidOperationException` at startup if:
+Authentication is now always enabled — the optional `RequireAuthentication` flag was removed in the same release. As a consequence, `AddNDjangoAdminDashboard*` always throws `InvalidOperationException` at startup if:
 
 - `NDJANGO_SECRET_KEY` is not set, or
 - `NDJANGO_SECRET_KEY` is set but shorter than 32 characters.
-
-If `RequireAuthentication = false`, nothing changes — the variable is not read.
 
 The throw is intentional and fail-fast: silently falling back to ephemeral keys is exactly what produced the bug this change fixes, and a misconfigured production cluster should refuse to start rather than silently break authentication for a fraction of requests.
 
@@ -25,7 +23,7 @@ Generate a secret (≥ 32 characters, cryptographically random):
 openssl rand -base64 48
 ```
 
-Provide it as the environment variable `NDJANGO_SECRET_KEY` to every process that runs the admin dashboard (every pod, every replica, every dev/staging/prod environment that sets `RequireAuthentication = true`).
+Provide it as the environment variable `NDJANGO_SECRET_KEY` to every process that runs the admin dashboard (every pod, every replica, every dev/staging/prod environment).
 
 ### Kubernetes
 
@@ -102,7 +100,7 @@ internal static class TestModuleInitializer
 
 - **Forge resistance**: anyone with the secret can forge any user's cookie, including superusers. Treat it as a production credential — never commit, never log, store in a secret manager.
 - **Rotation**: changing the secret invalidates every existing cookie. All users will need to log in again. Plan rotation during a maintenance window or accept the user impact.
-- **Zero-downtime rotation**: not supported with this approach. If you need it, configure your own `services.AddDataProtection()` with a shared key store (shared filesystem, AWS SSM, Azure Blob, Redis, or a custom Mongo-backed `IXmlRepository`) before calling `AddNDjangoAdminDashboard*`. The library only registers a `StaticKeyDataProtectionProvider` when it reads `NDJANGO_SECRET_KEY`; if you have already configured an `IDataProtectionProvider` via `AddDataProtection()` extensions, you do not need to set the env var — but you do need to remove the env var entirely from your environment, since the library still reads it and throws if it's malformed.
+- **Zero-downtime rotation**: not supported with this approach. The library unconditionally registers its own `StaticKeyDataProtectionProvider` derived from `NDJANGO_SECRET_KEY` and overrides any pre-existing `AddDataProtection()` registration. If you need rotation without a forced re-login, you currently have to fork or wrap the package.
 
 ## Verifying the change
 

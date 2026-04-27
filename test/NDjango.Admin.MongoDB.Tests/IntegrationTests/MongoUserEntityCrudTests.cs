@@ -19,7 +19,7 @@ namespace NDjango.Admin.MongoDB.Tests.IntegrationTests
         public MongoUserEntityCrudTests(MongoCrudFixture fixture)
         {
             _fixture = fixture;
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]

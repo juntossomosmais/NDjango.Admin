@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,13 +14,16 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 
 using NDjango.Admin.AspNetCore.AdminDashboard;
+using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
+
+using Xunit;
 
 namespace NDjango.Admin.MongoDB.Tests.Fixtures
 {
-    public class MongoCrudFixture : IDisposable
+    public class MongoCrudFixture : IAsyncLifetime, IDisposable
     {
-        private readonly IHost _host;
+        private IHost _host;
         private readonly string _dbName;
         private readonly IMongoClient _mongoClient;
 
@@ -32,6 +39,10 @@ namespace NDjango.Admin.MongoDB.Tests.Fixtures
         {
             _dbName = $"NDjangoAdminMongoCrudTest_{Guid.NewGuid():N}";
             _mongoClient = new MongoClient(ConnectionString);
+        }
+
+        public async Task InitializeAsync()
+        {
             var database = _mongoClient.GetDatabase(_dbName);
 
             SeedDatabase(database);
@@ -51,6 +62,8 @@ namespace NDjango.Admin.MongoDB.Tests.Fixtures
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Mongo CRUD Admin",
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = "admin",
                                 },
                                 mongo =>
                                 {
@@ -67,6 +80,35 @@ namespace NDjango.Admin.MongoDB.Tests.Fixtures
                         });
                 })
                 .Start();
+
+            var readiness = _host.Services.GetRequiredService<AuthBootstrapReadinessState>();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await readiness.WaitForReadyAsync(cts.Token);
+
+            AuthCookie = await LoginAsAdminAsync(_host);
+        }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        private static async Task<string> LoginAsAdminAsync(IHost host)
+        {
+            var client = host.GetTestClient();
+            var formContent = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("username", "admin"),
+                new KeyValuePair<string, string>("password", "admin"),
+            });
+
+            var response = await client.PostAsync("/admin/login/", formContent);
+            if (response.Headers.TryGetValues("Set-Cookie", out var cookies))
+            {
+                foreach (var header in cookies)
+                {
+                    if (header.Contains(".NDjango.Admin.Auth"))
+                        return header.Split(';')[0];
+                }
+            }
+            return null;
         }
 
         private void SeedDatabase(IMongoDatabase database)
@@ -88,6 +130,16 @@ namespace NDjango.Admin.MongoDB.Tests.Fixtures
         public IHost GetTestHost() => _host;
 
         public IMongoDatabase GetDatabase() => _mongoClient.GetDatabase(_dbName);
+
+        public HttpClient GetAuthenticatedClient()
+        {
+            var client = _host.GetTestClient();
+            if (!string.IsNullOrEmpty(AuthCookie))
+                client.DefaultRequestHeaders.Add("Cookie", AuthCookie);
+            return client;
+        }
+
+        public string AuthCookie { get; private set; }
 
         public void Dispose()
         {

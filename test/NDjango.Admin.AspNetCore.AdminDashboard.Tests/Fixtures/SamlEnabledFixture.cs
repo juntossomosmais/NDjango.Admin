@@ -55,7 +55,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Admin",
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
                                     EnableSaml = true,

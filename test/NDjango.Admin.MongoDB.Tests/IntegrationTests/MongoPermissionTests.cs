@@ -68,7 +68,6 @@ namespace NDjango.Admin.MongoDB.Tests.IntegrationTests
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Mongo Perm Admin",
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
                                 },

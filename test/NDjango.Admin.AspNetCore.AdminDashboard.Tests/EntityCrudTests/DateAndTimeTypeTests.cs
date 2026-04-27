@@ -16,7 +16,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
 
         public DateAndTimeTypeTests(AdminDashboardFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         private static string ExtractIdFromRedirect(string locationHeader)

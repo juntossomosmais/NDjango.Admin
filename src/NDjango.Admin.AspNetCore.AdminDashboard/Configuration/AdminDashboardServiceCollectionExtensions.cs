@@ -35,13 +35,12 @@ namespace Microsoft.Extensions.DependencyInjection
                 return ndjangoAdminOptions;
             });
 
-            // Register auth services eagerly (they are no-ops if RequireAuthentication is false)
             RegisterAuthServices<TDbContext>(services);
 
             services.AddSingleton<ISearchFilterFactory, SubstringFilterFactory>();
             services.AddSingleton<AuthBootstrapReadinessState>();
 
-            if (dashboardOptions.RequireAuthentication && !dashboardOptions.SkipStorageInitialization) {
+            if (!dashboardOptions.SkipStorageInitialization) {
                 services.AddHostedService<AuthBootstrapperHostedService>();
             }
 

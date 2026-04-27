@@ -15,7 +15,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
 
         public TimeLimitedCountTests(SlowCountFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]
@@ -69,7 +69,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
 
         public TimeLimitedCountHappyPathTests(BulkDataFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]
@@ -105,7 +105,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
 
         public TimeLimitedCountDisabledTests(DisabledTimeoutFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]

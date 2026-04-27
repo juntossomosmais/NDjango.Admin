@@ -32,7 +32,7 @@ namespace Microsoft.AspNetCore.Builder
 
             ndjangoAdminOptions.PaginationCountTimeoutMs = options.PaginationCountTimeoutMs;
 
-            if (options.RequireAuthentication && AuthManagerConfigurator != null) {
+            if (AuthManagerConfigurator != null) {
                 AuthManagerConfigurator(ndjangoAdminOptions);
             }
 
@@ -85,11 +85,9 @@ namespace Microsoft.AspNetCore.Builder
                     }
 
                     // Create cookie auth service for the callback
-                    var dataProtectionProvider = httpContext.RequestServices.GetService<IDataProtectionProvider>();
-                    if (dataProtectionProvider != null) {
-                        var cookieService = new AdminCookieAuthService(dataProtectionProvider, options);
-                        httpContext.Items["NDjango.Admin.CookieAuthService"] = cookieService;
-                    }
+                    var dataProtectionProvider = httpContext.RequestServices.GetRequiredService<IDataProtectionProvider>();
+                    var cookieService = new AdminCookieAuthService(dataProtectionProvider, options);
+                    httpContext.Items["NDjango.Admin.CookieAuthService"] = cookieService;
 
                     var manager = ndjangoAdminOptions.ManagerResolver(httpContext.RequestServices, ndjangoAdminOptions);
                     var context = new AdminDashboardContext(httpContext, options, manager, basePath);

@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -7,12 +9,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
+using Xunit;
 
 namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
 {
-    public class BulkDataFixture : IDisposable
+    public class BulkDataFixture : IAsyncLifetime, IDisposable
     {
-        private readonly IHost _host;
+        private IHost _host;
         private readonly string _dbName;
 
         private static readonly string ConnectionStringTemplate =
@@ -24,6 +27,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public BulkDataFixture()
         {
             _dbName = $"NDjangoAdminBulkTest_{Guid.NewGuid():N}";
+        }
+
+        public async Task InitializeAsync()
+        {
             var connectionString = string.Format(ConnectionStringTemplate, _dbName);
 
             _host = new HostBuilder()
@@ -43,6 +50,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Admin",
+                                    CreateDefaultAdminUser = true,
+                                    DefaultAdminPassword = AdminLoginHelper.DefaultPassword,
                                 });
                         })
                         .Configure(app =>
@@ -53,7 +62,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
                         });
                 })
                 .Start();
+
+            await AdminLoginHelper.WaitForReadinessAsync(_host);
+            AuthCookie = await AdminLoginHelper.LoginAndGetCookieAsync(_host);
         }
+
+        public Task DisposeAsync() => Task.CompletedTask;
 
         private void SeedDatabase(IApplicationBuilder app)
         {
@@ -84,6 +98,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         }
 
         public IHost GetTestHost() => _host;
+
+        public HttpClient GetAuthenticatedClient() => AdminLoginHelper.CreateAuthenticatedClient(_host, AuthCookie);
+
+        public string AuthCookie { get; private set; }
 
         public void Dispose()
         {

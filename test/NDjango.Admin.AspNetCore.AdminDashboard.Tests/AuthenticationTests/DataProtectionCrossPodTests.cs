@@ -46,7 +46,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
                                 {
                                     Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Cross Pod Admin",
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
                                 });

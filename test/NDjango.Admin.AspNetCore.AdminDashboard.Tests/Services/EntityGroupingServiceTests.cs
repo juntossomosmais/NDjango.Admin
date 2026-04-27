@@ -64,7 +64,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             // Arrange
             var manager = new StubAdminManager("Category", "Product");
             var metadataService = new AdminMetadataService(manager);
-            var options = new AdminDashboardOptions { RequireAuthentication = false };
+            var options = new AdminDashboardOptions();
             var service = new EntityGroupingService(metadataService, options);
 
             // Act
@@ -84,7 +84,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             var metadataService = new AdminMetadataService(manager);
             var options = new AdminDashboardOptions
             {
-                RequireAuthentication = false,
                 EntityGroups = new Dictionary<string, string[]>
                 {
                     ["Catalog"] = new[] { "Category", "Product" }
@@ -108,7 +107,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             // Arrange
             var manager = new StubAdminManager("Category", "AuthUser", "AuthGroup");
             var metadataService = new AdminMetadataService(manager);
-            var options = new AdminDashboardOptions { RequireAuthentication = true };
+            var options = new AdminDashboardOptions();
             var service = new EntityGroupingService(metadataService, options);
 
             // Act
@@ -127,7 +126,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             // Arrange
             var manager = new StubAdminManager();
             var metadataService = new AdminMetadataService(manager);
-            var options = new AdminDashboardOptions { RequireAuthentication = false };
+            var options = new AdminDashboardOptions();
             var service = new EntityGroupingService(metadataService, options);
 
             // Act
@@ -145,7 +144,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             var metadataService = new AdminMetadataService(manager);
             var options = new AdminDashboardOptions
             {
-                RequireAuthentication = false,
                 EntityGroups = new Dictionary<string, string[]>
                 {
                     ["Catalog"] = new[] { "Category", "NonExistent" }
@@ -168,7 +166,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             // Arrange
             var manager = new StubAdminManager("AuthUser", "AuthGroup", "AuthPermission", "AuthGroupPermission", "AuthUserGroup");
             var metadataService = new AdminMetadataService(manager);
-            var options = new AdminDashboardOptions { RequireAuthentication = true };
+            var options = new AdminDashboardOptions();
             var service = new EntityGroupingService(metadataService, options);
 
             // Act
@@ -180,22 +178,5 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Services
             Assert.Equal(5, result["Authentication and Authorization"].Count);
         }
 
-        [Fact]
-        public async Task GetGroupedEntitiesAsync_AuthDisabled_AuthEntitiesInModels()
-        {
-            // Arrange
-            var manager = new StubAdminManager("AuthUser", "Category");
-            var metadataService = new AdminMetadataService(manager);
-            var options = new AdminDashboardOptions { RequireAuthentication = false };
-            var service = new EntityGroupingService(metadataService, options);
-
-            // Act
-            var result = await service.GetGroupedEntitiesAsync();
-
-            // Assert
-            Assert.Single(result);
-            Assert.True(result.ContainsKey("Models"));
-            Assert.Equal(2, result["Models"].Count);
-        }
     }
 }
