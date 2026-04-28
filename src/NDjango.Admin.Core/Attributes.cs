@@ -36,6 +36,26 @@ namespace NDjango.Admin
         Lookup = 2
     }
 
+    /// <summary>
+    /// Hint for the HTML input type used when rendering a field.
+    /// Maps to HTML5 typed inputs (Django's EmailInput/URLInput/TelInput/ColorInput).
+    /// </summary>
+    public enum InputTypeHint
+    {
+        /// <summary>Default — input type is inferred from the attribute's <see cref="DataType"/>.</summary>
+        Auto = 0,
+        /// <summary>HTML5 <c>type="email"</c> — browser performs basic email validation.</summary>
+        Email = 1,
+        /// <summary>HTML5 <c>type="url"</c> — browser performs basic URL validation.</summary>
+        Url = 2,
+        /// <summary>HTML5 <c>type="tel"</c> — hints numeric keypad on mobile; no format enforced.</summary>
+        Tel = 3,
+        /// <summary>HTML5 <c>type="color"</c> — renders the native color picker.</summary>
+        Color = 4,
+        /// <summary>HTML5 <c>type="password"</c> — masks input; edit forms leave it blank to preserve the existing value.</summary>
+        Password = 5
+    }
+
 
     /// <summary>
     /// Represents one entity attribute of data model.
@@ -418,6 +438,39 @@ namespace NDjango.Admin
         /// <value></value>
         public int Size { get; set; }
 
+        /// <summary>Maximum string length (from EF Core or [MaxLength]/[StringLength]).</summary>
+        public int? MaxLength { get; set; }
+
+        /// <summary>Minimum string length. Set only when &gt; 0 to avoid redundant `minlength=0` emission.</summary>
+        public int? MinLength { get; set; }
+
+        /// <summary>Minimum numeric value (from [Range] on numeric types).</summary>
+        public decimal? MinValue { get; set; }
+
+        /// <summary>Maximum numeric value (from [Range] on numeric types).</summary>
+        public decimal? MaxValue { get; set; }
+
+        /// <summary>Minimum DateTime value (from [Range(typeof(DateTime), ...)]).</summary>
+        public DateTime? MinDateTime { get; set; }
+
+        /// <summary>Maximum DateTime value (from [Range(typeof(DateTime), ...)]).</summary>
+        public DateTime? MaxDateTime { get; set; }
+
+        /// <summary>Regex pattern for string validation (from [RegularExpression]).</summary>
+        public string? RegexPattern { get; set; }
+
+        /// <summary>Error message to surface when regex validation fails.</summary>
+        public string? RegexErrorMessage { get; set; }
+
+        /// <summary>Total digits for decimal values (from EF Core HasPrecision).</summary>
+        public int? Precision { get; set; }
+
+        /// <summary>Fractional digits for decimal values (from EF Core HasPrecision).</summary>
+        public int? Scale { get; set; }
+
+        /// <summary>Hint for which HTML input type to emit.</summary>
+        public InputTypeHint InputType { get; set; } = InputTypeHint.Auto;
+
         /// <summary>
         /// Gets or sets the attribute expression.
         /// </summary>
@@ -506,6 +559,17 @@ namespace NDjango.Admin
             ShowOnView = attr.ShowOnView;
             ShowOnEdit = attr.ShowOnEdit;
             ShowOnCreate = attr.ShowOnCreate;
+            MaxLength = attr.MaxLength;
+            MinLength = attr.MinLength;
+            MinValue = attr.MinValue;
+            MaxValue = attr.MaxValue;
+            MinDateTime = attr.MinDateTime;
+            MaxDateTime = attr.MaxDateTime;
+            RegexPattern = attr.RegexPattern;
+            RegexErrorMessage = attr.RegexErrorMessage;
+            Precision = attr.Precision;
+            Scale = attr.Scale;
+            InputType = attr.InputType;
         }
 
         /// <summary>
@@ -629,6 +693,61 @@ namespace NDjango.Admin
                 await writer.WritePropertyNameAsync("udata", ct).ConfigureAwait(false);
                 await writer.WriteValueAsync(UserData.ToString(), ct).ConfigureAwait(false);
             }
+
+            if (MaxLength.HasValue) {
+                await writer.WritePropertyNameAsync("mxl", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(MaxLength.Value, ct).ConfigureAwait(false);
+            }
+
+            if (MinLength.HasValue) {
+                await writer.WritePropertyNameAsync("mnl", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(MinLength.Value, ct).ConfigureAwait(false);
+            }
+
+            if (MinValue.HasValue) {
+                await writer.WritePropertyNameAsync("mnv", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(MinValue.Value, ct).ConfigureAwait(false);
+            }
+
+            if (MaxValue.HasValue) {
+                await writer.WritePropertyNameAsync("mxv", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(MaxValue.Value, ct).ConfigureAwait(false);
+            }
+
+            if (MinDateTime.HasValue) {
+                await writer.WritePropertyNameAsync("mndt", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(MinDateTime.Value, ct).ConfigureAwait(false);
+            }
+
+            if (MaxDateTime.HasValue) {
+                await writer.WritePropertyNameAsync("mxdt", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(MaxDateTime.Value, ct).ConfigureAwait(false);
+            }
+
+            if (!string.IsNullOrEmpty(RegexPattern)) {
+                await writer.WritePropertyNameAsync("rgx", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(RegexPattern, ct).ConfigureAwait(false);
+            }
+
+            if (!string.IsNullOrEmpty(RegexErrorMessage)) {
+                await writer.WritePropertyNameAsync("rgxm", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(RegexErrorMessage, ct).ConfigureAwait(false);
+            }
+
+            if (Precision.HasValue) {
+                await writer.WritePropertyNameAsync("prec", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(Precision.Value, ct).ConfigureAwait(false);
+            }
+
+            if (Scale.HasValue) {
+                await writer.WritePropertyNameAsync("scl", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync(Scale.Value, ct).ConfigureAwait(false);
+            }
+
+            if (InputType != InputTypeHint.Auto) {
+                await writer.WritePropertyNameAsync("inpt", ct).ConfigureAwait(false);
+                await writer.WriteValueAsync((int)InputType, ct).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -742,6 +861,39 @@ namespace NDjango.Admin
                 case "defVal":
                     var jObj = await JObject.ReadFromAsync(reader, ct).ConfigureAwait(false);
                     DefaultValue = jObj.ToObject<string>();
+                    break;
+                case "mxl":
+                    MaxLength = await reader.ReadAsInt32Async(ct).ConfigureAwait(false);
+                    break;
+                case "mnl":
+                    MinLength = await reader.ReadAsInt32Async(ct).ConfigureAwait(false);
+                    break;
+                case "mnv":
+                    MinValue = await reader.ReadAsDecimalAsync(ct).ConfigureAwait(false);
+                    break;
+                case "mxv":
+                    MaxValue = await reader.ReadAsDecimalAsync(ct).ConfigureAwait(false);
+                    break;
+                case "mndt":
+                    MinDateTime = await reader.ReadAsDateTimeAsync(ct).ConfigureAwait(false);
+                    break;
+                case "mxdt":
+                    MaxDateTime = await reader.ReadAsDateTimeAsync(ct).ConfigureAwait(false);
+                    break;
+                case "rgx":
+                    RegexPattern = await reader.ReadAsStringAsync(ct).ConfigureAwait(false);
+                    break;
+                case "rgxm":
+                    RegexErrorMessage = await reader.ReadAsStringAsync(ct).ConfigureAwait(false);
+                    break;
+                case "prec":
+                    Precision = await reader.ReadAsInt32Async(ct).ConfigureAwait(false);
+                    break;
+                case "scl":
+                    Scale = await reader.ReadAsInt32Async(ct).ConfigureAwait(false);
+                    break;
+                case "inpt":
+                    InputType = (InputTypeHint)(await reader.ReadAsInt32Async(ct).ConfigureAwait(false)).Value;
                     break;
                 default:
                     await reader.ReadAsync(ct).ConfigureAwait(false);

@@ -283,14 +283,28 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 : $"{model.BasePath}/{model.EntityId}/add/";
 
             content.Append($"<form method=\"post\" action=\"{formAction}\" class=\"entity-form\">");
+
+            if (model.Errors != null && model.Errors.TryGetValue(string.Empty, out var nonFieldError)
+                && !string.IsNullOrEmpty(nonFieldError)) {
+                content.Append($"<ul class=\"errorlist nonfield\"><li>{Encode(nonFieldError)}</li></ul>");
+            }
+
             content.Append("<fieldset class=\"module aligned\">");
 
             foreach (var field in model.Fields) {
-                content.Append("<div class=\"form-row\">");
+                string? fieldError = null;
+                var hasError = model.Errors != null
+                    && model.Errors.TryGetValue(field.PropName, out fieldError);
+                var rowClass = hasError ? "form-row errors" : "form-row";
+                content.Append($"<div class=\"{rowClass}\">");
                 content.Append($"<label for=\"id_{field.PropName}\">{Encode(field.Caption)}:");
                 if (field.IsEditable && field.IsRequired)
                     content.Append(" <span class=\"required\">*</span>");
                 content.Append("</label>");
+
+                if (hasError) {
+                    content.Append($"<ul class=\"errorlist\"><li>{Encode(fieldError!)}</li></ul>");
+                }
 
                 if (!field.IsEditable) {
                     var displayValue = field.Value?.ToString() ?? "-";
@@ -423,6 +437,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             var id = $"id_{field.PropName}";
             var required = field.IsRequired ? " required" : "";
             var readOnly = !field.IsEditable ? " readonly" : "";
+            var validation = BuildValidationAttrs(field);
 
             switch (field.DataType) {
                 case DataType.Bool:
@@ -430,38 +445,151 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                     content.Append($"<input type=\"checkbox\" id=\"{id}\" name=\"{field.PropName}\"{isChecked}{readOnly} />");
                     break;
                 case DataType.Date:
-                    content.Append($"<input type=\"date\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly} />");
+                    content.Append($"<input type=\"date\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly}{validation} />");
                     break;
                 case DataType.DateTime:
                     if (IsDateTimeOffset(field)) {
-                        content.Append($"<input type=\"text\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly} />");
+                        content.Append($"<input type=\"text\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly}{validation} />");
                     }
                     else {
-                        content.Append($"<input type=\"datetime-local\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly} />");
+                        content.Append($"<input type=\"datetime-local\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly}{validation} />");
                     }
                     break;
                 case DataType.Int32:
                 case DataType.Int64:
                 case DataType.Word:
                 case DataType.Byte:
-                    content.Append($"<input type=\"number\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly} />");
+                    content.Append($"<input type=\"number\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly}{validation} />");
                     break;
                 case DataType.Float:
                 case DataType.Currency:
-                    content.Append($"<input type=\"number\" step=\"any\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly} />");
+                    var stepAttr = field.Scale.HasValue && field.Scale.Value >= 0
+                        ? $" step=\"{BuildStepFromScale(field.Scale.Value)}\""
+                        : " step=\"any\"";
+                    content.Append($"<input type=\"number\"{stepAttr} id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly}{validation} />");
                     break;
                 case DataType.Memo:
-                    content.Append($"<textarea id=\"{id}\" name=\"{field.PropName}\" rows=\"5\"{required}{readOnly}>{Encode(value)}</textarea>");
+                    content.Append($"<textarea id=\"{id}\" name=\"{field.PropName}\" rows=\"5\"{required}{readOnly}{validation}>{Encode(value)}</textarea>");
                     break;
                 default:
                     if (field.IsPrimaryKey && !field.IsEditable) {
                         content.Append($"<span class=\"readonly-value\">{Encode(value)}</span>");
                     }
+                    else if (field.InputType == InputTypeHint.Password) {
+                        content.Append($"<input type=\"password\" id=\"{id}\" name=\"{field.PropName}\" value=\"\" autocomplete=\"new-password\"{required}{readOnly}{validation} />");
+                    }
                     else {
-                        content.Append($"<input type=\"text\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly} />");
+                        var inputType = field.InputType switch
+                        {
+                            InputTypeHint.Email => "email",
+                            InputTypeHint.Url => "url",
+                            InputTypeHint.Tel => "tel",
+                            _ => "text"
+                        };
+                        content.Append($"<input type=\"{inputType}\" id=\"{id}\" name=\"{field.PropName}\" value=\"{Encode(value)}\"{required}{readOnly}{validation} />");
                     }
                     break;
             }
+        }
+
+        /// <summary>
+        /// Builds the HTML5 validation attribute fragment (maxlength/minlength/min/max/pattern/title)
+        /// for a field. Returns an empty string when no validation metadata applies.
+        /// Fragment is leading-space-prefixed so it can be safely appended to an input tag.
+        /// </summary>
+        internal static string BuildValidationAttrs(FieldViewModel field)
+        {
+            if (field == null)
+                return "";
+            var sb = new StringBuilder();
+
+            var isStringLike = field.DataType == DataType.String
+                || field.DataType == DataType.Memo
+                || field.DataType == DataType.FixedChar;
+
+            var isNumeric = field.DataType == DataType.Int32
+                || field.DataType == DataType.Int64
+                || field.DataType == DataType.Word
+                || field.DataType == DataType.Byte
+                || field.DataType == DataType.Float
+                || field.DataType == DataType.Currency;
+
+            if (isStringLike) {
+                if (field.MaxLength.HasValue && field.MaxLength.Value > 0) {
+                    sb.Append($" maxlength=\"{field.MaxLength.Value}\"");
+                }
+                if (field.MinLength.HasValue && field.MinLength.Value > 0) {
+                    sb.Append($" minlength=\"{field.MinLength.Value}\"");
+                }
+                if (!string.IsNullOrEmpty(field.RegexPattern) && IsHtml5SafeRegex(field.RegexPattern)) {
+                    sb.Append($" pattern=\"{Encode(StripRegexAnchors(field.RegexPattern))}\"");
+                    var title = !string.IsNullOrEmpty(field.RegexErrorMessage)
+                        ? field.RegexErrorMessage
+                        : "Please match the requested format.";
+                    sb.Append($" title=\"{Encode(title)}\"");
+                }
+            }
+
+            if (isNumeric) {
+                if (field.MinValue.HasValue) {
+                    sb.Append($" min=\"{field.MinValue.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}\"");
+                }
+                if (field.MaxValue.HasValue) {
+                    sb.Append($" max=\"{field.MaxValue.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}\"");
+                }
+            }
+
+            if (field.DataType == DataType.Date) {
+                if (field.MinDateTime.HasValue) {
+                    sb.Append($" min=\"{field.MinDateTime.Value.ToString("yyyy-MM-dd")}\"");
+                }
+                if (field.MaxDateTime.HasValue) {
+                    sb.Append($" max=\"{field.MaxDateTime.Value.ToString("yyyy-MM-dd")}\"");
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns true when a regex pattern is safe to emit as HTML5 pattern= attribute.
+        /// HTML5 uses the JS regex engine (ECMA-262) and implicitly anchors the pattern with ^$.
+        /// Reject patterns using inline flags (e.g. `(?i)`, `(?-i)`) or embedded newlines, which
+        /// either parse differently or make no sense in the HTML5 context.
+        /// </summary>
+        internal static bool IsHtml5SafeRegex(string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern))
+                return false;
+            if (pattern.IndexOf("(?") >= 0)
+                return false;
+            if (pattern.IndexOfAny(new[] { '\n', '\r' }) >= 0)
+                return false;
+            return true;
+        }
+
+        private static string StripRegexAnchors(string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern))
+                return pattern;
+            var stripped = pattern;
+            if (stripped.StartsWith('^'))
+                stripped = stripped.Substring(1);
+            if (stripped.EndsWith('$') && !stripped.EndsWith("\\$")) {
+                stripped = stripped.Substring(0, stripped.Length - 1);
+            }
+            return stripped;
+        }
+
+        private static string BuildStepFromScale(int scale)
+        {
+            if (scale <= 0)
+                return "1";
+            var sb = new StringBuilder("0.");
+            for (var i = 1; i < scale; i++)
+                sb.Append('0');
+            sb.Append('1');
+            return sb.ToString();
         }
 
         private static void RenderSelectField(StringBuilder content, FieldViewModel field, string basePath)
@@ -487,7 +615,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             string authenticatedUsername = null)
         {
             httpContext.Response.ContentType = "text/html; charset=utf-8";
-            httpContext.Response.StatusCode = 200;
 
             var sb = new StringBuilder();
             sb.Append("<!DOCTYPE html><html lang=\"en\"><head>");

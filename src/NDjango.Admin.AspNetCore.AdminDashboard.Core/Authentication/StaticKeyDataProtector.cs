@@ -21,8 +21,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
 
         public StaticKeyDataProtector(byte[] key)
         {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
+            ArgumentNullException.ThrowIfNull(key);
             if (key.Length != KeySize)
                 throw new ArgumentException($"Key must be {KeySize} bytes.", nameof(key));
 
@@ -31,8 +30,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
 
         public IDataProtector CreateProtector(string purpose)
         {
-            if (purpose == null)
-                throw new ArgumentNullException(nameof(purpose));
+            ArgumentNullException.ThrowIfNull(purpose);
 
             var derivedKey = HKDF.DeriveKey(
                 HashAlgorithmName.SHA256,
@@ -46,8 +44,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
 
         public byte[] Protect(byte[] plaintext)
         {
-            if (plaintext == null)
-                throw new ArgumentNullException(nameof(plaintext));
+            ArgumentNullException.ThrowIfNull(plaintext);
 
             var nonce = new byte[NonceSize];
             RandomNumberGenerator.Fill(nonce);
@@ -69,8 +66,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
 
         public byte[] Unprotect(byte[] protectedData)
         {
-            if (protectedData == null)
-                throw new ArgumentNullException(nameof(protectedData));
+            ArgumentNullException.ThrowIfNull(protectedData);
             if (protectedData.Length < MinimumProtectedLength)
                 throw new CryptographicException("The protected payload is malformed.");
 

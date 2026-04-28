@@ -33,8 +33,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
 
         public IDataProtector CreateProtector(string purpose)
         {
-            if (purpose == null)
-                throw new ArgumentNullException(nameof(purpose));
+            ArgumentNullException.ThrowIfNull(purpose);
 
             var derivedKey = HKDF.DeriveKey(
                 HashAlgorithmName.SHA256,

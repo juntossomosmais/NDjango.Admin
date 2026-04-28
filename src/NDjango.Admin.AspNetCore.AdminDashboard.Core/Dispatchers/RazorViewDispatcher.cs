@@ -86,7 +86,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             }
 
             var query = context.HttpContext.Request.Query;
-            var page = int.TryParse(query["page"], out var p) ? p : 1;
+            var page = int.TryParse(query["page"], out var p) ? Math.Max(1, p) : 1;
             var pageSize = context.Options.DefaultRecordsPerPage;
             var searchQuery = query["q"].FirstOrDefault();
             var sortField = query["sort"].FirstOrDefault();
@@ -107,7 +107,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             }
 
             var sorters = new List<NDjango.Admin.Services.EasySorter>();
-            if (!string.IsNullOrEmpty(sortField)) {
+            if (!string.IsNullOrEmpty(sortField)
+                && entity.Attributes.Any(a => a.Kind != EntityAttrKind.Lookup
+                    && string.Equals(a.PropName, sortField, StringComparison.Ordinal))) {
                 sorters.Add(new NDjango.Admin.Services.EasySorter
                 {
                     FieldName = sortField,
@@ -116,11 +118,13 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 });
             }
             else {
+                sortField = null;
                 var defaultSorters = await metadataService.GetDefaultSortersAsync(entityId, ct);
                 sorters.AddRange(defaultSorters);
             }
 
-            var offset = (page - 1) * pageSize;
+            var offsetLong = ((long)page - 1) * pageSize;
+            var offset = offsetLong > int.MaxValue ? int.MaxValue : (int)offsetLong;
             // COUNT and data fetch run sequentially because both share the same DbContext,
             // which is not thread-safe. Do not parallelize with Task.WhenAll.
             var totalRecords = await metadataService.GetTotalRecordsAsync(entityId, filters, false, ct);
@@ -217,8 +221,27 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             await ViewRenderer.RenderEntityListViewAsync(context.HttpContext, viewModel, context.AuthenticatedUsername);
         }
 
-        private async Task RenderEntityFormAsync(AdminDashboardContext context, DashboardRouteMatch match,
+        private Task RenderEntityFormAsync(AdminDashboardContext context, DashboardRouteMatch match,
             AdminMetadataService metadataService, EntityGroupingService groupingService, bool isEdit, CancellationToken ct)
+        {
+            return RenderEntityFormAsync(context, match, metadataService, groupingService, isEdit,
+                submittedValues: null, errors: null, ct);
+        }
+
+        internal async Task RenderEntityFormWithErrorsAsync(AdminDashboardContext context, DashboardRouteMatch match,
+            AdminMetadataService metadataService, EntityGroupingService groupingService, bool isEdit,
+            IReadOnlyDictionary<string, object?>? submittedValues, IReadOnlyDictionary<string, string>? errors,
+            CancellationToken ct)
+        {
+            context.HttpContext.Response.StatusCode = 400;
+            await RenderEntityFormAsync(context, match, metadataService, groupingService, isEdit,
+                submittedValues, errors, ct);
+        }
+
+        private async Task RenderEntityFormAsync(AdminDashboardContext context, DashboardRouteMatch match,
+            AdminMetadataService metadataService, EntityGroupingService groupingService, bool isEdit,
+            IReadOnlyDictionary<string, object?>? submittedValues, IReadOnlyDictionary<string, string>? errors,
+            CancellationToken ct)
         {
             var entityId = match.Values["entityId"];
             var entity = await metadataService.GetEntityAsync(entityId, ct);
@@ -251,7 +274,21 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 else {
                     keys = new Dictionary<string, string> { { pkAttrs[0].PropName, recordId } };
                 }
-                record = await metadataService.FetchRecordAsync(entityId, keys, ct);
+                try {
+                    record = await metadataService.FetchRecordAsync(entityId, keys, ct);
+                }
+                catch (RecordNotFoundException) {
+                    context.HttpContext.Response.StatusCode = 404;
+                    return;
+                }
+                catch (InvalidRecordKeyException) {
+                    context.HttpContext.Response.StatusCode = 404;
+                    return;
+                }
+                if (record == null) {
+                    context.HttpContext.Response.StatusCode = 404;
+                    return;
+                }
             }
 
             var fields = new List<FieldViewModel>();
@@ -280,7 +317,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                         field.IsEditable = false;
                     }
 
-                    if (record != null && attr.DataAttr?.PropInfo != null) {
+                    if (submittedValues != null && submittedValues.TryGetValue(field.PropName, out var submittedLookup)) {
+                        field.Value = submittedLookup;
+                    }
+                    else if (record != null && attr.DataAttr?.PropInfo != null) {
                         field.Value = attr.DataAttr.PropInfo.GetValue(record);
                     }
 
@@ -291,6 +331,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                     if (!showOnForm)
                         continue;
 
+                    // Password inputs on edit forms render with an empty value by design
+                    // (leave blank to preserve the existing hash). Emitting `required` would
+                    // make the browser block submission until the user retypes a password.
+                    var isRequired = !attr.IsNullable
+                        && !(isEdit && attr.InputType == InputTypeHint.Password);
+
                     var field = new FieldViewModel
                     {
                         Id = attr.Id,
@@ -299,13 +345,27 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                         DataType = attr.DataType,
                         Kind = attr.Kind,
                         IsPrimaryKey = attr.IsPrimaryKey,
-                        IsRequired = !attr.IsNullable,
+                        IsRequired = isRequired,
                         IsEditable = attr.IsEditable,
                         DisplayFormat = attr.DisplayFormat,
                         ClrType = attr.PropInfo?.PropertyType,
+                        MaxLength = attr.MaxLength,
+                        MinLength = attr.MinLength,
+                        MinValue = attr.MinValue,
+                        MaxValue = attr.MaxValue,
+                        MinDateTime = attr.MinDateTime,
+                        MaxDateTime = attr.MaxDateTime,
+                        RegexPattern = attr.RegexPattern,
+                        RegexErrorMessage = attr.RegexErrorMessage,
+                        Precision = attr.Precision,
+                        Scale = attr.Scale,
+                        InputType = attr.InputType,
                     };
 
-                    if (record != null && attr.PropInfo != null) {
+                    if (submittedValues != null && submittedValues.TryGetValue(attr.PropName, out var submitted)) {
+                        field.Value = submitted;
+                    }
+                    else if (record != null && attr.PropInfo != null) {
                         field.Value = attr.PropInfo.GetValue(record);
                     }
                     else if (attr.DefaultValue != null) {
@@ -328,7 +388,13 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 IsEdit = isEdit,
                 IsReadOnly = context.Options.IsReadOnly || !entity.IsEditable,
                 Fields = fields,
-                SidebarGroups = sidebarGroups
+                SidebarGroups = sidebarGroups,
+                Errors = errors != null
+                    ? new Dictionary<string, string>(errors)
+                    : new Dictionary<string, string>(),
+                SubmittedValues = submittedValues != null
+                    ? new Dictionary<string, object?>(submittedValues)
+                    : new Dictionary<string, object?>()
             };
 
             await ViewRenderer.RenderEntityFormViewAsync(context.HttpContext, viewModel, context.AuthenticatedUsername);
@@ -365,7 +431,18 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             else {
                 keys = new Dictionary<string, string> { { pkAttrs[0].PropName, recordId } };
             }
-            var record = await metadataService.FetchRecordAsync(entityId, keys, ct);
+            object record;
+            try {
+                record = await metadataService.FetchRecordAsync(entityId, keys, ct);
+            }
+            catch (RecordNotFoundException) {
+                context.HttpContext.Response.StatusCode = 404;
+                return;
+            }
+            catch (InvalidRecordKeyException) {
+                context.HttpContext.Response.StatusCode = 404;
+                return;
+            }
             if (record == null) {
                 context.HttpContext.Response.StatusCode = 404;
                 return;

@@ -66,16 +66,16 @@ namespace NDjango.Admin.MongoDB.Tests.IntegrationTests
         }
 
         [Fact]
-        public async Task InvalidId_ThrowsRecordNotFoundExceptionAsync()
+        public async Task InvalidId_Returns404Async()
         {
             // Arrange
             var invalidId = ObjectId.GenerateNewId().ToString();
 
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<RecordNotFoundException>(
-                () => _client.GetAsync($"/admin/TestCategory/{invalidId}/change/"));
+            // Act
+            var response = await _client.GetAsync($"/admin/TestCategory/{invalidId}/change/");
 
-            Assert.Contains(invalidId, ex.Message);
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
     }
 }

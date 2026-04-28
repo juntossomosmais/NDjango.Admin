@@ -72,7 +72,21 @@ document.addEventListener('DOMContentLoaded', function () {
             window.opener.dismissRelatedLookupPopup(window, link.getAttribute('data-pk'));
         }
     });
+
+    focusFirstFormError();
 });
+
+function focusFirstFormError() {
+    const errorRow = document.querySelector('.form-row.errors');
+    if (!errorRow) return;
+    if (typeof errorRow.scrollIntoView === 'function') {
+        errorRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    const input = errorRow.querySelector('input, textarea, select');
+    if (input && typeof input.focus === 'function') {
+        input.focus();
+    }
+}
 
 function showRelatedObjectLookupPopup(triggerLink) {
     const inputId = triggerLink.id.replace(/^lookup_/, '');
@@ -95,5 +109,5 @@ function dismissRelatedLookupPopup(win, chosenId) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { showRelatedObjectLookupPopup, dismissRelatedLookupPopup };
+    module.exports = { showRelatedObjectLookupPopup, dismissRelatedLookupPopup, focusFirstFormError };
 }

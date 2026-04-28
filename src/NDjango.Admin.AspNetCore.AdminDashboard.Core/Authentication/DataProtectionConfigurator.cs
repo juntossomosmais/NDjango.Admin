@@ -21,7 +21,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
             ConfigureDataProtection(services, secret);
         }
 
-        internal static void ConfigureDataProtection(IServiceCollection services, string secret)
+        internal static void ConfigureDataProtection(IServiceCollection services, string? secret)
         {
             if (string.IsNullOrEmpty(secret)) {
                 throw new InvalidOperationException(

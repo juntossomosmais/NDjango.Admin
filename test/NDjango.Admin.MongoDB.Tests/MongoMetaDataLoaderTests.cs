@@ -175,6 +175,44 @@ namespace NDjango.Admin.MongoDB.Tests
         public DateTime CreatedDate { get; set; }
     }
 
+    public class ValidationDocument
+    {
+        public ObjectId Id { get; set; }
+
+        [MaxLength(50)]
+        public string MaxLengthString { get; set; }
+
+        [StringLength(maximumLength: 100, MinimumLength = 3)]
+        public string StringLengthField { get; set; }
+
+        [MinLength(5)]
+        public string MinLengthField { get; set; }
+
+        [MinLength(0)]
+        public string ZeroMinLengthField { get; set; }
+
+        [Range(1, 1000)]
+        public int IntRange { get; set; }
+
+        [Range(typeof(DateTime), "2020-01-01", "2030-12-31")]
+        public DateTime DateRange { get; set; }
+
+        [RegularExpression(@"^\d{5}$", ErrorMessage = "Must be 5 digits")]
+        public string PostalCode { get; set; }
+
+        [RegularExpression(@"(?i)^hello$")]
+        public string CaseInsensitivePattern { get; set; }
+
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Url]
+        public string Website { get; set; }
+
+        [Phone]
+        public string Phone { get; set; }
+    }
+
     #endregion
 
     public class MongoMetaDataLoaderTests
@@ -987,6 +1025,196 @@ namespace NDjango.Admin.MongoDB.Tests
             Assert.False(createdDateAttr.IsEditable);
             Assert.False(createdDateAttr.ShowOnCreate);
             Assert.True(createdDateAttr.ShowOnEdit);
+        }
+    }
+
+    public class MongoValidationMetadataTests
+    {
+        private readonly MetaEntity _entity;
+
+        public MongoValidationMetadataTests()
+        {
+            // Arrange
+            var model = new MetaData();
+            var collections = new List<MongoCollectionDescriptor>
+            {
+                new MongoCollectionDescriptor(typeof(ValidationDocument), "validation_docs")
+            };
+            var options = new MongoMetaDataLoaderOptions();
+
+            var loader = new MongoMetaDataLoader(model, collections, options);
+            loader.LoadFromCollections();
+
+            _entity = model.EntityRoot.SubEntities.Single();
+        }
+
+        private MetaEntityAttr FindAttr(string propName)
+        {
+            return _entity.Attributes.FirstOrDefault(a => a.PropName == propName);
+        }
+
+        [Fact]
+        public void LoadFromCollections_MaxLengthAttribute_PopulatesMaxLength()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.MaxLengthString));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(50, attr.MaxLength);
+        }
+
+        [Fact]
+        public void LoadFromCollections_StringLengthAttribute_PopulatesBothBounds()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.StringLengthField));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(100, attr.MaxLength);
+            Assert.Equal(3, attr.MinLength);
+        }
+
+        [Fact]
+        public void LoadFromCollections_MinLengthAttribute_PopulatesMinLength()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.MinLengthField));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(5, attr.MinLength);
+        }
+
+        [Fact]
+        public void LoadFromCollections_MinLengthZero_DoesNotPopulateMinLength()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.ZeroMinLengthField));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Null(attr.MinLength);
+        }
+
+        [Fact]
+        public void LoadFromCollections_IntRangeAttribute_PopulatesMinMaxValue()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.IntRange));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(1m, attr.MinValue);
+            Assert.Equal(1000m, attr.MaxValue);
+            Assert.Null(attr.MinDateTime);
+            Assert.Null(attr.MaxDateTime);
+        }
+
+        [Fact]
+        public void LoadFromCollections_DateTimeRange_PopulatesMinMaxDateTime()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.DateRange));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(new DateTime(2020, 1, 1), attr.MinDateTime);
+            Assert.Equal(new DateTime(2030, 12, 31), attr.MaxDateTime);
+            Assert.Null(attr.MinValue);
+            Assert.Null(attr.MaxValue);
+        }
+
+        [Fact]
+        public void LoadFromCollections_RegularExpression_PopulatesPatternAndErrorMessage()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.PostalCode));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(@"^\d{5}$", attr.RegexPattern);
+            Assert.Equal("Must be 5 digits", attr.RegexErrorMessage);
+        }
+
+        [Fact]
+        public void LoadFromCollections_RegularExpressionWithInlineFlags_StillStoresPattern()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.CaseInsensitivePattern));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal("(?i)^hello$", attr.RegexPattern);
+        }
+
+        [Fact]
+        public void LoadFromCollections_EmailAddress_SetsEmailInputType()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.Email));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(InputTypeHint.Email, attr.InputType);
+            Assert.Null(attr.RegexPattern);
+        }
+
+        [Fact]
+        public void LoadFromCollections_Url_SetsUrlInputType()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.Website));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(InputTypeHint.Url, attr.InputType);
+        }
+
+        [Fact]
+        public void LoadFromCollections_Phone_SetsTelInputTypeWithoutRegex()
+        {
+            // Arrange
+            // Metadata is loaded once in the constructor.
+
+            // Act
+            var attr = FindAttr(nameof(ValidationDocument.Phone));
+
+            // Assert
+            Assert.NotNull(attr);
+            Assert.Equal(InputTypeHint.Tel, attr.InputType);
+            Assert.Null(attr.RegexPattern);
         }
     }
 }

@@ -147,7 +147,16 @@ namespace NDjango.Admin.Services
             MapProperties(record, props);
 
             await DbContext.AddAsync(record, ct);
-            await DbContext.SaveChangesAsync(ct);
+            try {
+                await DbContext.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException ex) {
+                // Clear the whole tracker (not just this record) so the re-render path can
+                // safely reuse the scoped DbContext without colliding with entities left
+                // in Modified/Added state by the failed SaveChanges.
+                DbContext.ChangeTracker.Clear();
+                throw new DataIntegrityException(TranslateDbUpdateException(ex), ex);
+            }
 
             return record;
         }
@@ -165,7 +174,13 @@ namespace NDjango.Admin.Services
             MapProperties(record, props);
 
             DbContext.Update(record);
-            await DbContext.SaveChangesAsync(ct);
+            try {
+                await DbContext.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException ex) {
+                DbContext.ChangeTracker.Clear();
+                throw new DataIntegrityException(TranslateDbUpdateException(ex), ex);
+            }
 
             return record;
         }
@@ -181,7 +196,13 @@ namespace NDjango.Admin.Services
                     $"({string.Join(";", keys.Select(kv => $"{kv.Key.Name}: {kv.Value}"))})");
 
             DbContext.Remove(record);
-            await DbContext.SaveChangesAsync(ct);
+            try {
+                await DbContext.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException ex) {
+                DbContext.ChangeTracker.Clear();
+                throw new DataIntegrityException(TranslateDbUpdateException(ex), ex);
+            }
         }
 
         public override async Task DeleteRecordsByKeysAsync(string modelId, string sourceId, IReadOnlyList<Dictionary<string, string>> recordKeysList, CancellationToken ct = default)
@@ -236,8 +257,100 @@ namespace NDjango.Admin.Services
         {
             foreach (var entProp in props) {
                 var prop = entity.GetType().GetProperty(entProp.Key);
-                prop?.SetValue(entity, entProp.Value.ToObject(prop.PropertyType));
+                if (prop == null)
+                    continue;
+                try {
+                    prop.SetValue(entity, entProp.Value?.ToObject(prop.PropertyType));
+                }
+                catch (Exception ex) when (ex is FormatException || ex is OverflowException
+                    || ex is ArgumentException || ex is Newtonsoft.Json.JsonException
+                    || ex is InvalidCastException) {
+                    throw new DataIntegrityException($"Invalid value for '{prop.Name}'.", ex);
+                }
             }
+        }
+
+        internal static string TranslateDbUpdateException(DbUpdateException ex)
+        {
+            // Locale-independent provider error codes only. The previous English-substring fallback
+            // silently degraded on non-English database servers (e.g. a Spanish/Portuguese/German
+            // SQL Server locale would never match "foreign key"/"unique"/"duplicate"), so users on
+            // those servers got an unhelpful generic message. Providers we do not recognize get the
+            // generic message directly — better than a false-positive translation.
+            return TranslateByProviderCode(ex.InnerException)
+                ?? "Unable to save the record due to a data constraint violation.";
+        }
+
+        internal static string? TranslateByProviderCode(Exception? inner)
+        {
+            if (inner == null)
+                return null;
+
+            var typeName = inner.GetType().FullName ?? string.Empty;
+
+            // Explicit allow-list of provider types. An `EndsWith(".SqlException")` match would also
+            // pick up unrelated third-party types that happen to share the suffix (Oracle wrappers,
+            // test doubles, etc.), whose `Number` property — if any — has different semantics.
+            if (typeName.Equals("Microsoft.Data.SqlClient.SqlException", StringComparison.Ordinal)
+                || typeName.Equals("System.Data.SqlClient.SqlException", StringComparison.Ordinal)) {
+                var number = GetIntProperty(inner, "Number");
+                return number switch
+                {
+                    547 => "Referenced record does not exist.",
+                    2601 or 2627 => "A record with the same unique value already exists.",
+                    515 => "A required field is missing.",
+                    8152 or 2628 => "One or more string values exceed the allowed length.",
+                    220 or 232 or 8115 => "One or more numeric values are out of range.",
+                    _ => null
+                };
+            }
+
+            // Npgsql.PostgresException
+            if (typeName.Equals("Npgsql.PostgresException", StringComparison.Ordinal)) {
+                var state = GetStringProperty(inner, "SqlState");
+                return state switch
+                {
+                    "23503" => "Referenced record does not exist.",
+                    "23505" => "A record with the same unique value already exists.",
+                    "23502" => "A required field is missing.",
+                    "22001" => "One or more string values exceed the allowed length.",
+                    "22003" => "One or more numeric values are out of range.",
+                    _ => null
+                };
+            }
+
+            // Microsoft.Data.Sqlite.SqliteException
+            if (typeName.Equals("Microsoft.Data.Sqlite.SqliteException", StringComparison.Ordinal)) {
+                var code = GetIntProperty(inner, "SqliteErrorCode");
+                // SQLITE_CONSTRAINT = 19. Extended codes share the primary 19 but expose extended
+                // values via SqliteExtendedErrorCode. Prefer the extended code when available.
+                var extended = GetIntProperty(inner, "SqliteExtendedErrorCode") ?? code;
+                return extended switch
+                {
+                    787 => "Referenced record does not exist.",       // SQLITE_CONSTRAINT_FOREIGNKEY
+                    1555 or 2067 => "A record with the same unique value already exists.", // PRIMARYKEY / UNIQUE
+                    1299 => "A required field is missing.",           // NOTNULL
+                    _ => null
+                };
+            }
+
+            return null;
+        }
+
+        private static int? GetIntProperty(object obj, string name)
+        {
+            var prop = obj.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+            if (prop == null || prop.PropertyType != typeof(int))
+                return null;
+            return (int?)prop.GetValue(obj);
+        }
+
+        private static string? GetStringProperty(object obj, string name)
+        {
+            var prop = obj.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+            if (prop == null || prop.PropertyType != typeof(string))
+                return null;
+            return (string?)prop.GetValue(obj);
         }
 
         private static Dictionary<IProperty, object> GetKeys(IEntityType entityType, Dictionary<string, string> keys)
@@ -250,10 +363,18 @@ namespace NDjango.Admin.Services
                 throw new NDjangoAdminManagerException("Wrong number of key fields");
             }
 
-            return keyProps.ToDictionary(
-                prop => prop,
-                prop => TypeDescriptor.GetConverter(prop.ClrType)
-                                   .ConvertFromString(keys[prop.Name]));
+            var result = new Dictionary<IProperty, object>();
+            foreach (var prop in keyProps) {
+                var raw = keys[prop.Name];
+                try {
+                    var converted = TypeDescriptor.GetConverter(prop.ClrType).ConvertFromString(raw) ?? throw new InvalidRecordKeyException($"Invalid value for key '{prop.Name}': '{raw}'.");
+                    result[prop] = converted;
+                }
+                catch (Exception ex) when (ex is FormatException || ex is OverflowException || ex is ArgumentException || ex is NotSupportedException) {
+                    throw new InvalidRecordKeyException($"Invalid value for key '{prop.Name}': '{raw}'.");
+                }
+            }
+            return result;
         }
 
         private static Dictionary<IProperty, object> GetKeys(IEntityType entityType, JObject props)

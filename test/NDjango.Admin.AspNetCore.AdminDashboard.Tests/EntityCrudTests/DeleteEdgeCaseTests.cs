@@ -60,9 +60,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             Assert.Equal(HttpStatusCode.OK, responseA.StatusCode);
             Assert.Contains("DeleteTest_A", htmlA);
 
-            // Verify B was deleted (fetching it should throw or return error)
-            await Assert.ThrowsAnyAsync<Exception>(() =>
-                _client.GetAsync($"/admin/Ingredient/{ids[1]}/change/"));
+            // Verify B was deleted (fetching it returns 404)
+            var responseB = await _client.GetAsync($"/admin/Ingredient/{ids[1]}/change/");
+            Assert.Equal(HttpStatusCode.NotFound, responseB.StatusCode);
 
             // Verify C still exists
             var responseC = await _client.GetAsync($"/admin/Ingredient/{ids[2]}/change/");
@@ -72,7 +72,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
         }
 
         [Fact]
-        public async Task PostDelete_AlreadyDeletedRecord_ThrowsAsync()
+        public async Task PostDelete_AlreadyDeletedRecord_Returns404Async()
         {
             // Arrange
             var formData = new FormUrlEncodedContent(new[]
@@ -88,19 +88,25 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
                 new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
             Assert.Equal(HttpStatusCode.Redirect, firstDelete.StatusCode);
 
-            // Act & Assert
-            await Assert.ThrowsAnyAsync<Exception>(() => _client.PostAsync(
+            // Act
+            var secondDelete = await _client.PostAsync(
                 $"/admin/Ingredient/{id}/delete/",
-                new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>())));
+                new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, secondDelete.StatusCode);
         }
 
         [Fact]
-        public async Task PostDelete_NonExistentId_ThrowsAsync()
+        public async Task PostDelete_NonExistentId_Returns404Async()
         {
-            // Arrange & Act & Assert
-            await Assert.ThrowsAnyAsync<Exception>(() => _client.PostAsync(
+            // Arrange / Act
+            var response = await _client.PostAsync(
                 "/admin/Ingredient/999999/delete/",
-                new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>())));
+                new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
         [Fact]
