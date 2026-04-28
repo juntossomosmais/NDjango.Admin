@@ -19,7 +19,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             string secret = null;
 
             // Act
-            Action act = () => new StaticKeyDataProtectionProvider(secret);
+            Func<object> act = () => new StaticKeyDataProtectionProvider(secret);
 
             // Assert
             Assert.Throws<ArgumentException>(act);
@@ -32,7 +32,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             var secret = string.Empty;
 
             // Act
-            Action act = () => new StaticKeyDataProtectionProvider(secret);
+            Func<object> act = () => new StaticKeyDataProtectionProvider(secret);
 
             // Assert
             Assert.Throws<ArgumentException>(act);

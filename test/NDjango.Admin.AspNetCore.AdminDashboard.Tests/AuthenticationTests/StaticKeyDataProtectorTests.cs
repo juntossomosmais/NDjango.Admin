@@ -25,7 +25,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             var shortKey = new byte[16];
 
             // Act
-            Action act = () => new StaticKeyDataProtector(shortKey);
+            Func<object> act = () => new StaticKeyDataProtector(shortKey);
 
             // Assert
             Assert.Throws<ArgumentException>(act);
@@ -38,7 +38,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             var longKey = new byte[64];
 
             // Act
-            Action act = () => new StaticKeyDataProtector(longKey);
+            Func<object> act = () => new StaticKeyDataProtector(longKey);
 
             // Assert
             Assert.Throws<ArgumentException>(act);
@@ -51,7 +51,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             var emptyKey = Array.Empty<byte>();
 
             // Act
-            Action act = () => new StaticKeyDataProtector(emptyKey);
+            Func<object> act = () => new StaticKeyDataProtector(emptyKey);
 
             // Assert
             Assert.Throws<ArgumentException>(act);
@@ -64,7 +64,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             byte[] key = null;
 
             // Act
-            Action act = () => new StaticKeyDataProtector(key);
+            Func<object> act = () => new StaticKeyDataProtector(key);
 
             // Assert
             Assert.Throws<ArgumentNullException>(act);
