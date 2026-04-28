@@ -20,10 +20,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             // Act
             DataProtectionConfigurator.ConfigureDataProtection(services, "this-is-a-valid-ndjango-secret-32-chars-long");
             var sp = services.BuildServiceProvider();
-            var provider = sp.GetRequiredService<IDataProtectionProvider>();
+            var provider = sp.GetRequiredService<StaticKeyDataProtectionProvider>();
 
             // Assert
-            Assert.IsType<StaticKeyDataProtectionProvider>(provider);
+            Assert.NotNull(provider);
         }
 
         [Fact]
@@ -80,10 +80,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             // Act
             DataProtectionConfigurator.ConfigureDataProtection(services, new string('a', 32));
             var sp = services.BuildServiceProvider();
-            var provider = sp.GetRequiredService<IDataProtectionProvider>();
+            var provider = sp.GetRequiredService<StaticKeyDataProtectionProvider>();
 
             // Assert
-            Assert.IsType<StaticKeyDataProtectionProvider>(provider);
+            Assert.NotNull(provider);
         }
 
         [Fact]
@@ -111,10 +111,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
                 // Act
                 DataProtectionConfigurator.ConfigureDataProtection(services);
                 var sp = services.BuildServiceProvider();
-                var provider = sp.GetRequiredService<IDataProtectionProvider>();
+                var provider = sp.GetRequiredService<StaticKeyDataProtectionProvider>();
 
                 // Assert
-                Assert.IsType<StaticKeyDataProtectionProvider>(provider);
+                Assert.NotNull(provider);
             }
             finally
             {
@@ -123,7 +123,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
         }
 
         [Fact]
-        public void ConfigureDataProtection_AfterPreExistingAddDataProtection_StaticKeyProviderWins()
+        public void ConfigureDataProtection_DoesNotOverrideFrameworkDataProtectionProvider()
         {
             // Arrange — caller already registered ASP.NET Core's default DataProtection stack.
             var services = new ServiceCollection();
@@ -132,27 +132,28 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             // Act
             DataProtectionConfigurator.ConfigureDataProtection(services, "this-is-a-valid-ndjango-secret-32-chars-long");
             var sp = services.BuildServiceProvider();
-            var provider = sp.GetRequiredService<IDataProtectionProvider>();
+            var frameworkProvider = sp.GetRequiredService<IDataProtectionProvider>();
+            var ndjangoProvider = sp.GetRequiredService<StaticKeyDataProtectionProvider>();
 
-            // Assert — last AddSingleton wins; consumer's KeyRing-backed provider is shadowed.
-            Assert.IsType<StaticKeyDataProtectionProvider>(provider);
+            // Assert — framework's provider is unaffected; NDjango's provider is registered alongside.
+            Assert.IsNotType<StaticKeyDataProtectionProvider>(frameworkProvider);
+            Assert.NotNull(ndjangoProvider);
         }
 
         [Fact]
-        public void ConfigureDataProtection_BeforePreExistingAddDataProtection_StaticKeyProviderWins()
+        public void ConfigureDataProtection_DoesNotRegisterIDataProtectionProvider()
         {
-            // Arrange — NDjango registers first, then caller calls AddDataProtection().
+            // Arrange
             var services = new ServiceCollection();
+
+            // Act — NDjango registers only its concrete provider; consumer's IDataProtectionProvider
+            // resolution must continue to come from a separate AddDataProtection call.
             DataProtectionConfigurator.ConfigureDataProtection(services, "this-is-a-valid-ndjango-secret-32-chars-long");
-
-            // Act — AddDataProtection's internal TryAddSingleton no-ops because we already
-            // registered IDataProtectionProvider; resolved provider is still ours.
-            services.AddDataProtection();
             var sp = services.BuildServiceProvider();
-            var provider = sp.GetRequiredService<IDataProtectionProvider>();
 
-            // Assert
-            Assert.IsType<StaticKeyDataProtectionProvider>(provider);
+            // Assert — IDataProtectionProvider is NOT registered by NDjango.
+            var frameworkProvider = sp.GetService<IDataProtectionProvider>();
+            Assert.Null(frameworkProvider);
         }
     }
 }

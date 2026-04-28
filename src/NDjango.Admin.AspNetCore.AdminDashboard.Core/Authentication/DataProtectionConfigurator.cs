@@ -1,14 +1,17 @@
 using System;
 
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
 {
     /// <summary>
-    /// Configures the <see cref="IDataProtectionProvider"/> used to protect the NDjango.Admin
+    /// Registers the NDjango.Admin–private data protection provider used to protect the
     /// auth cookie. The NDJANGO_SECRET_KEY environment variable is required so cookies can be
-    /// shared across multi-pod deployments.
+    /// shared across multi-pod deployments. The provider is registered as the concrete
+    /// <see cref="StaticKeyDataProtectionProvider"/> type only — the framework's
+    /// <c>IDataProtectionProvider</c> registration is intentionally left untouched so the
+    /// consumer's other ASP.NET Core services (Identity, antiforgery, OAuth, etc.) keep using
+    /// their own data protection stack.
     /// </summary>
     internal static class DataProtectionConfigurator
     {
@@ -34,7 +37,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
                     $"{SecretEnvVarName} must be at least {MinimumSecretLength} characters.");
             }
 
-            services.AddSingleton<IDataProtectionProvider>(new StaticKeyDataProtectionProvider(secret));
+            services.AddSingleton(new StaticKeyDataProtectionProvider(secret));
         }
     }
 }

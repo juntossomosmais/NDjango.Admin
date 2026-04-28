@@ -49,8 +49,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
                     _logger.LogInformation("Auth bootstrap completed successfully.");
                     return;
                 }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) {
-                    _readinessState.SetFailed();
+                catch (OperationCanceledException ex) when (stoppingToken.IsCancellationRequested) {
+                    _readinessState.SetFailed(ex);
                     _logger.LogWarning("Auth bootstrap was cancelled during shutdown.");
                     return;
                 }
@@ -66,7 +66,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
                     await Task.Delay(delay, stoppingToken);
                 }
                 catch (Exception ex) {
-                    _readinessState.SetFailed();
+                    _readinessState.SetFailed(ex);
                     _logger.LogError(ex, "Auth bootstrap failed after {MaxRetries} attempts. The admin dashboard may not function correctly.", MaxRetries);
                     return;
                 }

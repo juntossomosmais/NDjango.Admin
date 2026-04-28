@@ -230,7 +230,8 @@ Why it matters:
 - **Multi-pod / multi-replica deployments**: every replica derives the same keys from the same secret, so a cookie issued by Pod A is accepted by Pod B. Without a shared secret each replica generates ephemeral keys and users hit a redirect-to-login loop whenever the load balancer routes them to a different pod.
 - **Pod restarts**: cookies issued before a restart remain valid afterwards.
 - **Forge resistance**: anyone with the secret can forge any user's cookie (including a superuser's). Treat it as a production credential — Kubernetes Secret, never committed to Git, rotate on suspected leak.
-- **Rotation**: changing the secret invalidates every existing cookie (all users re-login). This is intentional; for zero-downtime rotation, use one of the alternative key persistence stores (shared volume, AWS SSM, Mongo-backed `IXmlRepository`) configured directly on `services.AddDataProtection()`.
+- **Rotation**: changing the secret invalidates every existing cookie (all users re-login). Plan rotation during a maintenance window or accept the user impact. Zero-downtime rotation is not supported by NDjango.Admin's auth cookie.
+- **Isolation from your app's data protection**: NDjango.Admin registers its own static-key provider as a private internal service used only by the admin auth cookie. It does **not** override `IDataProtectionProvider`, so ASP.NET Identity, antiforgery, OAuth/OIDC, external cookie middleware, etc. continue to use whatever data-protection stack your application configures (`services.AddDataProtection()` and friends).
 
 Behavior:
 - All dashboard pages require login (unauthenticated requests redirect to `/admin/login/`)

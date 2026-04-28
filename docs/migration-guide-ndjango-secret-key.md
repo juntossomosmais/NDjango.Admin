@@ -125,7 +125,8 @@ The internal readiness state is not currently exposed to consumers, so there is 
 
 - **Forge resistance**: anyone with the secret can forge any user's cookie, including superusers. Treat it as a production credential — never commit, never log, store in a secret manager.
 - **Rotation**: changing the secret invalidates every existing cookie. All users will need to log in again. Plan rotation during a maintenance window or accept the user impact.
-- **Zero-downtime rotation**: not supported with this approach. The library unconditionally registers its own `StaticKeyDataProtectionProvider` derived from `NDJANGO_SECRET_KEY` and overrides any pre-existing `AddDataProtection()` registration. If you need rotation without a forced re-login, you currently have to fork or wrap the package.
+- **Zero-downtime rotation**: not supported. Plan rotation during a maintenance window.
+- **Isolation from your app's data protection**: NDjango.Admin registers its provider as a private internal service used only by the admin auth cookie. The framework's `IDataProtectionProvider` registration is left untouched, so ASP.NET Identity, antiforgery, OAuth/OIDC, and any other data-protection consumer in your app keep using their own stack.
 
 ## Verifying the change
 

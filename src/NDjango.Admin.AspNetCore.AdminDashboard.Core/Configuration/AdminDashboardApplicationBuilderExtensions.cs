@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -85,7 +84,7 @@ namespace Microsoft.AspNetCore.Builder
                     }
 
                     // Create cookie auth service for the callback
-                    var dataProtectionProvider = httpContext.RequestServices.GetRequiredService<IDataProtectionProvider>();
+                    var dataProtectionProvider = httpContext.RequestServices.GetRequiredService<StaticKeyDataProtectionProvider>();
                     var cookieService = new AdminCookieAuthService(dataProtectionProvider, options);
                     httpContext.Items["NDjango.Admin.CookieAuthService"] = cookieService;
 

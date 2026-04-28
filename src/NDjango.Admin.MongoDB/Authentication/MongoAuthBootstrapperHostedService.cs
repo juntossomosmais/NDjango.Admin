@@ -50,8 +50,8 @@ namespace NDjango.Admin.MongoDB.Authentication
                     _logger.LogInformation("MongoDB auth bootstrap completed successfully.");
                     return;
                 }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) {
-                    _readinessState.SetFailed();
+                catch (OperationCanceledException ex) when (stoppingToken.IsCancellationRequested) {
+                    _readinessState.SetFailed(ex);
                     _logger.LogWarning("MongoDB auth bootstrap was cancelled during shutdown.");
                     return;
                 }
@@ -67,7 +67,7 @@ namespace NDjango.Admin.MongoDB.Authentication
                     await Task.Delay(delay, stoppingToken);
                 }
                 catch (Exception ex) {
-                    _readinessState.SetFailed();
+                    _readinessState.SetFailed(ex);
                     _logger.LogError(ex,
                         "MongoDB auth bootstrap failed after {MaxRetries} attempts. The admin dashboard may not function correctly.",
                         MaxRetries);

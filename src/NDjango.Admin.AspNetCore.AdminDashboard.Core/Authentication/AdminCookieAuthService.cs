@@ -15,7 +15,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
         private readonly string _cookieName;
         private readonly TimeSpan _expiration;
 
-        public AdminCookieAuthService(IDataProtectionProvider dataProtectionProvider, AdminDashboardOptions options)
+        public AdminCookieAuthService(StaticKeyDataProtectionProvider dataProtectionProvider, AdminDashboardOptions options)
         {
             _protector = dataProtectionProvider.CreateProtector(Purpose);
             _cookieName = options.CookieName;

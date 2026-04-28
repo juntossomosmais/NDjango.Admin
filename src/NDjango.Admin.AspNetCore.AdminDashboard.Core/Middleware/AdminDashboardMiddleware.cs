@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using System.Web;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication.Storage;
@@ -27,7 +26,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
             NDjangoAdminOptions ndjangoAdminOptions,
             string basePath,
             AuthBootstrapReadinessState readinessState,
-            IDataProtectionProvider dataProtectionProvider)
+            StaticKeyDataProtectionProvider dataProtectionProvider)
         {
             _next = next;
             _options = options;
@@ -44,6 +43,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard
 
             if (!path.StartsWith(_basePath)) {
                 await _next(httpContext);
+                return;
+            }
+
+            if (_readinessState.IsFailed) {
+                httpContext.Response.StatusCode = 500;
+                await httpContext.Response.WriteAsync("Admin dashboard auth bootstrap failed. See server logs.");
                 return;
             }
 
