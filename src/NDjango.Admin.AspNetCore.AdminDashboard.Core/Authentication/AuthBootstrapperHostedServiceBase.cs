@@ -45,7 +45,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
                 }
                 catch (OperationCanceledException ex) when (stoppingToken.IsCancellationRequested) {
                     _readinessState.SetFailed(ex);
-                    _logger.LogWarning("{BootstrapName} was cancelled during shutdown.", BootstrapName);
+                    _logger.LogWarning(ex, "{BootstrapName} was cancelled during shutdown.", BootstrapName);
                     return;
                 }
                 catch (Exception ex) when (attempt < MaxRetries) {
