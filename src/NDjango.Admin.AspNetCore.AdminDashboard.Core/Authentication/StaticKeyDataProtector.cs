@@ -9,6 +9,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
     /// <summary>
     /// An <see cref="IDataProtector"/> implementation that derives AES-GCM keys from a static
     /// root key using HKDF per-purpose. Output layout: nonce(12) || tag(16) || ciphertext(n).
+    /// A fresh <see cref="AesGcm"/> is constructed per call: instance methods on
+    /// <see cref="AesGcm"/> are not thread-safe in .NET 8, and the protector is shared by the
+    /// auth pipeline across concurrent web requests.
     /// </summary>
     internal sealed class StaticKeyDataProtector : IDataProtector
     {
@@ -52,9 +55,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
             var ciphertext = new byte[plaintext.Length];
             var tag = new byte[TagSize];
 
-            using (var aes = new AesGcm(_key, TagSize)) {
-                aes.Encrypt(nonce, plaintext, ciphertext, tag);
-            }
+            using var aes = new AesGcm(_key, TagSize);
+            aes.Encrypt(nonce, plaintext, ciphertext, tag);
 
             var output = new byte[NonceSize + TagSize + ciphertext.Length];
             Buffer.BlockCopy(nonce, 0, output, 0, NonceSize);
@@ -80,9 +82,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Authentication
 
             var plaintext = new byte[ciphertext.Length];
 
-            using (var aes = new AesGcm(_key, TagSize)) {
-                aes.Decrypt(nonce, ciphertext, tag, plaintext);
-            }
+            using var aes = new AesGcm(_key, TagSize);
+            aes.Decrypt(nonce, ciphertext, tag, plaintext);
 
             return plaintext;
         }

@@ -34,7 +34,6 @@ Add a reference to the `NDjango.Admin.AspNetCore.AdminDashboard` project.
 // Program.cs or Startup.ConfigureServices
 services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 {
-    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
     DashboardTitle = "My Admin",
 });
 ```
@@ -59,7 +58,6 @@ Add references to `NDjango.Admin.MongoDB` and `NDjango.Admin.AspNetCore.AdminDas
 ```csharp
 using MongoDB.Driver;
 using NDjango.Admin.AspNetCore.AdminDashboard;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.MongoDB;
 
 // Register MongoDB
@@ -71,7 +69,6 @@ services.AddSingleton<IMongoDatabase>(sp =>
 services.AddNDjangoAdminDashboardMongo(
     new AdminDashboardOptions
     {
-        Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
         DashboardTitle = "My Admin (MongoDB)",
     },
     mongo =>
@@ -135,7 +132,6 @@ services.AddSingleton<IMongoDatabase>(sp =>
 services.AddNDjangoAdminDashboardMongo(
     new AdminDashboardOptions
     {
-        Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
         DashboardTitle = "My Admin (MongoDB)",
         CreateDefaultAdminUser = true,
         DefaultAdminPassword = "admin",
@@ -163,20 +159,6 @@ All authentication options (`CreateDefaultAdminUser`, `CookieName`, `CookieExpir
 - **No FK lookups** — references between collections (e.g., `ObjectId RestaurantId`) display as plain IDs, not lookup popups
 
 ## Configuration
-
-### Authorization
-
-```csharp
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
-
-// Allow all (development only)
-new AllowAllAdminDashboardAuthorizationFilter()
-
-// Restrict to localhost
-new LocalRequestsOnlyAuthorizationFilter()
-
-// Custom: implement IAdminDashboardAuthorizationFilter
-```
 
 ### Options
 

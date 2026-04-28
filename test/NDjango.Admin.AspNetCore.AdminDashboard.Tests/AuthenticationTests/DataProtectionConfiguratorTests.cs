@@ -121,5 +121,38 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
                 Environment.SetEnvironmentVariable(EnvVarName, originalValue);
             }
         }
+
+        [Fact]
+        public void ConfigureDataProtection_AfterPreExistingAddDataProtection_StaticKeyProviderWins()
+        {
+            // Arrange — caller already registered ASP.NET Core's default DataProtection stack.
+            var services = new ServiceCollection();
+            services.AddDataProtection();
+
+            // Act
+            DataProtectionConfigurator.ConfigureDataProtection(services, "this-is-a-valid-ndjango-secret-32-chars-long");
+            var sp = services.BuildServiceProvider();
+            var provider = sp.GetRequiredService<IDataProtectionProvider>();
+
+            // Assert — last AddSingleton wins; consumer's KeyRing-backed provider is shadowed.
+            Assert.IsType<StaticKeyDataProtectionProvider>(provider);
+        }
+
+        [Fact]
+        public void ConfigureDataProtection_BeforePreExistingAddDataProtection_StaticKeyProviderWins()
+        {
+            // Arrange — NDjango registers first, then caller calls AddDataProtection().
+            var services = new ServiceCollection();
+            DataProtectionConfigurator.ConfigureDataProtection(services, "this-is-a-valid-ndjango-secret-32-chars-long");
+
+            // Act — AddDataProtection's internal TryAddSingleton no-ops because we already
+            // registered IDataProtectionProvider; resolved provider is still ours.
+            services.AddDataProtection();
+            var sp = services.BuildServiceProvider();
+            var provider = sp.GetRequiredService<IDataProtectionProvider>();
+
+            // Assert
+            Assert.IsType<StaticKeyDataProtectionProvider>(provider);
+        }
     }
 }

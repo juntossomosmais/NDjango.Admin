@@ -15,15 +15,27 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
         [Fact]
         public void Constructor_NullSecret_ThrowsArgumentException()
         {
-            // Arrange & Act & Assert
-            Assert.Throws<ArgumentException>(() => new StaticKeyDataProtectionProvider(null));
+            // Arrange
+            string secret = null;
+
+            // Act
+            Action act = () => new StaticKeyDataProtectionProvider(secret);
+
+            // Assert
+            Assert.Throws<ArgumentException>(act);
         }
 
         [Fact]
         public void Constructor_EmptySecret_ThrowsArgumentException()
         {
-            // Arrange & Act & Assert
-            Assert.Throws<ArgumentException>(() => new StaticKeyDataProtectionProvider(string.Empty));
+            // Arrange
+            var secret = string.Empty;
+
+            // Act
+            Action act = () => new StaticKeyDataProtectionProvider(secret);
+
+            // Assert
+            Assert.Throws<ArgumentException>(act);
         }
 
         [Fact]
@@ -32,8 +44,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             // Arrange
             var provider = new StaticKeyDataProtectionProvider(TestSecret);
 
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => provider.CreateProtector(null));
+            // Act
+            Action act = () => provider.CreateProtector(null);
+
+            // Assert
+            Assert.Throws<ArgumentNullException>(act);
         }
 
         [Fact]
@@ -65,8 +80,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             var plaintext = Encoding.UTF8.GetBytes("cookie payload");
             var encryptedOnA = protectorPodA.Protect(plaintext);
 
-            // Act & Assert
-            Assert.Throws<AuthenticationTagMismatchException>(() => protectorPodB.Unprotect(encryptedOnA));
+            // Act
+            Action act = () => protectorPodB.Unprotect(encryptedOnA);
+
+            // Assert
+            Assert.Throws<AuthenticationTagMismatchException>(act);
         }
 
         [Fact]
@@ -79,8 +97,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.AuthenticationTests
             var plaintext = Encoding.UTF8.GetBytes("cookie payload");
             var encryptedByA = protectorA.Protect(plaintext);
 
-            // Act & Assert
-            Assert.Throws<AuthenticationTagMismatchException>(() => protectorB.Unprotect(encryptedByA));
+            // Act
+            Action act = () => protectorB.Unprotect(encryptedByA);
+
+            // Assert
+            Assert.Throws<AuthenticationTagMismatchException>(act);
         }
 
         [Fact]

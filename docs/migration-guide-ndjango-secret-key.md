@@ -96,6 +96,31 @@ internal static class TestModuleInitializer
 }
 ```
 
+## Other breaking changes shipped in the same release
+
+The release that introduced the required `NDJANGO_SECRET_KEY` also removes two other things consumers may have relied on. They are listed here so all migration work lives in one place.
+
+### `IAdminDashboardAuthorizationFilter` and the default localhost filter are removed
+
+The `IAdminDashboardAuthorizationFilter` interface and both bundled implementations (`LocalRequestsOnlyAuthorizationFilter`, `AllowAllAdminDashboardAuthorizationFilter`) are gone, along with the `AdminDashboardOptions.Authorization` property.
+
+Before this release, `AdminDashboardOptions.Authorization` defaulted to a single `LocalRequestsOnlyAuthorizationFilter`, which rejected any request whose remote IP was not loopback. After this release, the dashboard relies entirely on cookie authentication for access — anyone holding a valid login cookie can reach it from any origin the listener accepts.
+
+If you depended on the loopback restriction (or on a custom filter implementing the removed interface), pick one of:
+
+- Restrict the dashboard at the network layer (Kubernetes `NetworkPolicy`, ingress allow-list, security group, listening on a private interface only).
+- Wrap `app.UseNDjangoAdminDashboard("/admin")` in `app.MapWhen(ctx => …)` and put your own predicate (IP allow-list, header check, etc.) in front of it.
+
+Custom authorization filters that implemented `IAdminDashboardAuthorizationFilter` will not compile against the new release; port them to a plain ASP.NET Core middleware mounted before `UseNDjangoAdminDashboard`.
+
+### `SkipStorageInitialization = true` now blocks every admin request
+
+The middleware always waits for the auth bootstrap to be ready before serving any admin path; previously this gate was bypassed when `RequireAuthentication = false`. With authentication mandatory, the gate is always active.
+
+If `SkipStorageInitialization = true` (auth schema provisioned externally), the bootstrapper hosted service is never registered, the readiness flag stays `false`, and every request to the admin path returns `503 Service Unavailable` with `Retry-After: 1`.
+
+The internal readiness state is not currently exposed to consumers, so there is no supported way to mark the dashboard as ready from outside the package. **If you need `SkipStorageInitialization = true`, do not upgrade until the package exposes an extension point** — let the built-in bootstrapper run instead. The bootstrapper is idempotent: running it against a pre-provisioned schema is safe.
+
 ## Operational considerations
 
 - **Forge resistance**: anyone with the secret can forge any user's cookie, including superusers. Treat it as a production credential — never commit, never log, store in a secret manager.
