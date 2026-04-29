@@ -12,7 +12,7 @@ namespace NDjango.Admin.MongoDB.Tests.IntegrationTests
 
         public MongoSortingTests(MongoDashboardFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]

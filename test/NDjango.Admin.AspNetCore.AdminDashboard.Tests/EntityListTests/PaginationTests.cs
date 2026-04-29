@@ -19,7 +19,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
 
         public PaginationTests(BulkDataFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         private static int CountTableBodyRows(string html)

@@ -12,7 +12,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.DashboardTests
 
         public DashboardHomeTests(AdminDashboardFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]

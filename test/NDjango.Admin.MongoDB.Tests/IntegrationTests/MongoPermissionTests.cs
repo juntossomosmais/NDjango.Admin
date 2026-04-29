@@ -13,7 +13,6 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using NDjango.Admin.AspNetCore.AdminDashboard;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.MongoDB.Authentication.Entities;
 using NDjango.Admin.MongoDB.Authentication.Storage;
 using NDjango.Admin.MongoDB.Tests.Fixtures;
@@ -66,9 +65,7 @@ namespace NDjango.Admin.MongoDB.Tests.IntegrationTests
                             services.AddNDjangoAdminDashboardMongo(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
                                     DashboardTitle = "Test Mongo Perm Admin",
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
                                 },

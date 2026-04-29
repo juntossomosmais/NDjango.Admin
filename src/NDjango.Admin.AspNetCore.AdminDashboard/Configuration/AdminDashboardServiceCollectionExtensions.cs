@@ -1,7 +1,6 @@
 using System;
 
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
@@ -36,13 +35,12 @@ namespace Microsoft.Extensions.DependencyInjection
                 return ndjangoAdminOptions;
             });
 
-            // Register auth services eagerly (they are no-ops if RequireAuthentication is false)
             RegisterAuthServices<TDbContext>(services);
 
             services.AddSingleton<ISearchFilterFactory, SubstringFilterFactory>();
             services.AddSingleton<AuthBootstrapReadinessState>();
 
-            if (dashboardOptions.RequireAuthentication && !dashboardOptions.SkipStorageInitialization) {
+            if (!dashboardOptions.SkipStorageInitialization) {
                 services.AddHostedService<AuthBootstrapperHostedService>();
             }
 
@@ -54,7 +52,7 @@ namespace Microsoft.Extensions.DependencyInjection
         private static void RegisterAuthServices<TDbContext>(IServiceCollection services)
             where TDbContext : DbContext
         {
-            services.AddDataProtection();
+            DataProtectionConfigurator.ConfigureDataProtection(services);
 
             services.AddDbContext<AuthDbContext>((sp, options) => {
                 var userDbContext = sp.GetRequiredService<TDbContext>();

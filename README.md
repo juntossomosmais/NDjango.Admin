@@ -34,7 +34,6 @@ Add a reference to the `NDjango.Admin.AspNetCore.AdminDashboard` project.
 // Program.cs or Startup.ConfigureServices
 services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 {
-    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
     DashboardTitle = "My Admin",
 });
 ```
@@ -59,7 +58,6 @@ Add references to `NDjango.Admin.MongoDB` and `NDjango.Admin.AspNetCore.AdminDas
 ```csharp
 using MongoDB.Driver;
 using NDjango.Admin.AspNetCore.AdminDashboard;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.MongoDB;
 
 // Register MongoDB
@@ -71,7 +69,6 @@ services.AddSingleton<IMongoDatabase>(sp =>
 services.AddNDjangoAdminDashboardMongo(
     new AdminDashboardOptions
     {
-        Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
         DashboardTitle = "My Admin (MongoDB)",
     },
     mongo =>
@@ -135,9 +132,7 @@ services.AddSingleton<IMongoDatabase>(sp =>
 services.AddNDjangoAdminDashboardMongo(
     new AdminDashboardOptions
     {
-        Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
         DashboardTitle = "My Admin (MongoDB)",
-        RequireAuthentication = true,
         CreateDefaultAdminUser = true,
         DefaultAdminPassword = "admin",
     },
@@ -151,33 +146,19 @@ services.AddNDjangoAdminDashboardMongo(
 app.UseNDjangoAdminDashboard("/admin");
 ```
 
-When `RequireAuthentication` is enabled, the MongoDB provider:
+The MongoDB provider:
 - Creates 5 auth collections (`auth_users`, `auth_groups`, `auth_permissions`, `auth_group_permissions`, `auth_user_groups`) with unique indexes
 - Seeds CRUD permissions for each registered collection
 - Creates a default `admin` superuser (when `CreateDefaultAdminUser = true`)
 - Auth entities (Users, Groups, Permissions) are editable through the dashboard while user collections follow the configured editability
 
-All authentication options (`RequireAuthentication`, `CreateDefaultAdminUser`, `CookieName`, `CookieExpiration`, `SkipStorageInitialization`) work identically for both providers. SAML SSO is also supported — see the [SAML SSO section](#saml-sso-optional).
+All authentication options (`CreateDefaultAdminUser`, `CookieName`, `CookieExpiration`, `SkipStorageInitialization`) work identically for both providers. SAML SSO is also supported — see the [SAML SSO section](#saml-sso-optional).
 
 #### MongoDB limitations
 
 - **No FK lookups** — references between collections (e.g., `ObjectId RestaurantId`) display as plain IDs, not lookup popups
 
 ## Configuration
-
-### Authorization
-
-```csharp
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
-
-// Allow all (development only)
-new AllowAllAdminDashboardAuthorizationFilter()
-
-// Restrict to localhost
-new LocalRequestsOnlyAuthorizationFilter()
-
-// Custom: implement IAdminDashboardAuthorizationFilter
-```
 
 ### Options
 
@@ -199,16 +180,15 @@ services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 | `IsReadOnly` | `false` | Disable all write operations |
 | `EntityGroups` | `null` | Group entities in the sidebar (dictionary of group name to entity names) |
 
-### Authentication (optional)
+### Authentication
 
-The dashboard supports built-in cookie-based authentication with users, groups, and permissions — similar to Django Admin. Auth storage is created automatically in your existing database via a background hosted service after the host starts. This works for both EF Core (SQL Server tables) and MongoDB (auth collections with unique indexes).
+Cookie-based authentication is **always on** — every dashboard route requires login. The auth subsystem is modeled on Django Admin (users, groups, permissions). Auth storage is created automatically in your existing database via a background hosted service after the host starts. This works for both EF Core (SQL Server tables) and MongoDB (auth collections with unique indexes).
 
 ```csharp
 // ConfigureServices
 services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 {
     DashboardTitle = "My Admin",
-    RequireAuthentication = true,
     CreateDefaultAdminUser = true,
     DefaultAdminPassword = "admin",
 });
@@ -217,7 +197,43 @@ services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 app.UseNDjangoAdminDashboard("/admin");
 ```
 
-When `RequireAuthentication` is enabled:
+#### `NDJANGO_SECRET_KEY` (required)
+
+The auth cookie is encrypted and signed with AES-GCM keys derived from the `NDJANGO_SECRET_KEY` environment variable. The variable is **required** at startup — `AddNDjangoAdminDashboard*` throws `InvalidOperationException` if it's missing or shorter than 32 characters.
+
+Generate a secret:
+
+```bash
+openssl rand -base64 48
+```
+
+Provide it to every replica. In Kubernetes use a `Secret` (never a `ConfigMap`):
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ndjango-admin-secret
+stringData:
+  NDJANGO_SECRET_KEY: "<output from openssl>"
+---
+# In the Deployment spec.template.spec.containers[*].env:
+env:
+  - name: NDJANGO_SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: ndjango-admin-secret
+        key: NDJANGO_SECRET_KEY
+```
+
+Why it matters:
+- **Multi-pod / multi-replica deployments**: every replica derives the same keys from the same secret, so a cookie issued by Pod A is accepted by Pod B. Without a shared secret each replica generates ephemeral keys and users hit a redirect-to-login loop whenever the load balancer routes them to a different pod.
+- **Pod restarts**: cookies issued before a restart remain valid afterwards.
+- **Forge resistance**: anyone with the secret can forge any user's cookie (including a superuser's). Treat it as a production credential — Kubernetes Secret, never committed to Git, rotate on suspected leak.
+- **Rotation**: changing the secret invalidates every existing cookie (all users re-login). Plan rotation during a maintenance window or accept the user impact. Zero-downtime rotation is not supported by NDjango.Admin's auth cookie.
+- **Isolation from your app's data protection**: NDjango.Admin registers its own static-key provider as a private internal service used only by the admin auth cookie. It does **not** override `IDataProtectionProvider`, so ASP.NET Identity, antiforgery, OAuth/OIDC, external cookie middleware, etc. continue to use whatever data-protection stack your application configures (`services.AddDataProtection()` and friends).
+
+Behavior:
 - All dashboard pages require login (unauthenticated requests redirect to `/admin/login/`)
 - A default superuser `admin` is created on first startup (when `CreateDefaultAdminUser = true`)
 - Permissions are auto-generated for every entity (`add_`, `view_`, `change_`, `delete_`)
@@ -228,7 +244,6 @@ When `RequireAuthentication` is enabled:
 
 | Option | Default | Description |
 |---|---|---|
-| `RequireAuthentication` | `false` | Enable login and permission enforcement |
 | `CreateDefaultAdminUser` | `false` | Create an `admin` superuser on startup if it doesn't exist |
 | `DefaultAdminPassword` | `"admin"` | Password for the default admin user |
 | `CookieName` | `".NDjango.Admin.Auth"` | Name of the authentication cookie |
@@ -253,7 +268,6 @@ When testing with `WebApplicationFactory`, set `SkipStorageInitialization = true
 ```csharp
 services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 {
-    RequireAuthentication = true,
     SkipStorageInitialization = true,
 });
 ```
@@ -474,7 +488,6 @@ The dashboard supports SAML 2.0 single sign-on as an additional login method alo
 ```csharp
 services.AddNDjangoAdminDashboard<AppDbContext>(new AdminDashboardOptions
 {
-    RequireAuthentication = true,
     EnableSaml = true,
     SamlMetadataUrl = "https://portal.sso.us-east-1.amazonaws.com/saml/metadata/...",
     SamlIssuer = "http://localhost:8000/admin",

@@ -12,7 +12,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
 
         public SearchTests(AdminDashboardFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]

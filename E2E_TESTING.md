@@ -15,7 +15,7 @@ cd sample-project/src && dotnet run -- api
 - **App URL:** `http://localhost:8000/admin/`
 - **DB:** SQL Server on `localhost:1433`, sa/Password1, database `SampleProject`
 - **Auto-setup:** The app calls `EnsureCreated()` on startup — no migrations needed
-- **Authentication:** The sample project has `RequireAuthentication = true` and `CreateDefaultAdminUser = true`. Default credentials: **admin / admin**
+- **Authentication:** Authentication is always enabled. The sample project sets `CreateDefaultAdminUser = true`, so default credentials are **admin / admin**.
 
 **Important:** `EnsureCreated()` must run **before** `UseNDjangoAdminDashboard()` in `Configure()`. The auth bootstrap creates tables in the existing database — if the database doesn't exist yet, it will fail.
 
@@ -42,7 +42,7 @@ rm -rf ~/Library/Caches/ms-playwright/mcp-chrome-*
 
 ## Authentication Flow
 
-When `RequireAuthentication = true`, all dashboard pages require login. The auth system uses cookie-based sessions with DataProtection encryption.
+All dashboard pages require login. The auth system uses cookie-based sessions with DataProtection encryption.
 
 ### Login
 
@@ -805,7 +805,6 @@ The Gift model (`sample-project/src/Models.cs`) exercises all date/time types: `
 
 - **SP-initiated SAML login:** Does not work with AWS IAM Identity Center (403 "No access"). Only IdP-initiated is testable.
 - **Read-only mode:** `AdminDashboardOptions.IsReadOnly = true` hides all write controls and bulk action bar
-- **Custom authorization filters:** `LocalRequestsOnlyAuthorizationFilter`, custom `IAdminDashboardAuthorizationFilter`
 - **Cookie expiration:** Default 24h, configurable via `AdminDashboardOptions.CookieExpiration`
 - **Permission caching:** Permissions are cached in `HttpContext.Items` per request — no cross-request caching test
 - **Custom action error result (E2E):** The sample project's "Mark selected restaurants as featured" always returns success. The error flash message (red banner) can only be E2E-tested if a custom action returning `AdminActionResult.Error()` is added to the sample project. The error path is covered by integration tests (`ActionTests.cs`)

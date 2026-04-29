@@ -14,7 +14,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityListTests
 
         public ActionTests(AdminDashboardFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]

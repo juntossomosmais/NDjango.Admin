@@ -18,7 +18,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
 
         public ApiDispatcherMutationTests(AdminDashboardFixture fixture)
         {
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         private static string ExtractIdFromRedirect(string locationHeader, string entity)

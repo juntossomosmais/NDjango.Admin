@@ -16,7 +16,7 @@ namespace NDjango.Admin.MongoDB.Tests.IntegrationTests
         public MongoDetailViewTests(MongoDashboardFixture fixture)
         {
             _fixture = fixture;
-            _client = fixture.GetTestHost().GetTestClient();
+            _client = fixture.GetAuthenticatedClient();
         }
 
         [Fact]

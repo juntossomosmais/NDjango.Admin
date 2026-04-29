@@ -13,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication;
 using NDjango.Admin.AspNetCore.AdminDashboard.Authentication.Storage;
-using NDjango.Admin.AspNetCore.AdminDashboard.Authorization;
 using NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures;
 using Xunit;
 
@@ -50,8 +49,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = true,
                                     SkipStorageInitialization = true,
                                 });
                         })
@@ -93,8 +90,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "testadmin",
                                 });
@@ -146,8 +141,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = true,
                                     SkipStorageInitialization = true,
                                 });
                         })
@@ -187,8 +180,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = true,
                                     SkipStorageInitialization = true,
                                 });
                         })
@@ -211,6 +202,51 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         }
 
         [Fact]
+        public async Task Middleware_Returns500_WhenBootstrapFailedAsync()
+        {
+            // Arrange — start with SkipStorageInitialization so the bootstrapper never runs,
+            // then mark the readiness state as failed manually to simulate a permanent
+            // bootstrap failure.
+            var connectionString = string.Format(ConnectionStringTemplate, _dbName);
+
+            using var host = new HostBuilder()
+                .ConfigureWebHost(webBuilder =>
+                {
+                    webBuilder
+                        .UseTestServer()
+                        .ConfigureServices(services =>
+                        {
+                            services.AddDbContext<TestDbContext>(options =>
+                                options.UseSqlServer(connectionString));
+                            services.AddNDjangoAdminDashboard<TestDbContext>(
+                                new AdminDashboardOptions
+                                {
+                                    SkipStorageInitialization = true,
+                                });
+                        })
+                        .Configure(app =>
+                        {
+                            app.UseNDjangoAdminDashboard("/admin");
+                        });
+                })
+                .Start();
+
+            var readiness = host.Services.GetRequiredService<AuthBootstrapReadinessState>();
+            readiness.SetFailed(new InvalidOperationException("simulated bootstrap failure"));
+
+            var client = host.GetTestClient();
+
+            // Act
+            var response = await client.GetAsync("/admin/");
+
+            // Assert — failed state must surface as 500, not 503, so clients stop retrying.
+            Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+            Assert.False(response.Headers.Contains("Retry-After"));
+            var body = await response.Content.ReadAsStringAsync();
+            Assert.Contains("bootstrap failed", body);
+        }
+
+        [Fact]
         public async Task Middleware_NonAdminPath_NotAffectedByReadinessGateAsync()
         {
             // Arrange — auth not ready, but non-admin paths should pass through
@@ -228,8 +264,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = true,
                                     SkipStorageInitialization = true,
                                 });
                         })
@@ -251,52 +285,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
             var response = await client.GetAsync("/api/health");
 
             // Assert — should pass through to the terminal middleware, not blocked by readiness gate
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task Middleware_NoAuth_ReadinessGateSkippedAsync()
-        {
-            // Arrange — RequireAuthentication = false, readiness gate should not apply
-            var connectionString = string.Format(ConnectionStringTemplate, _dbName);
-
-            var dbOptions = new DbContextOptionsBuilder<TestDbContext>()
-                .UseSqlServer(connectionString)
-                .Options;
-            using (var context = new TestDbContext(dbOptions))
-            {
-                context.Database.EnsureCreated();
-            }
-
-            using var host = new HostBuilder()
-                .ConfigureWebHost(webBuilder =>
-                {
-                    webBuilder
-                        .UseTestServer()
-                        .ConfigureServices(services =>
-                        {
-                            services.AddDbContext<TestDbContext>(options =>
-                                options.UseSqlServer(connectionString));
-                            services.AddNDjangoAdminDashboard<TestDbContext>(
-                                new AdminDashboardOptions
-                                {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = false,
-                                });
-                        })
-                        .Configure(app =>
-                        {
-                            app.UseNDjangoAdminDashboard("/admin");
-                        });
-                })
-                .Start();
-
-            var client = host.GetTestClient();
-
-            // Act
-            var response = await client.GetAsync("/admin/");
-
-            // Assert — should get 200, not 503 (readiness gate only applies with RequireAuthentication)
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
@@ -343,8 +331,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    Authorization = new[] { new AllowAllAdminDashboardAuthorizationFilter() },
-                                    RequireAuthentication = true,
                                     CreateDefaultAdminUser = true,
                                     DefaultAdminPassword = "admin",
                                 });
@@ -421,16 +407,57 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
         }
 
         [Fact]
-        public void ReadinessState_AfterSetFailed_IsNotReadyAsync()
+        public void ReadinessState_AfterSetFailed_IsNotReadyAndIsFailed()
         {
             // Arrange
             var state = new AuthBootstrapReadinessState();
 
             // Act
-            state.SetFailed();
+            state.SetFailed(new InvalidOperationException("bootstrap exploded"));
 
             // Assert
             Assert.False(state.IsReady);
+            Assert.True(state.IsFailed);
+        }
+
+        [Fact]
+        public async Task ReadinessState_WaitForReadyAsync_ThrowsAfterSetFailed()
+        {
+            // Arrange
+            var state = new AuthBootstrapReadinessState();
+            var expected = new InvalidOperationException("bootstrap exploded");
+
+            // Act
+            state.SetFailed(expected);
+            var actual = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => state.WaitForReadyAsync(CancellationToken.None));
+
+            // Assert
+            Assert.Same(expected, actual);
+        }
+
+        [Fact]
+        public void ReadinessState_SetFailedWithNull_ThrowsArgumentNullException()
+        {
+            // Arrange
+            var state = new AuthBootstrapReadinessState();
+
+            // Act
+            Action act = () => state.SetFailed(null);
+
+            // Assert
+            Assert.Throws<ArgumentNullException>(act);
+        }
+
+        [Fact]
+        public void ReadinessState_InitialState_IsNeitherReadyNorFailed()
+        {
+            // Arrange & Act
+            var state = new AuthBootstrapReadinessState();
+
+            // Assert
+            Assert.False(state.IsReady);
+            Assert.False(state.IsFailed);
         }
 
         [Fact]
@@ -471,7 +498,6 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.MiddlewareTests
                             services.AddNDjangoAdminDashboard<TestDbContext>(
                                 new AdminDashboardOptions
                                 {
-                                    RequireAuthentication = true,
                                     SkipStorageInitialization = true,
                                 });
                         })

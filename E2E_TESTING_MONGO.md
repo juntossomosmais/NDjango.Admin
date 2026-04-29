@@ -42,7 +42,7 @@ rm -rf ~/Library/Caches/ms-playwright/mcp-chrome-*
 
 ## Authentication Flow
 
-When `RequireAuthentication = true`, all dashboard pages require login. The auth system uses cookie-based sessions with DataProtection encryption. Auth data is stored in MongoDB collections (`auth_users`, `auth_groups`, `auth_permissions`, `auth_group_permissions`, `auth_user_groups`).
+All dashboard pages require login. The auth system uses cookie-based sessions with DataProtection encryption. Auth data is stored in MongoDB collections (`auth_users`, `auth_groups`, `auth_permissions`, `auth_group_permissions`, `auth_user_groups`).
 
 ### Login
 
