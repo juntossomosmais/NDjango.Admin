@@ -353,6 +353,7 @@ MigrationBackup/
 ndjango-admin.js/**/docs
 
 package-lock.json
+!playwright/package-lock.json
 dist/
 
 /samples/**/wwwroot/js/ndjango-admin.js
