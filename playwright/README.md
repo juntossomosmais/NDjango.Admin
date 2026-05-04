@@ -1,38 +1,58 @@
 # NDjango.Admin — Playwright E2E
 
-End-to-end tests for the NDjango.Admin Dashboard using the EF Core sample project (`sample-project/`). Migrated from `E2E_TESTING.md` (the long-form manual test guide) to executable Playwright tests in TypeScript.
+End-to-end tests for the NDjango.Admin Dashboard. Two backends are exercised side by side:
+
+- **EF Core** sample (`sample-project/`) on `http://localhost:8000` against SQL Server. Migrated from `E2E_TESTING.md`.
+- **MongoDB** sample (`sample-project-mongodb/`) on `http://localhost:8001` against MongoDB. Migrated from `E2E_TESTING_MONGO.md`.
+
+Each backend has its own Playwright project (`chromium`, `chromium-mongo`, …) with an isolated authenticated storage-state file.
 
 ## Stack
 
 - **Playwright Test** v1.59.x (TypeScript)
 - **Node.js** 20.x / 22.x / 24.x
-- Targets the sample-project running on `http://localhost:8000` against SQL Server on `localhost:1433`
 
 ## Layout
 
 ```
 playwright/
-├── playwright.config.ts            # Top-level config (projects, baseURL, webServer)
-├── tests-sql-server/
-│   ├── auth.setup.ts               # Login as admin once → saves storage state
-│   ├── authentication/             # Phase 1: login/logout
-│   ├── dashboard/                  # Phase 2: dashboard home + sidebar
-│   ├── crud/                       # Phase 3: Category, Restaurant, Ingredient, RestaurantProfile, MenuItem
-│   ├── search-and-popup/           # Phase 3a: conditional search + FK lookup popup
-│   ├── m2m/                        # Phase 3b: MenuItemIngredient junction (composite PK)
-│   ├── auth-entities/              # Phase 4: AuthUser/Group/Permission/UserGroup/GroupPermission
-│   ├── permissions/                # Phase 5: permission enforcement (403 for missing perms)
-│   ├── list-features/              # Phase 6: sorting + pagination
-│   ├── bulk-actions/               # Phase 7: action bar, checkboxes, custom + delete actions, flash messages
-│   ├── pagination-timeout/         # Phase 8: COUNT timeout fallback (requires 5M categories)
-│   ├── saml/                       # Phase 9: SAML SSO (skipped by default)
-│   ├── gift/                       # Phase 9a: Gift date/time round-trip
-│   └── logout/                     # Phase 10: session cleared verification
+├── playwright.config.ts            # Per-project baseURL (EF :8000, Mongo :8001) + storageState
+├── tests-sql-server/               # EF Core suite (uses sample-project on :8000)
+│   ├── auth.setup.ts               # Login as admin once → saves .auth/admin.json
+│   ├── authentication/             # Phase 1
+│   ├── dashboard/                  # Phase 2
+│   ├── crud/                       # Phase 3
+│   ├── search-and-popup/           # Phase 3a
+│   ├── m2m/                        # Phase 3b (composite PK)
+│   ├── auth-entities/              # Phase 4
+│   ├── permissions/                # Phase 5
+│   ├── list-features/              # Phase 6
+│   ├── bulk-actions/               # Phase 7
+│   ├── pagination-timeout/         # Phase 8 (opt-in, 5M-row seed)
+│   ├── saml/                       # Phase 9 (opt-in, sample-project-sso)
+│   ├── gift/                       # Phase 9a
+│   └── logout/                     # Phase 10
+├── tests-mongodb/                  # MongoDB suite (uses sample-project-mongodb on :8001)
+│   ├── auth-mongo.setup.ts         # Login → .auth/admin-mongo.json
+│   ├── authentication/             # Phase 1
+│   ├── dashboard/                  # Phase 2 (Restaurant + Shop + Auth groups)
+│   ├── crud/                       # Phase 3 (ObjectId references, no FK lookup popups)
+│   ├── m2m/                        # Phase 3a (single-ObjectId PK on junction)
+│   ├── auth-entities/              # Phase 7 (MongoAuth* entities)
+│   ├── permissions/                # Phase 8
+│   ├── list-features/              # Phases 4, 5, 9 (search, sort, pagination)
+│   ├── bulk-actions/               # Phase 6
+│   ├── breadcrumbs/                # Phase 10
+│   └── logout/                     # Phase 11
 ├── fixtures/
-│   ├── admin.ts                    # Authenticated test (default)
-│   └── anonymous.ts                # Unauthenticated test (login/logout flows)
-├── pages/                          # Page Objects: LoginPage, DashboardPage, ListPage, FormPage, etc.
-└── helpers/                        # admin-urls, random, data factories, auth-setup
+│   ├── admin.ts                    # EF authenticated test
+│   ├── admin-mongo.ts              # Mongo authenticated test (uses MongoFormPage)
+│   ├── anonymous.ts                # EF unauthenticated
+│   └── anonymous-mongo.ts          # Mongo unauthenticated
+├── pages/                          # LoginPage, DashboardPage, ListPage, FormPage,
+│                                   # MongoFormPage, DeleteConfirmationPage, PopupPage
+└── helpers/                        # admin-urls, random, object-id, data, data-mongo,
+                                    # auth-setup, auth-setup-mongo
 ```
 
 ## Prerequisites
@@ -46,42 +66,62 @@ playwright/
    npx playwright install --with-deps
    ```
 
-3. Start SQL Server (from the repo root):
+3. Start the databases (from the repo root):
 
    ```bash
+   # SQL Server (for the EF Core suite)
    docker compose up --detach --wait --wait-timeout 120 db
+
+   # MongoDB replica set (for the MongoDB suite)
+   docker compose up --detach --wait --wait-timeout 120 --remove-orphans mongoClusterSetup
    ```
 
-4. Start the sample app (from the repo root):
+4. Set `NDJANGO_SECRET_KEY` (mandatory for the dashboard's cookie data-protection):
 
    ```bash
-   cd sample-project/src && dotnet run -- api
+   export NDJANGO_SECRET_KEY=$(openssl rand -base64 48)
    ```
 
-   The app listens on `http://localhost:8000` and creates the schema (`EnsureCreated()`) plus the default `admin/admin` user.
+5. Start the sample apps (each in its own terminal):
 
-   > Alternative: set `PLAYWRIGHT_START_SERVER=1` so Playwright starts the app via `webServer`. The DB still needs to be up first.
+   ```bash
+   # EF Core sample on :8000
+   cd sample-project/src && dotnet run -- api
+
+   # MongoDB sample on :8001
+   cd sample-project-mongodb/src && dotnet run -- api
+   ```
+
+   Both apps create the schema (or seed the collections) plus the default `admin/admin` user.
+
+   > Alternative: set `PLAYWRIGHT_START_SERVER=1` so Playwright starts the EF app via `webServer`. (No equivalent for the Mongo sample yet — start it manually.)
 
 ## Running
 
 ```bash
-# All tests, default browser (chromium)
-npm test
+# All EF Core tests on chromium (default)
+npx playwright test --project=chromium
 
-# Specific browser
-npm run test:chromium
-npm run test:firefox
-npm run test:webkit
+# All MongoDB tests on chromium
+npx playwright test --project=chromium-mongo
 
-# Headed (watch the browser) / UI mode (interactive)
-npm run test:headed
-npm run test:ui
+# Both backends, chromium only
+npx playwright test --project=chromium --project=chromium-mongo
+
+# Other browsers
+npx playwright test --project=firefox-mongo
+npx playwright test --project=webkit-mongo
 
 # Single file
-npx playwright test tests-sql-server/crud/category.spec.ts
+npx playwright test tests-mongodb/crud/category.spec.ts
 
 # Single test by title pattern
 npx playwright test -g "boolean field"
+
+# Headed / UI / debug
+npx playwright test --project=chromium-mongo --headed
+npx playwright test --project=chromium-mongo --ui
+npx playwright test --project=chromium-mongo --debug
 
 # Open the latest HTML report
 npm run test:report
@@ -89,9 +129,9 @@ npm run test:report
 
 ## Test isolation strategy
 
-- **Auth**: a `setup` project logs in once as `admin/admin` and persists the cookie state into `.auth/admin.json`. Every other project loads that storage state automatically. Tests that need to be unauthenticated import `@fixtures/anonymous` instead.
-- **Database**: the suite shares a single SQL Server database. `workers: 1` and `fullyParallel: false` are set deliberately because the dashboard does not isolate test data per worker. Each test creates its own records with unique names (`uniqueName('Cat')`) and cleans up only when the assertion requires it; cross-test leakage is acceptable because rows are scoped to unique names.
-- **No mocking**: this is true E2E. The browser drives the real ASP.NET Core dashboard talking to a real EF Core context.
+- **Auth**: each backend has its own setup project (`setup` for EF, `setup-mongo` for Mongo) that logs in once as `admin/admin` and persists cookie state into a per-backend file (`.auth/admin.json` or `.auth/admin-mongo.json`). Sibling projects load that storage state automatically. Tests that need to be unauthenticated import `@fixtures/anonymous` or `@fixtures/anonymous-mongo`.
+- **Database**: each backend shares a single database (SQL Server for EF, MongoDB for Mongo). `workers: 1` and `fullyParallel: false` are set deliberately because the dashboard does not isolate test data per worker. Each test creates its own records with unique names (`uniqueName('Cat')`) and cleans up only when the assertion requires it; cross-test leakage is acceptable because rows are scoped to unique names.
+- **No mocking**: this is true E2E. The browser drives the real ASP.NET Core dashboard talking to a real EF Core context or MongoDB driver.
 
 ## Phase 8 — Pagination timeout
 
@@ -121,12 +161,14 @@ Skipped by default. Enabling requires `sample-project-sso` running plus AWS IAM 
 
 | Variable | Default | Effect |
 |---|---|---|
-| `PLAYWRIGHT_BASE_URL` | `http://localhost:8000` | Dashboard origin under test |
-| `NDJANGO_ADMIN_USER` | `admin` | Username used by `auth.setup.ts` |
-| `NDJANGO_ADMIN_PASSWORD` | `admin` | Password used by `auth.setup.ts` |
-| `PLAYWRIGHT_START_SERVER` | unset | Set truthy to let Playwright start `dotnet run -- api` via `webServer` |
-| `PLAYWRIGHT_LARGE_DATASET` | unset | Enable Phase 8 tests |
-| `PLAYWRIGHT_SAML_ENABLED` | unset | Enable Phase 9 SAML tests |
+| `PLAYWRIGHT_BASE_URL` | `http://localhost:8000` | Origin for the EF Core projects (`chromium`, `firefox`, `webkit`) |
+| `PLAYWRIGHT_MONGO_BASE_URL` | `http://localhost:8001` | Origin for the MongoDB projects (`chromium-mongo`, …) |
+| `NDJANGO_ADMIN_USER` | `admin` | Username used by both setup projects |
+| `NDJANGO_ADMIN_PASSWORD` | `admin` | Password used by both setup projects |
+| `PLAYWRIGHT_START_SERVER` | unset | Set truthy to let Playwright start the **EF Core** sample via `webServer` |
+| `PLAYWRIGHT_LARGE_DATASET` | unset | Enable Phase 8 (EF Core) pagination-timeout tests |
+| `PLAYWRIGHT_SAML_ENABLED` | unset | Enable Phase 9 (EF Core) SAML tests |
+| `NDJANGO_SECRET_KEY` | (required) | Cookie data-protection secret (≥ 32 chars). Both sample apps will refuse to start without it. |
 | `CI` | unset | Enables retries=2, github reporter, forbidOnly |
 
 ## Codegen

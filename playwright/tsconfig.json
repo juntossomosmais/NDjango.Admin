@@ -20,5 +20,12 @@
       "@helpers/*": ["helpers/*"]
     }
   },
-  "include": ["tests-sql-server/**/*", "fixtures/**/*", "pages/**/*", "helpers/**/*", "playwright.config.ts"]
+  "include": [
+    "tests-sql-server/**/*",
+    "tests-mongodb/**/*",
+    "fixtures/**/*",
+    "pages/**/*",
+    "helpers/**/*",
+    "playwright.config.ts"
+  ]
 }
