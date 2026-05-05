@@ -1,0 +1,131 @@
+name: Playwright E2E
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'src/**'
+      - 'sample-project/**'
+      - 'sample-project-mongodb/**'
+      - 'playwright/**'
+      - '.github/workflows/playwright.yml'
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Playwright tests (chromium, EF Core + MongoDB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NDJANGO_SECRET_KEY: ci-playwright-static-secret-do-not-use-in-prod-0123456789
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: playwright/package-lock.json
+
+      - name: Start SQL Server and MongoDB cluster
+        run: |
+          docker compose up --detach --wait --wait-timeout 180 db
+          docker compose up --detach --wait --wait-timeout 180 --remove-orphans mongoClusterSetup
+
+      - name: Build sample apps (sequential, avoids deps.json write race)
+        # Both apps share the NDjango.Admin.* projects. Building them sequentially
+        # here and launching with --no-build below prevents two concurrent
+        # dotnet run invocations from colliding on the shared bin/Debug/net8.0
+        # output directory.
+        run: |
+          dotnet build sample-project/src/SampleProject.csproj --configuration Debug
+          dotnet build sample-project-mongodb/src/SampleProjectMongo.csproj --configuration Debug
+
+      - name: Install Playwright dependencies
+        working-directory: playwright
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Start sample-project (EF Core, :8000) in background
+        working-directory: sample-project/src
+        run: |
+          nohup dotnet run --no-build -- api > /tmp/sample-project.log 2>&1 &
+          echo $! > /tmp/sample-project.pid
+
+      - name: Start sample-project-mongodb (:8001) in background
+        working-directory: sample-project-mongodb/src
+        run: |
+          nohup dotnet run --no-build -- api > /tmp/sample-project-mongodb.log 2>&1 &
+          echo $! > /tmp/sample-project-mongodb.pid
+
+      - name: Wait for both sample apps to be ready
+        run: |
+          ready_ef=0
+          ready_mongo=0
+          for i in $(seq 1 90); do
+            if [ "$ready_ef" -eq 0 ] && curl --fail --silent http://localhost:8000/admin/login/ > /dev/null; then
+              echo "sample-project (:8000) is up"
+              ready_ef=1
+            fi
+            if [ "$ready_mongo" -eq 0 ] && curl --fail --silent http://localhost:8001/admin/login/ > /dev/null; then
+              echo "sample-project-mongodb (:8001) is up"
+              ready_mongo=1
+            fi
+            if [ "$ready_ef" -eq 1 ] && [ "$ready_mongo" -eq 1 ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "One or both sample apps failed to start within 180s (ef=$ready_ef mongo=$ready_mongo)"
+          echo "----- /tmp/sample-project.log -----"
+          tail -200 /tmp/sample-project.log || true
+          echo "----- /tmp/sample-project-mongodb.log -----"
+          tail -200 /tmp/sample-project-mongodb.log || true
+          exit 1
+
+      - name: Run Playwright tests (EF Core + MongoDB)
+        working-directory: playwright
+        env:
+          CI: 'true'
+        run: npx playwright test --project=chromium --project=chromium-mongo
+
+      - name: Stop sample apps
+        if: always()
+        run: |
+          for pidfile in /tmp/sample-project.pid /tmp/sample-project-mongodb.pid; do
+            if [ -f "$pidfile" ]; then
+              kill "$(cat "$pidfile")" || true
+            fi
+          done
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright/playwright-report
+          retention-days: 14
+
+      - name: Upload sample-project log (EF Core)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-project-log
+          path: /tmp/sample-project.log
+          retention-days: 14
+
+      - name: Upload sample-project-mongodb log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-project-mongodb-log
+          path: /tmp/sample-project-mongodb.log
+          retention-days: 14
