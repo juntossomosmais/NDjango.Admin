@@ -496,14 +496,28 @@ namespace NDjango.Admin.EntityFrameworkCore
             }
 
             var veId = $"VE_{entity.Id}_{propertyName}";
-            if (property.ClrType.IsEnum) {
+            // When a value converter is configured (e.g. an enum mapped to string),
+            // property.ClrType is the PROVIDER type, so IsEnum would be false. Resolve the
+            // model type via the converter so enum-backed properties still render as a dropdown.
+            var valueConverter = property.GetValueConverter();
+            var enumClrType = valueConverter?.ModelClrType ?? property.ClrType;
+            if (enumClrType.IsEnum) {
                 var editor = new ConstListValueEditor(veId);
-                var fields = property.ClrType.GetFields();
+                var fields = enumClrType.GetFields();
                 foreach (var field in fields.Where(f => !f.Name.Equals("value__"))) {
-                    editor.Values.Add(field.GetRawConstantValue().ToString(), field.Name);
+                    // The option id must match the value stored in the column: the provider
+                    // value when a converter exists, otherwise the raw enum value.
+                    var id = valueConverter != null
+                        ? valueConverter.ConvertToProvider(field.GetValue(null))?.ToString()
+                        : field.GetRawConstantValue().ToString();
+                    editor.Values.Add(id, field.Name);
                 }
                 entityAttr.DefaultEditor = editor;
-                entityAttr.DisplayFormat = DataUtils.ComposeDisplayFormatForEnum(property.ClrType);
+                // Without a converter the column stores the enum's underlying number, so the
+                // int→name display map is needed. With a converter the column already holds a
+                // readable value, so no extra display format is required.
+                if (valueConverter == null)
+                    entityAttr.DisplayFormat = DataUtils.ComposeDisplayFormatForEnum(enumClrType);
             }
 
             var propInfo = property.PropertyInfo;
