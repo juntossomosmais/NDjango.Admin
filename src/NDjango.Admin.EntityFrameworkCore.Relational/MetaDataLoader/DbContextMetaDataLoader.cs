@@ -509,8 +509,9 @@ namespace NDjango.Admin.EntityFrameworkCore
                     // value when a converter exists, otherwise the raw enum value.
                     var id = valueConverter != null
                         ? valueConverter.ConvertToProvider(field.GetValue(null))?.ToString()
-                        : field.GetRawConstantValue().ToString();
-                    editor.Values.Add(id, field.Name);
+                        : field.GetRawConstantValue()?.ToString();
+                    if (id != null)
+                        editor.Values.Add(id, field.Name);
                 }
                 entityAttr.DefaultEditor = editor;
                 // Without a converter the column stores the enum's underlying number, so the
