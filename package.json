@@ -13,8 +13,15 @@
   "jest": {
     "testEnvironment": "jsdom",
     "coverageProvider": "v8",
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/playwright/"
+    ],
     "collectCoverageFrom": [
-      "src/NDjango.Admin.AspNetCore.AdminDashboard/wwwroot/js/admin-dashboard.js"
+      "src/NDjango.Admin.AspNetCore.AdminDashboard.Core/wwwroot/js/admin-dashboard.js"
     ]
   }
 }
