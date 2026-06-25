@@ -442,6 +442,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
         /// </summary>
         internal static void RenderChoiceField(StringBuilder content, FieldViewModel field)
         {
+            if (field.Choices == null)
+                return;
+
             var id = $"id_{field.PropName}";
             var required = field.IsRequired ? " required" : "";
             var currentValue = FormatValueForInput(field);

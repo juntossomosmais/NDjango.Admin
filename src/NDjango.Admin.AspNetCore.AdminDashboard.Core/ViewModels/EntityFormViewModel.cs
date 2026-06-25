@@ -74,7 +74,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         /// Available options for fields backed by a constant list editor (e.g. enums).
         /// When non-empty and the field is editable, the form renders a &lt;select&gt; instead of a text input.
         /// </summary>
-        public IReadOnlyList<FieldChoice> Choices { get; set; }
+        public IReadOnlyList<FieldChoice>? Choices { get; set; }
     }
 
     /// <summary>
@@ -83,9 +83,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
     public class FieldChoice
     {
         /// <summary>The value submitted with the form (matches the value stored in the column).</summary>
-        public string Id { get; set; }
+        public string Id { get; set; } = "";
 
         /// <summary>The human-readable label shown to the user.</summary>
-        public string Text { get; set; }
+        public string Text { get; set; } = "";
     }
 }
