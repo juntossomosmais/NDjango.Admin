@@ -20,6 +20,7 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public DbSet<MenuItemIngredient> MenuItemIngredients { get; set; }
         public DbSet<Gift> Gifts { get; set; }
         public DbSet<ValidatedProduct> ValidatedProducts { get; set; }
+        public DbSet<EnumWidget> EnumWidgets { get; set; }
 
         public TestDbContext(DbContextOptions<TestDbContext> options) : base(options)
         {
@@ -37,6 +38,14 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
 
             modelBuilder.Entity<MenuItem>()
                 .Property(m => m.Price).HasPrecision(10, 2);
+
+            // Plain enum -> stored as int (underlying value ids); converter enum -> stored as string (provider ids).
+            modelBuilder.Entity<EnumWidget>()
+                .Property(w => w.Size)
+                .HasConversion(
+                    v => v == WidgetSize.Small ? "small" : v == WidgetSize.Medium ? "medium" : "large",
+                    v => v == "small" ? WidgetSize.Small : v == "medium" ? WidgetSize.Medium : WidgetSize.Large)
+                .HasMaxLength(20);
 
             modelBuilder.Entity<MenuItemIngredient>(entity =>
             {
@@ -160,6 +169,25 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.Fixtures
         public TimeOnly AvailableFrom { get; set; }
         public string Description { get; set; } = "";
         public string Notes { get; set; } = "";
+    }
+
+    public enum WidgetColor { Red, Green, Blue }
+
+    public enum WidgetSize { Small, Medium, Large }
+
+    public class EnumWidget
+    {
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        public string Name { get; set; }
+
+        // Plain enum: renders as a dropdown whose option ids are the underlying int values.
+        public WidgetColor Color { get; set; }
+
+        // Enum mapped to string via a value converter: option ids are the provider string values.
+        public WidgetSize Size { get; set; }
     }
 
     public class ValidatedProduct

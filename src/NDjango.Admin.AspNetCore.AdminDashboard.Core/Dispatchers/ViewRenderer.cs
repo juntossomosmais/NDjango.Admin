@@ -313,6 +313,9 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 else if (field.Kind == EntityAttrKind.Lookup) {
                     RenderSelectField(content, field, model.BasePath);
                 }
+                else if (field.Choices != null && field.Choices.Count > 0) {
+                    RenderChoiceField(content, field);
+                }
                 else {
                     RenderInputField(content, field);
                 }
@@ -429,6 +432,29 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 ? Nullable.GetUnderlyingType(field.ClrType) ?? field.ClrType
                 : null;
             return underlyingType == typeof(DateTimeOffset);
+        }
+
+        /// <summary>
+        /// Renders a &lt;select&gt; dropdown for a field backed by a constant list editor (e.g. an enum).
+        /// The option whose Id or Text matches the current value is pre-selected: a freshly loaded
+        /// record exposes the enum name (Text), while a re-rendered form after a validation error
+        /// exposes the submitted value (Id).
+        /// </summary>
+        internal static void RenderChoiceField(StringBuilder content, FieldViewModel field)
+        {
+            var id = $"id_{field.PropName}";
+            var required = field.IsRequired ? " required" : "";
+            var currentValue = FormatValueForInput(field);
+
+            content.Append($"<select id=\"{id}\" name=\"{field.PropName}\"{required}>");
+            if (!field.IsRequired) {
+                content.Append("<option value=\"\">---------</option>");
+            }
+            foreach (var choice in field.Choices) {
+                var selected = currentValue == choice.Id || currentValue == choice.Text ? " selected" : "";
+                content.Append($"<option value=\"{Encode(choice.Id)}\"{selected}>{Encode(choice.Text)}</option>");
+            }
+            content.Append("</select>");
         }
 
         private static void RenderInputField(StringBuilder content, FieldViewModel field)

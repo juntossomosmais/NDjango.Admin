@@ -362,6 +362,13 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                         InputType = attr.InputType,
                     };
 
+                    // Fields backed by a constant list editor (e.g. enums) render as a dropdown.
+                    if (attr.DefaultEditor is ConstListValueEditor listEditor) {
+                        field.Choices = listEditor.Values
+                            .Select(v => new FieldChoice { Id = v.Id, Text = v.Text })
+                            .ToList();
+                    }
+
                     if (submittedValues != null && submittedValues.TryGetValue(attr.PropName, out var submitted)) {
                         field.Value = submitted;
                     }
