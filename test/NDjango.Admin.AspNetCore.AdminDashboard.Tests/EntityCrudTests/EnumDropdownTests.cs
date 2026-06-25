@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -69,6 +71,27 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Tests.EntityCrudTests
             // Assert
             Assert.DoesNotContain("<input type=\"text\" id=\"id_Color\"", html);
             Assert.DoesNotContain("<input type=\"text\" id=\"id_Size\"", html);
+        }
+
+        [Fact]
+        public async Task PostCreate_EnumValues_SucceedsWithoutIntegerValidationErrorAsync()
+        {
+            // Arrange
+            var formData = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("Name", "Widget_" + Guid.NewGuid().ToString("N")[..8]),
+                new KeyValuePair<string, string>("Color", "1"),        // plain enum -> underlying int id
+                new KeyValuePair<string, string>("Size", "medium"),    // converter enum -> provider string id
+                new KeyValuePair<string, string>("_save_action", "save"),
+            });
+
+            // Act
+            var response = await _client.PostAsync("/admin/EnumWidget/add/", formData);
+
+            // Assert
+            // A successful create redirects; a validation failure would return 200 with the form
+            // and the "Enter a valid integer number." message for the string-backed Size field.
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         }
     }
 }

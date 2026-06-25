@@ -443,7 +443,13 @@ namespace NDjango.Admin.EntityFrameworkCore
         /// <returns>MetaEntityAttr.</returns>
         protected virtual MetaEntityAttr CreateEntityAttribute(MetaEntity entity, IEntityType entityType, IProperty property)
         {
-            var columnType = DataUtils.GetDataTypeBySystemType(property.ClrType);
+            // When a value converter maps the property to a different store type (e.g. an enum
+            // stored as a string), the column — and the value the form posts back — uses the
+            // PROVIDER type, so derive the DataType from it. Otherwise validation would expect the
+            // model type (e.g. an integer for an enum) and reject the stored representation.
+            var valueConverter = property.GetValueConverter();
+            var storeClrType = valueConverter?.ProviderClrType ?? property.ClrType;
+            var columnType = DataUtils.GetDataTypeBySystemType(storeClrType);
 
             if (columnType == DataType.Unknown)
                 return null;
@@ -496,10 +502,8 @@ namespace NDjango.Admin.EntityFrameworkCore
             }
 
             var veId = $"VE_{entity.Id}_{propertyName}";
-            // When a value converter is configured (e.g. an enum mapped to string),
-            // property.ClrType is the PROVIDER type, so IsEnum would be false. Resolve the
-            // model type via the converter so enum-backed properties still render as a dropdown.
-            var valueConverter = property.GetValueConverter();
+            // Resolve the model type via the converter (when present) so enum-backed properties
+            // are detected even when stored as a different type (e.g. an enum mapped to string).
             var enumClrType = valueConverter?.ModelClrType ?? property.ClrType;
             if (enumClrType.IsEnum) {
                 var editor = new ConstListValueEditor(veId);
