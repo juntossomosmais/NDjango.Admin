@@ -82,6 +82,9 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             Assert.Equal(EnumNames, editor.Values.Select(v => v.Text).ToList());
             // A converter already stores a readable value, so no extra display format is needed.
             Assert.Null(attr.DisplayFormat);
+            // DataType reflects the provider (column) type so validation accepts the posted string
+            // value (e.g. "sqlserver") instead of demanding an integer.
+            Assert.Equal(DataType.String, attr.DataType);
         }
 
         [Fact]
@@ -105,6 +108,8 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             Assert.Equal(EnumNames, editor.Values.Select(v => v.Text).ToList());
             // The int->name display map is required so lists show readable text.
             Assert.NotNull(attr.DisplayFormat);
+            // Without a converter the column stores the underlying int, so the field is integer-typed.
+            Assert.Equal(DataType.Int32, attr.DataType);
         }
     }
 }
