@@ -1,18 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>NDjango.Admin.EntityFrameworkCore</RootNamespace>
     <Description>Entity Framework Core classes for NDjango.Admin library.</Description>
-    <DocumentationFile>NDjango.Admin.EntityFrameworkCore.Relational.xml</DocumentationFile>
     <PackageId>NDjango.Admin.EntityFrameworkCore.Relational</PackageId>
     <PackageTags>database crud middleware filtering</PackageTags>
     <DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.*" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkCoreVersion)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(EntityFrameworkCoreVersion)" />
   </ItemGroup>
 
   <ItemGroup>

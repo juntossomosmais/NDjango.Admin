@@ -1,10 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>NDjango.Admin</RootNamespace>
     <Description>Basic classes of NDjango.Admin library.</Description>
-    <DocumentationFile>NDjango.Admin.Core.xml</DocumentationFile>
     <PackageId>NDjango.Admin.Core</PackageId>
     <PackageTags>database crud filtering</PackageTags>
   </PropertyGroup>
