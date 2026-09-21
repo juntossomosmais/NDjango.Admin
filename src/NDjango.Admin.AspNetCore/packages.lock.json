@@ -1,7 +1,33 @@
 {
   "version": 1,
   "dependencies": {
+    "net10.0": {
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
+      },
+      "ndjango.admin.core": {
+        "type": "Project",
+        "dependencies": {
+          "Newtonsoft.Json": "[13.*, )"
+        }
+      }
+    },
     "net8.0": {
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
+      },
+      "ndjango.admin.core": {
+        "type": "Project",
+        "dependencies": {
+          "Newtonsoft.Json": "[13.*, )"
+        }
+      }
+    },
+    "net9.0": {
       "Newtonsoft.Json": {
         "type": "Transitive",
         "resolved": "13.0.4",

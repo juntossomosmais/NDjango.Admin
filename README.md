@@ -9,6 +9,11 @@ A Django-admin-inspired admin dashboard for ASP.NET Core. Automatically generate
 - **Entity Framework Core** — full CRUD from your `DbContext`
 - **MongoDB** — full CRUD dashboard from your MongoDB collections, with optional authentication
 
+**Supported frameworks:** `net8.0`, `net9.0` and `net10.0`. The packages ship one build per
+framework, each carrying the matching Entity Framework Core major (8, 9 and 10), so referencing the
+dashboard from a .NET 10 app does not pull an older EF Core into it. The whole test suite runs
+against all three.
+
 ## What you get
 
 - **Dashboard home** at `/admin/` listing all entities with Add/Change links

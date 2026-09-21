@@ -3,7 +3,6 @@
   <PropertyGroup>
     <RootNamespace>NDjango.Admin.AspNetCore</RootNamespace>
     <Description>ASP.NET Core classes for NDjango.Admin library.</Description>
-    <DocumentationFile>NDjango.Admin.AspNetCore.xml</DocumentationFile>
     <PackageId>NDjango.Admin.AspNetCore</PackageId>
     <PackageTags>database crud middleware filtering</PackageTags>
   </PropertyGroup>

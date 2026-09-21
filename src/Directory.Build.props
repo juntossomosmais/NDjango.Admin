@@ -1,7 +1,7 @@
 <Project>
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
         <!-- Version is configured in the build pipeline -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <Authors>willianantunes</Authors>
@@ -12,7 +12,31 @@
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <Nullable>enable</Nullable>
+        <!--
+            Pinned, because multi-targeting otherwise compiles one source tree under three language
+            versions: C# 12 for net8.0, 13 for net9.0, 14 for net10.0. Left to the defaults, a C# 14
+            construct (the `field` keyword, say) would compile on the net10.0 pass and fail the
+            net8.0 one — and `dotnet format` would happily write exactly that, since the analyzers
+            follow the language version. 12 is the floor, so the compiler rejects on every pass what
+            the oldest target cannot take.
+        -->
+        <LangVersion>12</LangVersion>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+
+    <!--
+        One Entity Framework Core major per target framework. Shipping EF Core 8 to a net10.0 app
+        would drag the whole EF 8 assembly set into it and lose whatever the app already resolved,
+        so each inner build takes the major that matches its runtime.
+
+        TargetFramework is empty during the outer (multi-targeting) pass, which never restores
+        packages — the fallback only keeps that pass from evaluating an empty version.
+    -->
+    <PropertyGroup>
+        <EntityFrameworkCoreVersion Condition="'$(TargetFramework)' == 'net8.0'">8.*</EntityFrameworkCoreVersion>
+        <EntityFrameworkCoreVersion Condition="'$(TargetFramework)' == 'net9.0'">9.*</EntityFrameworkCoreVersion>
+        <EntityFrameworkCoreVersion Condition="'$(TargetFramework)' == 'net10.0'">10.*</EntityFrameworkCoreVersion>
+        <EntityFrameworkCoreVersion Condition="'$(EntityFrameworkCoreVersion)' == ''">8.*</EntityFrameworkCoreVersion>
     </PropertyGroup>
 
 </Project>

@@ -1,6 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>NDjango.Admin.MongoDB</RootNamespace>
     <Description>MongoDB provider for NDjango.Admin library. Full CRUD admin dashboard for MongoDB collections with authentication support.</Description>
   </PropertyGroup>

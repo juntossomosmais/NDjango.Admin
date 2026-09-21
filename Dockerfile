@@ -2,8 +2,12 @@ ARG DOTNET_VERSION=10.0
 
 FROM mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION
 
-# Project targets net8.0 — install its runtime so dotnet test/run works
-COPY --from=mcr.microsoft.com/dotnet/runtime:8.0 /usr/share/dotnet/shared /usr/share/dotnet/shared
+# The packages multi-target net8.0/net9.0/net10.0 and the suite runs once per framework, so every
+# targeted runtime has to be here — the SDK image ships only its own. These come from the aspnet
+# images, not the runtime ones: the dashboard tests spin up a TestHost and so ask for
+# Microsoft.AspNetCore.App, which mcr.microsoft.com/dotnet/runtime does not carry.
+COPY --from=mcr.microsoft.com/dotnet/aspnet:8.0 /usr/share/dotnet/shared /usr/share/dotnet/shared
+COPY --from=mcr.microsoft.com/dotnet/aspnet:9.0 /usr/share/dotnet/shared /usr/share/dotnet/shared
 
 WORKDIR /app
 
