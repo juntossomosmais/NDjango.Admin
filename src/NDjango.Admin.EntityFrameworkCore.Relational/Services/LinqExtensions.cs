@@ -22,6 +22,33 @@ namespace NDjango.Admin.Services
         public Func<PropertyInfo, bool> Filter { get; set; }
 
         /// <summary>
+        /// Filters properties by their <em>path</em> from the root entity — <c>"Name"</c> at the
+        /// top level, <c>"User.Name"</c> one relationship in.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Filter"/> receives a <see cref="PropertyInfo"/> and nothing else, so it
+        /// cannot tell <c>Name</c> on the root from <c>Name</c> on a related entity. That is
+        /// harmless while <see cref="Depth"/> is zero and wrong as soon as it is not.
+        /// <para>
+        /// When set it takes precedence over <see cref="Filter"/>. It is also consulted for the
+        /// navigation properties themselves, which is what decides whether the search descends
+        /// into one — refusing a relationship nobody asked about is what keeps a deeper search
+        /// from becoming a search over the whole object graph.
+        /// </para>
+        /// </remarks>
+        public Func<string, PropertyInfo, bool>? PathFilter { get; set; }
+
+        /// <summary>
+        /// The path already walked, as a prefix ending in a dot, or empty at the root.
+        /// </summary>
+        /// <remarks>
+        /// Carried on the options rather than passed down, for the same reason <see cref="Depth"/>
+        /// is: the recursion adjusts it on the way in and restores it on the way out, and keeping
+        /// both in one place makes them impossible to get out of step.
+        /// </remarks>
+        internal string CurrentPath { get; set; } = string.Empty;
+
+        /// <summary>
         /// The name of the property to order by the result list
         /// </summary>
         public string OrderBy { get; set; }
@@ -89,8 +116,13 @@ namespace NDjango.Admin.Services
 
             Exp predicateBody = null;
             foreach (var prop in properties) {
+                // The path this property has from the root entity: "Name" at the top level,
+                // "User.Name" one relationship in. It is what lets a caller say which of two
+                // identically named columns it meant.
+                var path = (options?.CurrentPath ?? string.Empty) + prop.Name;
+
                 //Check if we can use this property in search
-                if (options == null || options.Filter == null || options.Filter.Invoke(prop)) {
+                if (Accepts(options, path, prop)) {
                     var paramExp = Exp.Property(expr, prop);
 
                     if (prop.PropertyType.IsNumeric() || prop.PropertyType == typeof(string)) {
@@ -144,8 +176,11 @@ namespace NDjango.Admin.Services
                     //If this property is't simple and the depth > 0
                     if (options != null && options.Depth != 0
                         && !prop.PropertyType.IsSimpleType() && !prop.PropertyType.IsEnumerable()) {
+                        var outerPath = options.CurrentPath;
                         options.Depth -= 1;
+                        options.CurrentPath = path + ".";
                         var subExp = CreateSubExpression(paramExp, prop.PropertyType, text, options, isQueriable);
+                        options.CurrentPath = outerPath;
                         options.Depth += 1;
 
                         if (subExp != null) {
@@ -159,6 +194,22 @@ namespace NDjango.Admin.Services
             }
 
             return predicateBody;
+        }
+
+        /// <summary>
+        /// Whether a property takes part in the search: by path when the caller filters that way,
+        /// by <see cref="FullTextSearchOptions.Filter"/> otherwise, and always when there are no
+        /// options at all — which is what every caller that passes none already relies on.
+        /// </summary>
+        private static bool Accepts(FullTextSearchOptions? options, string path, PropertyInfo prop)
+        {
+            if (options == null)
+                return true;
+
+            if (options.PathFilter != null)
+                return options.PathFilter.Invoke(path, prop);
+
+            return options.Filter == null || options.Filter.Invoke(prop);
         }
     }
 }

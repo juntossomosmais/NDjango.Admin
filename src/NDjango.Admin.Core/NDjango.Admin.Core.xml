@@ -4,6 +4,23 @@
         <name>NDjango.Admin.Core</name>
     </assembly>
     <members>
+        <member name="M:NDjango.Admin.PropertyList`1.Validate(System.Linq.Expressions.Expression{System.Func{`0,System.Object}})">
+            <summary>
+            Reads the property path off the expression: <c>x =&gt; x.Name</c> yields <c>"Name"</c>,
+            and <c>x =&gt; x.User.Name</c> yields <c>"User.Name"</c>.
+            </summary>
+            <remarks>
+            The path is Django's <c>search_fields = ["user__name"]</c>, and it exists for the same
+            reason: a join table is identified by what it points at and never by a column of its
+            own. Without it the only searchable thing on such a table is a foreign key, so finding a
+            row means looking the parent up on another screen and pasting its id back.
+            <para>
+            Anything that is not a chain of member accesses rooted at the parameter is still
+            refused — a method call, an indexer or a captured variable names no column, and failing
+            here keeps the error next to the declaration that caused it.
+            </para>
+            </remarks>
+        </member>
         <member name="T:NDjango.Admin.EntityAttrKind">
             <summary>
             Represents an attribute's kind

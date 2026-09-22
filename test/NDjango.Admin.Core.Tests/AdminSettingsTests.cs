@@ -30,6 +30,41 @@ namespace NDjango.Admin.Core.Tests
         }
 
         [Fact]
+        public void Constructor_WithAPathThroughARelationship_ExtractsTheDottedPath()
+        {
+            // Arrange & Act: Django's search_fields = ["inner__name"]. A join table is identified
+            // by what it points at, so without this the only searchable thing on one is a foreign
+            // key — and finding a row means pasting an id looked up on another screen.
+            var list = new PropertyList<SampleDto>(x => x.Inner.Name);
+
+            // Assert
+            Assert.Equal("Inner.Name", Assert.Single(list));
+        }
+
+        [Fact]
+        public void Constructor_WithADeeperPath_ExtractsEverySegment()
+        {
+            // Arrange & Act: two relationships in. The depth the search runs at is derived from
+            // the longest path declared, so this is the shape that decides it.
+            var list = new PropertyList<SampleDto>(x => x.Inner.Inner.Name);
+
+            // Assert
+            Assert.Equal("Inner.Inner.Name", Assert.Single(list));
+        }
+
+        [Fact]
+        public void Constructor_WithAPathAndAFlatProperty_KeepsBothAndTheirOrder()
+        {
+            // Arrange & Act
+            var list = new PropertyList<SampleDto>(x => x.Name, x => x.Inner.Name);
+
+            // Assert
+            Assert.Equal(2, list.Count);
+            Assert.Equal("Name", list[0]);
+            Assert.Equal("Inner.Name", list[1]);
+        }
+
+        [Fact]
         public void Constructor_WithNoSelectors_CreatesEmptyList()
         {
             // Arrange & Act
@@ -59,17 +94,26 @@ namespace NDjango.Admin.Core.Tests
             var ex = Assert.Throws<ArgumentException>(
                 () => new PropertyList<SampleDto>(x => x.Name.ToString()));
 
-            Assert.Contains("Expression must be a direct property access", ex.Message);
+            Assert.Contains("Expression must be a property access", ex.Message);
         }
 
         [Fact]
-        public void Validate_NestedProperty_ThrowsArgumentException()
+        public void Validate_ExpressionNotRootedAtTheParameter_ThrowsArgumentException()
         {
-            // Arrange & Act & Assert
-            var ex = Assert.Throws<ArgumentException>(
-                () => new PropertyList<SampleDto>(x => x.Inner.Name));
+            // Arrange: 🔴 this replaces Validate_NestedProperty_ThrowsArgumentException, which
+            // asserted that x => x.Inner.Name was refused. That refusal is what this change
+            // reverses — a path through a relationship is now the supported way to search a join
+            // table — so the test is not relaxed, it is pointed at what is still refused.
+            //
+            // What remains invalid is a member access that does not start at the entity: a
+            // captured variable reads a value from the closure and names no column to search.
+            var captured = new SampleDto { Name = "outside the entity" };
 
-            Assert.Contains("Property must be accessed directly on the entity", ex.Message);
+            // Act & Assert
+            var ex = Assert.Throws<ArgumentException>(
+                () => new PropertyList<SampleDto>(x => captured.Name));
+
+            Assert.Contains("Property must be reached from the entity by member access", ex.Message);
         }
 
         [Fact]

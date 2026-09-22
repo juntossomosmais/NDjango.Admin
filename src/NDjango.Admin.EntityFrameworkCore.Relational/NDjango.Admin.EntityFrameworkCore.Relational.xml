@@ -596,6 +596,33 @@
             Lamda expression, which filters properties to use in full text search
             </summary>
         </member>
+        <member name="P:NDjango.Admin.Services.FullTextSearchOptions.PathFilter">
+            <summary>
+            Filters properties by their <em>path</em> from the root entity — <c>"Name"</c> at the
+            top level, <c>"User.Name"</c> one relationship in.
+            </summary>
+            <remarks>
+            <see cref="P:NDjango.Admin.Services.FullTextSearchOptions.Filter"/> receives a <see cref="T:System.Reflection.PropertyInfo"/> and nothing else, so it
+            cannot tell <c>Name</c> on the root from <c>Name</c> on a related entity. That is
+            harmless while <see cref="P:NDjango.Admin.Services.FullTextSearchOptions.Depth"/> is zero and wrong as soon as it is not.
+            <para>
+            When set it takes precedence over <see cref="P:NDjango.Admin.Services.FullTextSearchOptions.Filter"/>. It is also consulted for the
+            navigation properties themselves, which is what decides whether the search descends
+            into one — refusing a relationship nobody asked about is what keeps a deeper search
+            from becoming a search over the whole object graph.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:NDjango.Admin.Services.FullTextSearchOptions.CurrentPath">
+            <summary>
+            The path already walked, as a prefix ending in a dot, or empty at the root.
+            </summary>
+            <remarks>
+            Carried on the options rather than passed down, for the same reason <see cref="P:NDjango.Admin.Services.FullTextSearchOptions.Depth"/>
+            is: the recursion adjusts it on the way in and restores it on the way out, and keeping
+            both in one place makes them impossible to get out of step.
+            </remarks>
+        </member>
         <member name="P:NDjango.Admin.Services.FullTextSearchOptions.OrderBy">
             <summary>
             The name of the property to order by the result list
@@ -620,6 +647,13 @@
             <param name="text">The text - meaning of the search</param>
             <param name="options">The options for full-text search</param>
             <returns></returns>
+        </member>
+        <member name="M:NDjango.Admin.Services.LinqExtensions.Accepts(NDjango.Admin.Services.FullTextSearchOptions,System.String,System.Reflection.PropertyInfo)">
+            <summary>
+            Whether a property takes part in the search: by path when the caller filters that way,
+            by <see cref="P:NDjango.Admin.Services.FullTextSearchOptions.Filter"/> otherwise, and always when there are no
+            options at all — which is what every caller that passes none already relies on.
+            </summary>
         </member>
     </members>
 </doc>

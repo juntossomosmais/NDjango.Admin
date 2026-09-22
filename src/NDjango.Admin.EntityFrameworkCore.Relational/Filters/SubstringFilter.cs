@@ -63,12 +63,30 @@ namespace NDjango.Admin.Services
         {
             var searchFields = entity.SearchFields;
 
+            // A declared field may be a path — "User.Name" — so the search has to descend that far
+            // and no further. Depth counts the relationships crossed, which is one less than the
+            // number of segments; a flat declaration leaves it at zero and nothing changes.
+            if (searchFields != null && searchFields.Count > 0) {
+                var depth = searchFields.Max(field => field.Split('.').Length) - 1;
+
+                return new FullTextSearchOptions
+                {
+                    Depth = depth,
+
+                    // Two answers, and the second is the one that makes depth safe. A path that was
+                    // declared is searched. A navigation that merely *starts* one is descended into
+                    // — without that the walk would stop at the relationship and never reach the
+                    // column — and everything else is refused, so raising the depth cannot turn the
+                    // search into a search over the whole object graph.
+                    PathFilter = (path, prop) =>
+                        searchFields.Contains(path)
+                        || searchFields.Any(field => field.StartsWith(path + ".", System.StringComparison.Ordinal))
+                };
+            }
+
             return new FullTextSearchOptions
             {
                 Filter = (prop) => {
-                    if (searchFields != null && searchFields.Count > 0) {
-                        return searchFields.Contains(prop.Name);
-                    }
 
                     // Legacy fallback
                     var attr = entity?.FindAttribute(a => a.PropInfo == prop);

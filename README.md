@@ -319,6 +319,34 @@ public class Category : IAdminSettings<Category>
 - Entities without `IAdminSettings<T>`, or with an empty `SearchFields`, do not show a search box and ignore `?q=` query parameters.
 - `PropertyList<T>` uses expression-based selectors (`x => x.Name`) for compile-time safety — typos in property names cause build errors, not runtime surprises.
 
+#### Searching across a relationship
+
+A selector may walk a relationship, which is Django's `search_fields = ["supplier__name"]`:
+
+```csharp
+public class Product : IAdminSettings<Product>
+{
+    public int Id { get; set; }
+    public int? SupplierId { get; set; }
+    public Supplier Supplier { get; set; }
+
+    // Finds a product by its supplier's name, a column Product does not have
+    public PropertyList<Product> SearchFields => new(x => x.Name, x => x.Supplier.CompanyName);
+}
+```
+
+This matters most on join tables, which are identified by what they point at and rarely have a
+column of their own. Without it their only searchable property is a foreign key, so finding a row
+means looking the parent up on another screen and pasting its id back.
+
+- The search descends exactly as far as the longest declared path and only through relationships
+  that a declared path names. A flat declaration searches nothing beyond the entity itself, so
+  existing configurations are unaffected.
+- Only the declared column of the related entity is searched, not its other properties.
+- A null relationship is a row that does not match, never an error.
+- Supported by the Entity Framework Core provider. The MongoDB provider does not resolve references
+  between collections, so paths do not apply there.
+
 ### FK lookup popup
 
 Foreign key fields render as a plain text input showing the raw FK ID plus a magnifying glass lookup icon, matching Django Admin's `raw_id_fields` pattern. Clicking the icon opens a popup window with the related entity's list view, where the user can search (if the related entity has `SearchFields` configured) and select a record. The popup closes and fills the FK ID automatically.
