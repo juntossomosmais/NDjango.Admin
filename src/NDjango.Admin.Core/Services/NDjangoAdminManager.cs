@@ -66,6 +66,22 @@ namespace NDjango.Admin.Services
         public abstract Task<IEnumerable<EasySorter>> GetDefaultSortersAsync(string modelId, string sourceId, CancellationToken ct = default);
 
         /// <summary>
+        /// Display labels of the records of <paramref name="sourceId"/> whose primary key is one of
+        /// <paramref name="keys"/>, keyed by the key's string form. The label is made of the entity's
+        /// <c>ShowInLookup</c> attributes, joined by <see cref="LookupLabels.Separator"/> — the
+        /// equivalent of Django's <c>__str__</c>. Keys that match no record are left out.
+        /// </summary>
+        /// <remarks>
+        /// The default returns no labels, which makes callers fall back to the raw key. Providers that
+        /// can resolve relationships override it with a single batched query.
+        /// </remarks>
+        public virtual Task<IReadOnlyDictionary<string, string>> FetchLookupLabelsAsync(string modelId, string sourceId,
+            IReadOnlyCollection<object> keys, CancellationToken ct = default)
+        {
+            return Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
+        }
+
+        /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>

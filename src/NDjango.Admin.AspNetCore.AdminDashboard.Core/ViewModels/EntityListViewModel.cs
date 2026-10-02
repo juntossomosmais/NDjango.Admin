@@ -29,6 +29,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         public List<ActionViewModel> Actions { get; set; } = new List<ActionViewModel>();
         public string Message { get; set; }
         public string MessageLevel { get; set; }
+        /// <summary>
+        /// Properties that make up the label of a row of this entity (its <c>ShowInLookup</c>
+        /// attributes). The lookup popup hands that label back to the form along with the key.
+        /// </summary>
+        public List<string> LabelFields { get; set; } = new List<string>();
     }
 
     public class ActionViewModel
@@ -45,5 +50,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         public string PropName { get; set; }
         public bool IsPrimaryKey { get; set; }
         public DataType DataType { get; set; }
+        /// <summary>
+        /// For a foreign key column: the label of each referenced record, keyed by the key's string
+        /// form. Null for any other column. A key missing here renders as the raw value.
+        /// </summary>
+        public IReadOnlyDictionary<string, string>? LookupLabels { get; set; }
     }
 }

@@ -266,7 +266,19 @@ describe('popup dismiss delegation', () => {
         link.dispatchEvent(event);
 
         expect(event.defaultPrevented).toBe(true);
-        expect(mockDismiss).toHaveBeenCalledWith(window, '42');
+        expect(mockDismiss).toHaveBeenCalledWith(window, '42', null);
+    });
+
+    test('passes the row label to the opener along with the key', () => {
+        document.body.innerHTML = '<a class="popup-select" data-pk="42" data-label="Italian" href="#">Pick</a>';
+        loadScript();
+
+        const mockDismiss = jest.fn();
+        window.opener = { dismissRelatedLookupPopup: mockDismiss };
+
+        document.querySelector('.popup-select').dispatchEvent(new Event('click', { bubbles: true, cancelable: true }));
+
+        expect(mockDismiss).toHaveBeenCalledWith(window, '42', 'Italian');
     });
 
     test('does nothing when click target is not a .popup-select', () => {
@@ -368,6 +380,27 @@ describe('dismissRelatedLookupPopup', () => {
         expect(mockWin.close).toHaveBeenCalled();
     });
 
+    test('fills the label next to the input with the chosen record label', () => {
+        document.body.innerHTML = '<input id="category_id" /><strong id="label_category_id">Old</strong>';
+        loadScript();
+
+        const mockWin = { name: 'lookup_category_id', close: jest.fn() };
+        adminDashboard.dismissRelatedLookupPopup(mockWin, '3', 'Japanese');
+
+        expect(document.getElementById('category_id').value).toBe('3');
+        expect(document.getElementById('label_category_id').textContent).toBe('Japanese');
+    });
+
+    test('clears the label when the chosen record has none', () => {
+        document.body.innerHTML = '<input id="category_id" /><strong id="label_category_id">Old</strong>';
+        loadScript();
+
+        const mockWin = { name: 'lookup_category_id', close: jest.fn() };
+        adminDashboard.dismissRelatedLookupPopup(mockWin, '3');
+
+        expect(document.getElementById('label_category_id').textContent).toBe('');
+    });
+
     test('closes popup even when input element is not found', () => {
         document.body.innerHTML = '';
         loadScript();
@@ -425,5 +458,29 @@ describe('focusFirstFormError', () => {
         `;
 
         expect(() => loadScript()).not.toThrow();
+    });
+});
+
+// ─── Foreign key label next to the raw id input ───
+
+describe('foreign key label', () => {
+    test('clears the label when the key is typed by hand', () => {
+        document.body.innerHTML = '<input id="id_CategoryId" class="vForeignKeyRawIdAdminField" value="1" />'
+            + '<strong id="label_id_CategoryId">Italian</strong>';
+        loadScript();
+
+        const input = document.getElementById('id_CategoryId');
+        input.value = '2';
+        input.dispatchEvent(new Event('input'));
+
+        expect(document.getElementById('label_id_CategoryId').textContent).toBe('');
+    });
+
+    test('does not throw when the input has no label element', () => {
+        document.body.innerHTML = '<input id="id_CategoryId" class="vForeignKeyRawIdAdminField" value="1" />';
+        loadScript();
+
+        const input = document.getElementById('id_CategoryId');
+        expect(() => input.dispatchEvent(new Event('input'))).not.toThrow();
     });
 });

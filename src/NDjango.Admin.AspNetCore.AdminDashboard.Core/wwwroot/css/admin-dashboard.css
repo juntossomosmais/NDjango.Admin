@@ -466,6 +466,8 @@ body.popup { margin: 10px; }
 body.popup #content { max-width: 100%; }
 .related-lookup { cursor: pointer; margin-left: 5px; text-decoration: none; font-size: 1.2em; }
 .vForeignKeyRawIdAdminField { width: auto; }
+.related-label { margin-left: 8px; font-weight: 600; }
+.related-label:empty { display: none; }
 
 /* Bulk actions */
 .actions {

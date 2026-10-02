@@ -88,6 +88,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return await _manager.GetDefaultSortersAsync("__admin", entityId, ct);
         }
 
+        public async Task<IReadOnlyDictionary<string, string>> FetchLookupLabelsAsync(string entityId, IReadOnlyCollection<object> keys, CancellationToken ct = default)
+        {
+            return await _manager.FetchLookupLabelsAsync("__admin", entityId, keys, ct);
+        }
+
         public static string GetEntityName(MetaEntity entity)
         {
             var parts = entity.Id.Split('.');

@@ -161,6 +161,12 @@ namespace NDjango.Admin.MongoDB
             return await GetManagerFor(sourceId).GetDefaultSortersAsync(modelId, sourceId, ct);
         }
 
+        public override async Task<IReadOnlyDictionary<string, string>> FetchLookupLabelsAsync(string modelId, string sourceId,
+            IReadOnlyCollection<object> keys, CancellationToken ct = default)
+        {
+            return await GetManagerFor(sourceId).FetchLookupLabelsAsync(modelId, sourceId, keys, ct);
+        }
+
         private static void HashPasswordInProps(JObject props)
         {
             if (props.TryGetValue("Password", out var passwordToken)) {

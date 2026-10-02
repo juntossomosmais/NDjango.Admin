@@ -69,8 +69,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!link) return;
         e.preventDefault();
         if (window.opener && typeof window.opener.dismissRelatedLookupPopup === 'function') {
-            window.opener.dismissRelatedLookupPopup(window, link.getAttribute('data-pk'));
+            window.opener.dismissRelatedLookupPopup(window, link.getAttribute('data-pk'), link.getAttribute('data-label'));
         }
+    });
+
+    // A key typed by hand no longer matches the label rendered next to it; clear it rather than
+    // show the label of another record. Picking through the popup fills it again.
+    document.querySelectorAll('.vForeignKeyRawIdAdminField').forEach(function (input) {
+        input.addEventListener('input', function () {
+            const label = document.getElementById('label_' + input.id);
+            if (label) label.textContent = '';
+        });
     });
 
     focusFirstFormError();
@@ -99,11 +108,15 @@ function showRelatedObjectLookupPopup(triggerLink) {
     return false;
 }
 
-function dismissRelatedLookupPopup(win, chosenId) {
+function dismissRelatedLookupPopup(win, chosenId, chosenLabel) {
     const inputId = win.name.replace(/^lookup_/, '');
     const input = document.getElementById(inputId);
     if (input) {
         input.value = chosenId;
+    }
+    const label = document.getElementById('label_' + inputId);
+    if (label) {
+        label.textContent = chosenLabel || '';
     }
     win.close();
 }
