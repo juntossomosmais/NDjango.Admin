@@ -35,9 +35,10 @@ test.describe('Phase 3 — RestaurantProfile (1:1 FK to Restaurant)', () => {
 
     await expect(page).toHaveURL(/\/admin\/RestaurantProfile\/(\?|$)/);
     await list.gotoLatest();
-    await expect(list.rowByText(String(restaurant.id))).toBeVisible();
+    // The Restaurant column shows the restaurant's label (its Name), not the raw key.
+    await expect(list.rowByText(restaurant.name)).toBeVisible();
 
-    await list.clickRowLink(String(restaurant.id));
+    await list.clickRowLink(restaurant.name);
     await expect(form.fkInput('RestaurantId')).toHaveValue(String(restaurant.id));
     await expect(form.input('Capacity')).toHaveValue('50');
 

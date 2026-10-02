@@ -46,7 +46,7 @@ test.describe('Phase 3 — MenuItem (N:1 FK to Restaurant)', () => {
     await list.gotoLatest();
     const row = list.rowByText(itemName);
     await expect(row).toBeVisible();
-    await expect(row).toContainText(String(restaurant.id));
+    await expect(row).toContainText(restaurant.name);
 
     await list.clickRowLink(itemName);
     await expect(form.input('Name')).toHaveValue(itemName);
