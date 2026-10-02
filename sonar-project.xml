@@ -6,7 +6,7 @@
     <Property Name="sonar.host.url">http://localhost:9000</Property>
     <Property Name="sonar.cs.opencover.reportsPaths">**/*/coverage.opencover.xml</Property>
     <Property Name="sonar.cs.vstest.reportsPaths">**/*/*.trx</Property>
-    <!-- Jest coverage of the dashboard script. The PR workflow runs `npm test` (jest --coverage)
+    <!-- Jest coverage of the dashboard script. The PR workflow runs `npm test` (Jest with coverage)
          before the scanner; without this path every JavaScript line counted as uncovered. -->
     <Property Name="sonar.javascript.lcov.reportPaths">coverage/lcov.info</Property>
     <Property Name="sonar.exclusions">
