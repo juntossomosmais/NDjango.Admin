@@ -245,6 +245,7 @@ namespace NDjango.Admin.Services
             return records;
         }
 
+        /// <inheritdoc />
         public override async Task<IReadOnlyDictionary<string, string>> FetchLookupLabelsAsync(string modelId, string sourceId,
             IReadOnlyCollection<object> keys, CancellationToken ct = default)
         {
@@ -264,26 +265,31 @@ namespace NDjango.Admin.Services
 
             var keyProp = primaryKey.Properties[0];
             // A shadow key has no CLR property to read the value back from the loaded records.
-            if (keyProp.PropertyInfo == null)
+            var keyInfo = keyProp.PropertyInfo;
+            if (keyInfo == null)
                 return labels;
+
             var modelEntity = Model.EntityRoot.SubEntities.FirstOrDefault(e => e.ClrType == entityType.ClrType);
-            var labelProps = modelEntity?.Attributes
-                .Where(attr => attr.ShowInLookup && attr.Kind != EntityAttrKind.Lookup && attr.PropInfo != null)
+            var labelProps = (modelEntity?.Attributes ?? Enumerable.Empty<MetaEntityAttr>())
+                .Where(attr => attr.ShowInLookup && attr.Kind != EntityAttrKind.Lookup)
                 .OrderBy(attr => attr.Index)
                 .Select(attr => attr.PropInfo)
+                .OfType<PropertyInfo>()
                 .ToList();
-            if (labelProps == null || labelProps.Count == 0)
+            if (labelProps.Count == 0)
                 return labels;
 
             var typedKeys = ConvertKeys(keys, keyProp.ClrType);
             if (typedKeys.Count == 0)
                 return labels;
 
-            var targetMethod = _fetchByKeysGeneric.MakeGenericMethod(entityType.ClrType, keyProp.ClrType);
-            var records = await (Task<List<object>>)targetMethod.Invoke(this, new object[] { DbContext, keyProp.Name, typedKeys, ct });
+            var targetMethod = typeof(NDjangoAdminManagerEF<TDbContext>)
+                .GetMethod(nameof(FetchByKeysAsync), BindingFlags.Static | BindingFlags.NonPublic)!
+                .MakeGenericMethod(entityType.ClrType, keyProp.ClrType);
+            var records = await (Task<List<object>>)targetMethod.Invoke(null, new object[] { DbContext, keyProp.Name, typedKeys, ct })!;
 
             foreach (var record in records) {
-                var key = LookupLabels.KeyToString(keyProp.PropertyInfo.GetValue(record));
+                var key = LookupLabels.KeyToString(keyInfo.GetValue(record));
                 var label = LookupLabels.Compose(labelProps.Select(prop => prop.GetValue(record)));
                 if (key != null && label != null)
                     labels[key] = label;
@@ -294,19 +300,20 @@ namespace NDjango.Admin.Services
 
         // Keys arrive as whatever the caller had (an int read from a dataset, a string from a form);
         // the query needs them in the key's own type. Values that do not convert match nothing.
-        private static System.Collections.IList ConvertKeys(IReadOnlyCollection<object> keys, Type keyType)
+        private static System.Collections.IList ConvertKeys(IReadOnlyCollection<object?> keys, Type keyType)
         {
             var converter = TypeDescriptor.GetConverter(keyType);
-            var result = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(keyType));
+            var result = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(keyType))!;
             var seen = new HashSet<object>();
             foreach (var key in keys) {
-                if (key == null)
+                var text = LookupLabels.KeyToString(key);
+                if (key == null || text == null)
                     continue;
-                object converted;
+                object? converted;
                 try {
                     converted = keyType.IsInstanceOfType(key)
                         ? key
-                        : converter.ConvertFromInvariantString(LookupLabels.KeyToString(key));
+                        : converter.ConvertFromInvariantString(text);
                 }
                 catch (Exception ex) when (ex is FormatException || ex is OverflowException
                     || ex is ArgumentException || ex is NotSupportedException) {
@@ -467,7 +474,6 @@ namespace NDjango.Admin.Services
         private static readonly MethodInfo _findRecordAsyncGeneric;
         private static readonly MethodInfo _queryRecordsGeneric;
         private static readonly MethodInfo _countRecordsGeneric;
-        private static readonly MethodInfo _fetchByKeysGeneric;
 
         static NDjangoAdminManagerEF()
         {
@@ -478,7 +484,6 @@ namespace NDjango.Admin.Services
             _findRecordAsyncGeneric = methods.Single(m => m.Name == nameof(FetchRecordAsyncInternal));
             _queryRecordsGeneric = methods.Single(m => m.Name == nameof(QueryRecords));
             _countRecordsGeneric = methods.Single(m => m.Name == nameof(CountRecordsAsync));
-            _fetchByKeysGeneric = methods.Single(m => m.Name == nameof(FetchByKeysAsync));
         }
 
 
@@ -517,7 +522,7 @@ namespace NDjango.Admin.Services
         }
 
         // One query for all keys: WHERE key IN (...). Read-only, so nothing is tracked.
-        private async Task<List<object>> FetchByKeysAsync<T, TKey>(DbContext dbContext, string keyName,
+        private static async Task<List<object>> FetchByKeysAsync<T, TKey>(DbContext dbContext, string keyName,
             List<TKey> keys, CancellationToken ct) where T : class
         {
             var records = await dbContext.Set<T>()

@@ -266,7 +266,7 @@ describe('popup dismiss delegation', () => {
         link.dispatchEvent(event);
 
         expect(event.defaultPrevented).toBe(true);
-        expect(mockDismiss).toHaveBeenCalledWith(window, '42', null);
+        expect(mockDismiss).toHaveBeenCalledWith(window, '42', undefined);
     });
 
     test('passes the row label to the opener along with the key', () => {

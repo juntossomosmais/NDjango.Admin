@@ -13,8 +13,13 @@ namespace NDjango.Admin.Services
     /// </summary>
     public static class LookupLabels
     {
+        /// <summary>Placed between the values when a label is made of more than one attribute.</summary>
         public const string Separator = " \u00B7 ";
 
+        /// <summary>
+        /// The label made of <paramref name="values"/>, in order, skipping empty ones; <c>null</c> when
+        /// none is left.
+        /// </summary>
         public static string? Compose(IEnumerable<object?> values)
         {
             var parts = values

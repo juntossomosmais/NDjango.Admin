@@ -186,13 +186,13 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 HasCompositeKey = entity.HasCompositeKey,
                 SidebarGroups = sidebarGroups,
                 IsSearchEnabled = isSearchEnabled,
-                IsPopup = isPopup,
-                ToField = toField,
                 LabelFields = entity.Attributes
                     .Where(a => a.ShowInLookup && a.Kind != EntityAttrKind.Lookup)
                     .OrderBy(a => a.Index)
                     .Select(a => a.PropName)
-                    .ToList()
+                    .ToList(),
+                IsPopup = isPopup,
+                ToField = toField
             };
 
             // Read flash message from query params

@@ -16,9 +16,19 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
     /// The dashboard asks for the labels of a whole page at once, so the lookup has to be one query
     /// regardless of how many keys it gets.
     /// </summary>
-    public class NDjangoAdminManagerEFLookupLabelsTests : IDisposable
+    public sealed class NDjangoAdminManagerEFLookupLabelsTests : IDisposable
     {
         private const string ModelId = "__admin";
+
+        private static readonly object[] AllSuppliers = { 1, 2, 3 };
+        private static readonly object[] FirstAndLastSupplier = { 1, 3 };
+        private static readonly object[] BothEmployees = { 7, 8 };
+        private static readonly object[] SupplierKeysOfOtherTypes = { "2", 3L };
+        private static readonly object[] CustomerKeys = { "ALFKI" };
+        private static readonly object[] KnownUnknownAndInvalidKeys = { 1, 999, "not-a-number", null };
+        private static readonly object[] OneKey = { 1 };
+        private static readonly object[] TwoSuppliers = { 1, 2 };
+        private static readonly object[] OnlyInvalidKeys = { "not-a-number", "also-not" };
 
         private readonly SqliteConnection _connection;
         private readonly CommandCounter _counter = new CommandCounter();
@@ -55,6 +65,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         {
             _dbContext.Dispose();
             _connection.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -65,7 +76,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             _counter.Reset();
 
             // Act
-            var labels = await _manager.FetchLookupLabelsAsync(ModelId, "Supplier", new object[] { 1, 2, 3 });
+            var labels = await _manager.FetchLookupLabelsAsync(ModelId, "Supplier", AllSuppliers);
 
             // Assert
             Assert.Equal(1, _counter.Count);
@@ -77,7 +88,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         {
             // Arrange — Supplier has no ShowInLookup annotation: the loader picks its "name" columns,
             // CompanyName and ContactName.
-            var keys = new object[] { 1, 3 };
+            var keys = FirstAndLastSupplier;
 
             // Act
             var labels = await _manager.FetchLookupLabelsAsync(ModelId, "Supplier", keys);
@@ -91,7 +102,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         public async Task FetchLookupLabelsAsync_WithAnExplicitShowInLookup_ShouldUseOnlyThatAttributeAsync()
         {
             // Arrange — Employee marks only LastName with [MetaEntityAttr(ShowInLookup = true)].
-            var keys = new object[] { 7, 8 };
+            var keys = BothEmployees;
 
             // Act
             var labels = await _manager.FetchLookupLabelsAsync(ModelId, "Employee", keys);
@@ -105,8 +116,8 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         public async Task FetchLookupLabelsAsync_WithStringOrMistypedKeys_ShouldConvertThemToTheKeyTypeAsync()
         {
             // Arrange — a key read from a form arrives as a string; the Customer key is a string column.
-            var intKeysAsText = new object[] { "2", 3L };
-            var stringKeys = new object[] { "ALFKI" };
+            var intKeysAsText = SupplierKeysOfOtherTypes;
+            var stringKeys = CustomerKeys;
 
             // Act
             var suppliers = await _manager.FetchLookupLabelsAsync(ModelId, "Supplier", intKeysAsText);
@@ -121,7 +132,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         public async Task FetchLookupLabelsAsync_WithUnknownOrInvalidKeys_ShouldLeaveThemOutAsync()
         {
             // Arrange
-            var keys = new object[] { 1, 999, "not-a-number", null! };
+            var keys = KnownUnknownAndInvalidKeys;
 
             // Act
             var labels = await _manager.FetchLookupLabelsAsync(ModelId, "Supplier", keys);
@@ -150,7 +161,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         public async Task FetchLookupLabelsAsync_ForACompositeKeyEntity_ShouldReturnNoLabelsAsync()
         {
             // Arrange — OrderDetail is keyed by (OrderID, ProductID): no single value to look up.
-            var keys = new object[] { 1 };
+            var keys = OneKey;
 
             // Act
             var labels = await _manager.FetchLookupLabelsAsync(ModelId, "OrderDetail", keys);
@@ -163,7 +174,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         public async Task FetchLookupLabelsAsync_ShouldNotTrackTheLoadedRecordsAsync()
         {
             // Arrange
-            var keys = new object[] { 1, 2 };
+            var keys = TwoSuppliers;
 
             // Act
             await _manager.FetchLookupLabelsAsync(ModelId, "Supplier", keys);
@@ -179,7 +190,50 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             NDjangoAdminManager manager = new BareManager();
 
             // Act
-            var labels = await manager.FetchLookupLabelsAsync(ModelId, "Supplier", new object[] { 1 });
+            var labels = await manager.FetchLookupLabelsAsync(ModelId, "Supplier", OneKey);
+
+            // Assert
+            Assert.Empty(labels);
+        }
+
+        [Fact]
+        public async Task FetchLookupLabelsAsync_WithOnlyKeysThatDoNotConvert_ShouldNotQueryTheDatabaseAsync()
+        {
+            // Arrange
+            await _manager.GetModelAsync(ModelId);
+            _counter.Reset();
+
+            // Act
+            var labels = await _manager.FetchLookupLabelsAsync(ModelId, "Supplier", OnlyInvalidKeys);
+
+            // Assert
+            Assert.Empty(labels);
+            Assert.Equal(0, _counter.Count);
+        }
+
+        [Fact]
+        public async Task FetchLookupLabelsAsync_ForAnEntityWithoutLabelAttributes_ShouldReturnNoLabelsAsync()
+        {
+            // Arrange — no string property, so nothing qualifies as its label.
+            using var context = LabelEdgeCasesContext.Create(_connection);
+            var manager = new NDjangoAdminManagerEF<LabelEdgeCasesContext>(new SingleServiceProvider(context), new NDjangoAdminOptions());
+
+            // Act
+            var labels = await manager.FetchLookupLabelsAsync(ModelId, nameof(Counter), OneKey);
+
+            // Assert
+            Assert.Empty(labels);
+        }
+
+        [Fact]
+        public async Task FetchLookupLabelsAsync_ForAShadowKey_ShouldReturnNoLabelsAsync()
+        {
+            // Arrange — the key exists only in the EF model, so the loaded records cannot hand it back.
+            using var context = LabelEdgeCasesContext.Create(_connection);
+            var manager = new NDjangoAdminManagerEF<LabelEdgeCasesContext>(new SingleServiceProvider(context), new NDjangoAdminOptions());
+
+            // Act
+            var labels = await manager.FetchLookupLabelsAsync(ModelId, nameof(ShadowKeyed), OneKey);
 
             // Assert
             Assert.Empty(labels);
@@ -187,11 +241,11 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
 
         private sealed class SingleServiceProvider : IServiceProvider
         {
-            private readonly TestDbContext _dbContext;
+            private readonly DbContext _dbContext;
 
-            public SingleServiceProvider(TestDbContext dbContext) => _dbContext = dbContext;
+            public SingleServiceProvider(DbContext dbContext) => _dbContext = dbContext;
 
-            public object? GetService(Type serviceType) => serviceType == typeof(TestDbContext) ? _dbContext : null;
+            public object GetService(Type serviceType) => serviceType.IsInstanceOfType(_dbContext) ? _dbContext : null;
         }
 
         private sealed class CommandCounter : DbCommandInterceptor
@@ -210,14 +264,14 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
 
         private sealed class BareManager : NDjangoAdminManager
         {
-            public BareManager() : base(null!, new NDjangoAdminOptions()) { }
+            public BareManager() : base(null, new NDjangoAdminOptions()) { }
 
             public override Task<NDjangoAdminResultSet> FetchDatasetAsync(string modelId, string sourceId,
-                IEnumerable<EasyFilter>? filters = null, IEnumerable<EasySorter>? sorters = null, bool isLookup = false,
+                IEnumerable<EasyFilter> filters = null, IEnumerable<EasySorter> sorters = null, bool isLookup = false,
                 int? offset = null, int? fetch = null, CancellationToken ct = default) => throw new NotSupportedException();
 
             public override Task<long> GetTotalRecordsAsync(string modelId, string sourceId,
-                IEnumerable<EasyFilter>? filters = null, bool isLookup = false, CancellationToken ct = default) => throw new NotSupportedException();
+                IEnumerable<EasyFilter> filters = null, bool isLookup = false, CancellationToken ct = default) => throw new NotSupportedException();
 
             public override Task<object> FetchRecordAsync(string modelId, string sourceId,
                 Dictionary<string, string> keys, CancellationToken ct = default) => throw new NotSupportedException();
@@ -240,5 +294,37 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             public override Task<IEnumerable<EasySorter>> GetDefaultSortersAsync(string modelId, string sourceId,
                 CancellationToken ct = default) => throw new NotSupportedException();
         }
+    }
+
+    // Nested types would get a "Outer+Inner" entity name; these live at namespace level so the
+    // manager finds them by their plain name.
+    internal sealed class Counter
+    {
+        public int Id { get; set; }
+
+        public int Value { get; set; }
+    }
+
+    internal sealed class ShadowKeyed
+    {
+        public string Name { get; set; }
+    }
+
+    internal sealed class LabelEdgeCasesContext : DbContext
+    {
+        private LabelEdgeCasesContext(DbContextOptions options) : base(options) { }
+
+        public DbSet<Counter> Counters { get; set; }
+
+        public DbSet<ShadowKeyed> ShadowKeyeds { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ShadowKeyed>().Property<int>("Id");
+            modelBuilder.Entity<ShadowKeyed>().HasKey("Id");
+        }
+
+        public static LabelEdgeCasesContext Create(SqliteConnection connection) =>
+            new LabelEdgeCasesContext(new DbContextOptionsBuilder().UseSqlite(connection).Options);
     }
 }

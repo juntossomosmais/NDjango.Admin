@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!link) return;
         e.preventDefault();
         if (window.opener && typeof window.opener.dismissRelatedLookupPopup === 'function') {
-            window.opener.dismissRelatedLookupPopup(window, link.getAttribute('data-pk'), link.getAttribute('data-label'));
+            window.opener.dismissRelatedLookupPopup(window, link.dataset.pk, link.dataset.label);
         }
     });
 
