@@ -24,8 +24,10 @@ test.describe('Phase 4 — AuthUserGroup', () => {
     formFor,
     listFor,
   }) => {
-    const userId = await createUserAndReturnId(page, uniqueName('user-AUG'));
-    const groupId = await createGroupAndReturnId(page, uniqueName('group-AUG'));
+    const username = uniqueName('user-AUG');
+    const groupName = uniqueName('group-AUG');
+    const userId = await createUserAndReturnId(page, username);
+    const groupId = await createGroupAndReturnId(page, groupName);
 
     const form = formFor('AuthUserGroup');
     await form.gotoAdd();
@@ -38,11 +40,12 @@ test.describe('Phase 4 — AuthUserGroup', () => {
     const list = listFor('AuthUserGroup');
     await expect(page).toHaveURL(/\/admin\/AuthUserGroup\/(\?|$)/);
 
+    // The FK columns show the related records' labels; the raw ids stay in the cell title.
     await list.gotoLatest();
     const row = page.locator('tbody tr').filter({
-      has: page.locator(`td`).filter({ hasText: new RegExp(`^${userId}$`) }),
+      has: page.locator(`td[title="UserId: ${userId}"]`).filter({ hasText: username }),
     }).filter({
-      has: page.locator(`td`).filter({ hasText: new RegExp(`^${groupId}$`) }),
+      has: page.locator(`td[title="GroupId: ${groupId}"]`).filter({ hasText: groupName }),
     });
     await expect(row).toBeVisible();
   });

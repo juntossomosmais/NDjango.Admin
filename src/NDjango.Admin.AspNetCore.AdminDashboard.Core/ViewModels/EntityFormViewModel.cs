@@ -46,6 +46,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.ViewModels
         public Type ClrType { get; set; }
         public string DisplayFormat { get; set; }
         public string LookupEntityId { get; set; }
+        /// <summary>Label of the record a foreign key field currently points at, shown next to the key.</summary>
+        public string? LookupLabel { get; set; }
 
         /// <summary>Maximum string length (maps to HTML <c>maxlength</c>).</summary>
         public int? MaxLength { get; set; }

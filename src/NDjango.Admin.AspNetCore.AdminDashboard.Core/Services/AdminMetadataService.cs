@@ -88,6 +88,15 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Services
             return await _manager.GetDefaultSortersAsync("__admin", entityId, ct);
         }
 
+        /// <summary>
+        /// Labels of the records of <paramref name="entityId"/> whose key is one of <paramref name="keys"/>,
+        /// keyed by the key's string form. See <see cref="NDjangoAdminManager.FetchLookupLabelsAsync"/>.
+        /// </summary>
+        public async Task<IReadOnlyDictionary<string, string>> FetchLookupLabelsAsync(string entityId, IReadOnlyCollection<object> keys, CancellationToken ct = default)
+        {
+            return await _manager.FetchLookupLabelsAsync("__admin", entityId, keys, ct);
+        }
+
         public static string GetEntityName(MetaEntity entity)
         {
             var parts = entity.Id.Split('.');

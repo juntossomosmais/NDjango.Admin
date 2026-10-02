@@ -33,7 +33,8 @@ async function createGroupAndReturnId(
 
 test.describe('Phase 4 — AuthGroupPermission', () => {
   test('assign a permission to a group', async ({ page, formFor, listFor }) => {
-    const groupId = await createGroupAndReturnId(page, uniqueName('group-AGP'));
+    const groupName = uniqueName('group-AGP');
+    const groupId = await createGroupAndReturnId(page, groupName);
     const permId = await findPermissionId(page, 'view_category');
 
     const form = formFor('AuthGroupPermission');
@@ -47,11 +48,12 @@ test.describe('Phase 4 — AuthGroupPermission', () => {
     const list = listFor('AuthGroupPermission');
     await expect(page).toHaveURL(/\/admin\/AuthGroupPermission\/(\?|$)/);
 
+    // The FK columns show the related records' labels; the raw ids stay in the cell title.
     await list.gotoLatest();
     const row = page.locator('tbody tr').filter({
-      has: page.locator(`td`).filter({ hasText: new RegExp(`^${groupId}$`) }),
+      has: page.locator(`td[title="GroupId: ${groupId}"]`).filter({ hasText: groupName }),
     }).filter({
-      has: page.locator(`td`).filter({ hasText: new RegExp(`^${permId}$`) }),
+      has: page.locator(`td[title="PermissionId: ${permId}"]`).filter({ hasText: 'view_category' }),
     });
     await expect(row).toBeVisible();
   });

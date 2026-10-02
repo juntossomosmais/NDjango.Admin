@@ -245,6 +245,86 @@ namespace NDjango.Admin.Services
             return records;
         }
 
+        /// <inheritdoc />
+        public override async Task<IReadOnlyDictionary<string, string>> FetchLookupLabelsAsync(string modelId, string sourceId,
+            IReadOnlyCollection<object> keys, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var labels = new Dictionary<string, string>();
+            if (keys == null || keys.Count == 0)
+                return labels;
+
+            await GetModelAsync(modelId, ct);
+
+            var entityType = GetCurrentEntityType(DbContext, sourceId);
+            var primaryKey = entityType.FindPrimaryKey();
+            // A foreign key points at one column; composite keys have no single value to look up.
+            if (primaryKey == null || primaryKey.Properties.Count != 1)
+                return labels;
+
+            var keyProp = primaryKey.Properties[0];
+            // A shadow key has no CLR property to read the value back from the loaded records.
+            var keyInfo = keyProp.PropertyInfo;
+            if (keyInfo == null)
+                return labels;
+
+            var modelEntity = Model.EntityRoot.SubEntities.FirstOrDefault(e => e.ClrType == entityType.ClrType);
+            var labelProps = (modelEntity?.Attributes ?? Enumerable.Empty<MetaEntityAttr>())
+                .Where(attr => attr.ShowInLookup && attr.Kind != EntityAttrKind.Lookup)
+                .OrderBy(attr => attr.Index)
+                .Select(attr => attr.PropInfo)
+                .OfType<PropertyInfo>()
+                .ToList();
+            if (labelProps.Count == 0)
+                return labels;
+
+            var typedKeys = ConvertKeys(keys, keyProp.ClrType);
+            if (typedKeys.Count == 0)
+                return labels;
+
+            var targetMethod = typeof(KeyQuery)
+                .GetMethod(nameof(KeyQuery.FetchByKeysAsync))!
+                .MakeGenericMethod(entityType.ClrType, keyProp.ClrType);
+            var records = await (Task<List<object>>)targetMethod.Invoke(null, new object[] { DbContext, keyProp.Name, typedKeys, ct })!;
+
+            foreach (var record in records) {
+                var key = LookupLabels.KeyToString(keyInfo.GetValue(record));
+                var label = LookupLabels.Compose(labelProps.Select(prop => prop.GetValue(record)));
+                if (key != null && label != null)
+                    labels[key] = label;
+            }
+
+            return labels;
+        }
+
+        // Keys arrive as whatever the caller had (an int read from a dataset, a string from a form);
+        // the query needs them in the key's own type. Values that do not convert match nothing.
+        private static System.Collections.IList ConvertKeys(IReadOnlyCollection<object?> keys, Type keyType)
+        {
+            var converter = TypeDescriptor.GetConverter(keyType);
+            var result = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(keyType))!;
+            var seen = new HashSet<object>();
+            foreach (var key in keys) {
+                var text = LookupLabels.KeyToString(key);
+                if (key == null || text == null)
+                    continue;
+                object? converted;
+                try {
+                    converted = keyType.IsInstanceOfType(key)
+                        ? key
+                        : converter.ConvertFromInvariantString(text);
+                }
+                catch (Exception ex) when (ex is FormatException || ex is OverflowException
+                    || ex is ArgumentException || ex is NotSupportedException) {
+                    continue;
+                }
+                if (converted != null && seen.Add(converted))
+                    result.Add(converted);
+            }
+            return result;
+        }
+
         private static IEntityType GetCurrentEntityType(DbContext dbContext, string sourceId)
         {
             var entityType = dbContext.Model.GetEntityTypes()
@@ -439,6 +519,23 @@ namespace NDjango.Admin.Services
         {
             var targetMethod = _countRecordsGeneric.MakeGenericMethod(entityType);
             return await (Task<long>)targetMethod.Invoke(this, new object[] { dbContext, filters, isLookup, ct });
+        }
+
+        // The entity and key types are only known at run time, so the typed query is reached through
+        // MakeGenericMethod. It lives in its own class to be found as a public method, without
+        // bypassing member accessibility.
+        private static class KeyQuery
+        {
+            // One query for all keys: WHERE key IN (...). Read-only, so nothing is tracked.
+            public static async Task<List<object>> FetchByKeysAsync<T, TKey>(DbContext dbContext, string keyName,
+                List<TKey> keys, CancellationToken ct) where T : class
+            {
+                var records = await dbContext.Set<T>()
+                    .AsNoTracking()
+                    .Where(record => keys.Contains(EF.Property<TKey>(record, keyName)))
+                    .ToListAsync(ct);
+                return records.Cast<object>().ToList();
+            }
         }
 
         private T FetchRecord<T>(DbContext dbContext, IEnumerable<object> keys) where T : class

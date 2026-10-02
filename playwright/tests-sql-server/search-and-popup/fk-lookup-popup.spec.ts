@@ -83,7 +83,56 @@ test.describe('Phase 3a — FK lookup popup', () => {
 
     const list = listFor('MenuItem');
     await list.gotoLatest();
-    await expect(list.rowByText(itemName)).toContainText(String(restaurant.id));
+    await expect(list.rowByText(itemName)).toContainText(restaurant.name);
+  });
+
+  test('List shows the FK label under the relationship caption, keeping the raw id on hover', async ({
+    page,
+    listFor,
+  }) => {
+    const restaurant = await createRestaurant(page, { Name: uniqueName('Rest-Label') });
+    await createMenuItem(page, restaurant.id, { Name: uniqueName('Item') });
+
+    const list = listFor('MenuItem');
+    await list.gotoLatest();
+
+    await expect(list.headerCells.filter({ hasText: /^Restaurant$/ })).toHaveCount(1);
+    const cell = list.rows.locator('td', { hasText: restaurant.name }).first();
+    await expect(cell).toHaveAttribute('title', `RestaurantId: ${restaurant.id}`);
+  });
+
+  test('Edit form shows the FK label next to the raw id input', async ({ page, formFor }) => {
+    const restaurant = await createRestaurant(page, { Name: uniqueName('Rest-Edit') });
+    const item = await createMenuItem(page, restaurant.id, { Name: uniqueName('Item') });
+
+    const form = formFor('MenuItem');
+    await form.gotoEdit(item.id);
+
+    await expect(page.locator('#label_id_RestaurantId')).toHaveText(restaurant.name);
+  });
+
+  test('Picking a record in the popup fills the id and its label; typing an id clears the label', async ({
+    page,
+    formFor,
+  }) => {
+    const restaurant = await createRestaurant(page, { Name: uniqueName('Rest-Pick') });
+
+    const form = formFor('MenuItem');
+    await form.gotoAdd();
+
+    const popupPromise = page.waitForEvent('popup');
+    await form.fkLookupLink('RestaurantId').click();
+    const popup = await popupPromise;
+    // The popup lists the first page; search narrows it to the record no matter how much data exists.
+    await popup.locator('input[name="q"]').fill(restaurant.name);
+    await popup.locator('.search-box button[type="submit"]').click();
+    await popup.locator(`a.popup-select[data-pk="${restaurant.id}"]`).click();
+
+    await expect(form.fkInput('RestaurantId')).toHaveValue(String(restaurant.id));
+    await expect(page.locator('#label_id_RestaurantId')).toHaveText(restaurant.name);
+
+    await form.fkInput('RestaurantId').fill('999999');
+    await expect(page.locator('#label_id_RestaurantId')).toHaveText('');
   });
 
   test('FK value pre-fills correctly on edit', async ({ page, formFor }) => {

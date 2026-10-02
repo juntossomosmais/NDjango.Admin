@@ -173,12 +173,12 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 var first = true;
                 foreach (var col in model.Columns) {
                     row.TryGetValue(col.PropName, out var cellVal);
-                    var displayValue = cellVal?.ToString() ?? "";
+                    var displayValue = CellText(col, cellVal);
                     if (first && encodedPk != null) {
                         content.Append($"<td><a href=\"{model.BasePath}/{model.EntityId}/{Encode(encodedPk)}/change/\">{Encode(displayValue)}</a></td>");
                     }
                     else {
-                        content.Append($"<td>{Encode(displayValue)}</td>");
+                        content.Append($"<td{CellTitle(col, cellVal)}>{Encode(displayValue)}</td>");
                     }
                     first = false;
                 }
@@ -242,17 +242,20 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
 
             foreach (var row in model.Rows) {
                 var pkValue = GetEncodedPrimaryKey(row, model) ?? "";
+                // Label of the row as a record of this entity, handed back to the form that opened the popup.
+                var rowLabel = NDjango.Admin.Services.LookupLabels.Compose(
+                    model.LabelFields.Select(f => row.TryGetValue(f, out var v) ? v : null)) ?? "";
 
                 sb.Append("<tr>");
                 var first = true;
                 foreach (var col in model.Columns) {
                     row.TryGetValue(col.PropName, out var cellVal);
-                    var displayValue = cellVal?.ToString() ?? "";
+                    var displayValue = CellText(col, cellVal);
                     if (first) {
-                        sb.Append($"<td><a href=\"#\" class=\"popup-select\" data-pk=\"{Encode(pkValue)}\">{Encode(displayValue)}</a></td>");
+                        sb.Append($"<td><a href=\"#\" class=\"popup-select\" data-pk=\"{Encode(pkValue)}\" data-label=\"{Encode(rowLabel)}\">{Encode(displayValue)}</a></td>");
                     }
                     else {
-                        sb.Append($"<td>{Encode(displayValue)}</td>");
+                        sb.Append($"<td{CellTitle(col, cellVal)}>{Encode(displayValue)}</td>");
                     }
                     first = false;
                 }
@@ -308,6 +311,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
 
                 if (!field.IsEditable) {
                     var displayValue = field.Value?.ToString() ?? "-";
+                    if (field.Kind == EntityAttrKind.Lookup && !string.IsNullOrEmpty(field.LookupLabel))
+                        displayValue = $"{field.LookupLabel} ({displayValue})";
                     content.Append($"<span class=\"readonly-value\">{Encode(displayValue)}</span>");
                 }
                 else if (field.Kind == EntityAttrKind.Lookup) {
@@ -621,6 +626,27 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             return sb.ToString();
         }
 
+        // A foreign key cell shows the label of the record it points at; any other cell, its value.
+        // A key with no label (the referenced record has no ShowInLookup value, or is gone) keeps
+        // the raw value, so the cell is never blank where there is data.
+        internal static string CellText(ColumnViewModel col, object? value)
+        {
+            var raw = value?.ToString() ?? "";
+            if (col.LookupLabels == null || value == null)
+                return raw;
+            var key = NDjango.Admin.Services.LookupLabels.KeyToString(value);
+            return key != null && col.LookupLabels.TryGetValue(key, out var label) ? label : raw;
+        }
+
+        // The raw key stays reachable on hover once the cell shows a label.
+        private static string CellTitle(ColumnViewModel col, object? value)
+        {
+            if (col.LookupLabels == null || value == null)
+                return "";
+            var raw = value.ToString() ?? "";
+            return CellText(col, value) == raw ? "" : $" title=\"{Encode(col.PropName)}: {Encode(raw)}\"";
+        }
+
         private static void RenderSelectField(StringBuilder content, FieldViewModel field, string basePath)
         {
             var id = $"id_{field.PropName}";
@@ -635,6 +661,10 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 var popupUrl = $"{basePath}/{field.LookupEntityId}/?_to_field=id&_popup=1";
                 content.Append($" <a href=\"{popupUrl}\" class=\"related-lookup\" id=\"lookup_{id}\" onclick=\"return showRelatedObjectLookupPopup(this);\" title=\"Lookup\">&#128269;</a>");
             }
+
+            // Label of the current record next to the key, as Django does for raw_id_fields. Always
+            // rendered (empty when there is none) so the popup can fill it after a pick.
+            content.Append($" <strong class=\"related-label\" id=\"label_{id}\">{Encode(field.LookupLabel ?? "")}</strong>");
         }
 
         internal static async Task WriteLayoutAsync(HttpContext httpContext, string title, string basePath,

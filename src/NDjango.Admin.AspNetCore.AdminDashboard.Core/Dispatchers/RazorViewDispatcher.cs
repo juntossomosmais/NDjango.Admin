@@ -157,6 +157,8 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 rows.Add(dict);
             }
 
+            await ApplyForeignKeyLabelsAsync(entity, columns, rows, metadataService, ct);
+
             var totalPagesLong = (long)Math.Ceiling((double)totalRecords / pageSize);
             var totalPages = (int)Math.Min(totalPagesLong, int.MaxValue);
 
@@ -184,6 +186,11 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                 HasCompositeKey = entity.HasCompositeKey,
                 SidebarGroups = sidebarGroups,
                 IsSearchEnabled = isSearchEnabled,
+                LabelFields = entity.Attributes
+                    .Where(a => a.ShowInLookup && a.Kind != EntityAttrKind.Lookup)
+                    .OrderBy(a => a.Index)
+                    .Select(a => a.PropName)
+                    .ToList(),
                 IsPopup = isPopup,
                 ToField = toField
             };
@@ -219,6 +226,36 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
             }
 
             await ViewRenderer.RenderEntityListViewAsync(context.HttpContext, viewModel, context.AuthenticatedUsername);
+        }
+
+        // Django's changelist shows str(obj.fk) instead of the key. Here: the foreign key column takes
+        // the relationship's caption ("Category", not "Category Id") and each cell the label of the
+        // record it points at. One query per foreign key column for the whole page — never per row.
+        // Lookups run one after the other because they share the request's DbContext.
+        private static async Task ApplyForeignKeyLabelsAsync(MetaEntity entity, List<ColumnViewModel> columns,
+            List<Dictionary<string, object>> rows, AdminMetadataService metadataService, CancellationToken ct)
+        {
+            var lookups = entity.Attributes
+                .Where(a => a.Kind == EntityAttrKind.Lookup && a.DataAttr != null && a.LookupEntity != null);
+
+            foreach (var lookup in lookups) {
+                var column = columns.FirstOrDefault(c => c.PropName == lookup.DataAttr.PropName);
+                if (column == null)
+                    continue;
+
+                column.Caption = lookup.Caption;
+
+                var keys = rows
+                    .Select(r => r.TryGetValue(column.PropName, out var value) ? value : null)
+                    .OfType<object>()
+                    .Distinct()
+                    .ToList();
+
+                column.LookupLabels = keys.Count == 0
+                    ? new Dictionary<string, string>()
+                    : await metadataService.FetchLookupLabelsAsync(
+                        AdminMetadataService.GetEntityName(lookup.LookupEntity), keys, ct);
+            }
         }
 
         private Task RenderEntityFormAsync(AdminDashboardContext context, DashboardRouteMatch match,
@@ -322,6 +359,15 @@ namespace NDjango.Admin.AspNetCore.AdminDashboard.Dispatchers
                     }
                     else if (record != null && attr.DataAttr?.PropInfo != null) {
                         field.Value = attr.DataAttr.PropInfo.GetValue(record);
+                    }
+
+                    // Like Django's raw_id_fields: the key stays editable and its label shows next to it.
+                    // One lookup per foreign key field of this single record, not per row of a list.
+                    if (field.Value != null && !string.IsNullOrEmpty(field.LookupEntityId)
+                        && !string.IsNullOrEmpty(LookupLabels.KeyToString(field.Value))) {
+                        var labels = await metadataService.FetchLookupLabelsAsync(field.LookupEntityId, new[] { field.Value }, ct);
+                        if (labels.TryGetValue(LookupLabels.KeyToString(field.Value)!, out var label))
+                            field.LookupLabel = label;
                     }
 
                     fields.Add(field);

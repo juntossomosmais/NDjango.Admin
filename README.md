@@ -361,13 +361,36 @@ This replaces preloaded `<select>` dropdowns, which don't scale when the related
 ```
 ┌──────────────────────────────────────────────────┐
 │ Restaurant: *                                    │
-│ ┌──────────┐  🔍                                 │
+│ ┌──────────┐  🔍  Bella Roma                     │
 │ │ 1        │  ← click to open popup              │
 │ └──────────┘                                     │
 └──────────────────────────────────────────────────┘
 ```
 
-The popup opens a simplified version of the related entity's list view (no header, no sidebar) and respects conditional search — if the related entity has `SearchFields`, the popup includes a search box.
+The popup opens a simplified version of the related entity's list view (no header, no sidebar) and respects conditional search — if the related entity has `SearchFields`, the popup includes a search box. Picking a record fills the ID and shows that record's label next to the input; typing an ID by hand clears the label.
+
+### Foreign key labels
+
+A foreign key shows the **label** of the record it points at instead of its raw ID, like Django shows `str(obj.fk)`:
+
+- **List view** — the column takes the relationship's name (`Category`, not `Category Id`) and each cell the related record's label. The raw ID stays in the cell's `title` (hover), and sorting still uses the key.
+- **Forms** — the label sits next to the raw ID input, as Django does for `raw_id_fields`.
+
+The label is made of the related entity's `ShowInLookup` attributes, joined by ` · `. Without any annotation, the string properties whose name contains "name" are picked (or every string property when none does). To choose the field yourself:
+
+```csharp
+public class Category
+{
+    public int Id { get; set; }
+
+    [MetaEntityAttr(ShowInLookup = true)]   // label = "ITA" instead of "Italian"
+    public string Code { get; set; }
+
+    public string Name { get; set; }
+}
+```
+
+The labels of a list page are loaded with **one query per foreign key column** (`WHERE Id IN (...)` with the keys of the page), never one per row. A key whose record has no label — or no longer exists — keeps showing the raw ID. Composite keys are not resolved and keep their raw values.
 
 ### Many-to-many relationships
 
@@ -579,4 +602,4 @@ Demonstrates SAML SSO with AWS IAM Identity Center. See [`sample-project-sso/REA
 
 - **MongoDB FK lookups** — references between MongoDB collections display as plain ObjectId strings, not lookup popups like the EF Core provider
 - **MongoDB cascade delete** — deleting a parent document does not auto-delete junction records (MongoDB has no FK constraints)
-- **FK display names in list views** — FK columns show raw IDs, not the related entity's display name (applies to both providers)
+- **FK labels on MongoDB** — references between collections are not relationships for the MongoDB provider, so they keep showing raw values; [foreign key labels](#foreign-key-labels) apply to the EF Core provider
