@@ -283,8 +283,8 @@ namespace NDjango.Admin.Services
             if (typedKeys.Count == 0)
                 return labels;
 
-            var targetMethod = typeof(NDjangoAdminManagerEF<TDbContext>)
-                .GetMethod(nameof(FetchByKeysAsync), BindingFlags.Static | BindingFlags.NonPublic)!
+            var targetMethod = typeof(KeyQuery)
+                .GetMethod(nameof(KeyQuery.FetchByKeysAsync))!
                 .MakeGenericMethod(entityType.ClrType, keyProp.ClrType);
             var records = await (Task<List<object>>)targetMethod.Invoke(null, new object[] { DbContext, keyProp.Name, typedKeys, ct })!;
 
@@ -521,15 +521,21 @@ namespace NDjango.Admin.Services
             return await (Task<long>)targetMethod.Invoke(this, new object[] { dbContext, filters, isLookup, ct });
         }
 
-        // One query for all keys: WHERE key IN (...). Read-only, so nothing is tracked.
-        private static async Task<List<object>> FetchByKeysAsync<T, TKey>(DbContext dbContext, string keyName,
-            List<TKey> keys, CancellationToken ct) where T : class
+        // The entity and key types are only known at run time, so the typed query is reached through
+        // MakeGenericMethod. It lives in its own class to be found as a public method, without
+        // bypassing member accessibility.
+        private static class KeyQuery
         {
-            var records = await dbContext.Set<T>()
-                .AsNoTracking()
-                .Where(record => keys.Contains(EF.Property<TKey>(record, keyName)))
-                .ToListAsync(ct);
-            return records.Cast<object>().ToList();
+            // One query for all keys: WHERE key IN (...). Read-only, so nothing is tracked.
+            public static async Task<List<object>> FetchByKeysAsync<T, TKey>(DbContext dbContext, string keyName,
+                List<TKey> keys, CancellationToken ct) where T : class
+            {
+                var records = await dbContext.Set<T>()
+                    .AsNoTracking()
+                    .Where(record => keys.Contains(EF.Property<TKey>(record, keyName)))
+                    .ToListAsync(ct);
+                return records.Cast<object>().ToList();
+            }
         }
 
         private T FetchRecord<T>(DbContext dbContext, IEnumerable<object> keys) where T : class

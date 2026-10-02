@@ -29,6 +29,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
         private static readonly object[] OneKey = { 1 };
         private static readonly object[] TwoSuppliers = { 1, 2 };
         private static readonly object[] OnlyInvalidKeys = { "not-a-number", "also-not" };
+        private static readonly string[] ConvertedSupplierKeys = { "2", "3" };
 
         private readonly SqliteConnection _connection;
         private readonly CommandCounter _counter = new CommandCounter();
@@ -124,7 +125,7 @@ namespace NDjango.Admin.EntityFrameworkCore.Relational.Tests
             var customers = await _manager.FetchLookupLabelsAsync(ModelId, "Customer", stringKeys);
 
             // Assert
-            Assert.Equal(new[] { "2", "3" }, new SortedSet<string>(suppliers.Keys));
+            Assert.Equal(ConvertedSupplierKeys, new SortedSet<string>(suppliers.Keys));
             Assert.Equal("Alfreds Futterkiste", customers["ALFKI"]);
         }
 
